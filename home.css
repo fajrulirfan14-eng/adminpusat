@@ -1,0 +1,185 @@
+/* ── HOME PAGE ── */
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── BANNER ── */
+.home-banner {
+  background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 60%, var(--brand-mid) 100%);
+  border-radius: 20px;
+  padding: 28px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.home-banner::before {
+  content: "";
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+.home-banner-greeting { font-size: 13px; font-weight: 500; opacity: 0.75; margin-bottom: 4px; }
+.home-banner-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.home-banner-date { font-size: 12px; opacity: 0.6; margin-bottom: 14px; }
+.home-banner-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px; font-weight: 600;
+}
+.home-banner-logo {
+  width: 90px; height: 90px;
+  object-fit: contain;
+  opacity: 0.9;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+  flex-shrink: 0;
+}
+
+/* ── STAT GRID ── */
+.home-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-card);
+  box-shadow: 0 2px 8px var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 10px;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.stat-card:hover { box-shadow: 0 4px 16px var(--shadow-md); transform: translateY(-2px); }
+.stat-card-top { display: flex; align-items: center; justify-content: space-between; }
+.stat-card-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.stat-card-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.stat-card-icon.brown  { background: #fdf0e0; color: var(--brand-mid); }
+.stat-card-icon.green  { background: #f0fdf4; color: #16a34a; }
+.stat-card-icon.blue   { background: #eff6ff; color: #2563eb; }
+.stat-card-icon.purple { background: #f5f3ff; color: #7c3aed; }
+.stat-card-value { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+.stat-card-sub { font-size: 11px; color: var(--text-muted); }
+
+/* ── BOTTOM GRID ── */
+.home-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+}
+
+/* ── SECTION ── */
+.home-section { display: flex; flex-direction: column; gap: 14px; }
+.section-title {
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::before {
+  content: "";
+  display: block; width: 4px; height: 18px;
+  background: var(--brand-mid); border-radius: 2px;
+}
+
+/* ── CABANG LIST ── */
+.home-cabang-list { display: flex; flex-direction: column; gap: 10px; }
+.cabang-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-card);
+  box-shadow: 0 2px 6px var(--shadow-sm);
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.cabang-card:hover { box-shadow: 0 4px 14px var(--shadow-md); transform: translateY(-1px); }
+.cabang-card-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand-pale), var(--brand-mid));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 18px; flex-shrink: 0;
+}
+.cabang-card-info { flex: 1; min-width: 0; }
+.cabang-card-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.cabang-card-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.cabang-card-status {
+  width: 10px; height: 10px;
+  border-radius: 50%; background: #16a34a;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.2);
+}
+
+/* ── RINGKASAN ── */
+.home-ringkasan {
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--border-card);
+  box-shadow: 0 2px 8px var(--shadow-sm);
+  overflow: hidden;
+}
+.ringkasan-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-card);
+  transition: background var(--transition-fast);
+}
+.ringkasan-item:last-child { border-bottom: none; }
+.ringkasan-item:hover { background: var(--bg-hover); }
+.ringkasan-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.ringkasan-icon.brown  { background: #fdf0e0; color: var(--brand-mid); }
+.ringkasan-icon.green  { background: #f0fdf4; color: #16a34a; }
+.ringkasan-icon.blue   { background: #eff6ff; color: #2563eb; }
+.ringkasan-icon.purple { background: #f5f3ff; color: #7c3aed; }
+.ringkasan-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+.ringkasan-value { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+
+/* ── SKELETON ── */
+@keyframes skShimmer {
+  0%   { background-position: -600px 0 }
+  100% { background-position:  600px 0 }
+}
+.sk {
+  background: linear-gradient(90deg,
+    var(--border-card) 25%,
+    rgba(176,138,92,0.1) 50%,
+    var(--border-card) 75%
+  );
+  background-size: 1200px 100%;
+  animation: skShimmer 1.5s infinite linear;
+  border-radius: 10px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .home-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .home-bottom-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .home-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-card-value { font-size: 20px; }
+  .home-banner { padding: 20px; }
+  .home-banner-name { font-size: 18px; }
+  .home-banner-logo { width: 60px; height: 60px; }
+}

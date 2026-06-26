@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#8A6234">
+<title>TTN Pusat</title>
+
+<link rel="stylesheet" href="root.css">
+<link rel="stylesheet" href="map.css">
+<link rel="stylesheet" href="index.css">
+<link rel="stylesheet" href="home.css">
+<link rel="stylesheet" href="cabang.css">
+<link rel="stylesheet" href="customer.css">
+<link rel="stylesheet" href="akun.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── HAMBURGER FLOATING ── -->
+  <button class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon"></div>
+        <span class="sidebar-logo-title">TTN Pusat</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-view="home">
+        <div class="nav-icon"><i class="fa-solid fa-house"></i></div>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-view="cabang">
+        <div class="nav-icon"><i class="fa-solid fa-building"></i></div>
+        <span>Cabang</span>
+      </a>
+      <a class="nav-item" data-view="laporan">
+        <div class="nav-icon"><i class="fa-solid fa-chart-bar"></i></div>
+        <span>Laporan</span>
+      </a>
+      <a class="nav-item" data-view="customer">
+        <div class="nav-icon"><i class="fa-solid fa-users"></i></div>
+        <span>Customer</span>
+      </a>
+      <a class="nav-item" data-view="akun">
+        <div class="nav-icon"><i class="fa-solid fa-user-gear"></i></div>
+        <span>Akun</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── OVERLAY SIDEBAR ── -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ── BOTTOM NAV (mobile only) ── -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a class="bottom-nav-item active" data-view="home">
+      <i class="fa-solid fa-house"></i>
+      <span>Dashboard</span>
+    </a>
+    <a class="bottom-nav-item" data-view="cabang">
+      <i class="fa-solid fa-building"></i>
+      <span>Cabang</span>
+    </a>
+    <a class="bottom-nav-item" data-view="laporan">
+      <i class="fa-solid fa-chart-bar"></i>
+      <span>Laporan</span>
+    </a>
+    <a class="bottom-nav-item" data-view="customer">
+      <i class="fa-solid fa-users"></i>
+      <span>Customer</span>
+    </a>
+    <a class="bottom-nav-item" data-view="akun">
+      <i class="fa-solid fa-user-gear"></i>
+      <span>Akun</span>
+    </a>
+  </nav>
+
+  <!-- ── MAIN WRAPPER ── -->
+  <div class="main-wrapper" id="mainWrapper">
+
+    <div class="main-inner">
+      <!-- ── TOPBAR ── -->
+      <header class="topbar" id="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title" id="topbarTitle">Dashboard</div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-back-btn" id="topbarBackBtn" style="display:none;">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <button class="topbar-reload" id="topbarReload" style="display:none;">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+          <button class="topbar-reload" id="topbarPeta">
+            <i class="fa-solid fa-map"></i>
+          </button>
+          <button class="topbar-notif" id="topbarNotif">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notif-badge" id="notifBadge"></span>
+          </button>
+          <div class="topbar-avatar" id="topbarAvatar">A</div>
+        </div>
+      </header>
+  
+      <!-- ── VIEWS ── -->
+      <main class="content-area" id="contentArea">
+  
+        <!-- HOME VIEW -->
+        <div class="view active" id="view-home">
+          <div class="view-scroll" id="homeScroll">
+  
+            <div class="home-page">
+  
+              <!-- BANNER -->
+              <div class="home-banner">
+                <div class="home-banner-left">
+                  <div class="home-banner-greeting" id="homeBannerGreeting">Selamat Datang 👋</div>
+                  <div class="home-banner-name" id="homeBannerName">Admin Pusat</div>
+                  <div class="home-banner-date" id="homeBannerDate">-</div>
+                  <div class="home-banner-badge">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Admin Pusat TTN
+                  </div>
+                </div>
+                <div class="home-banner-right">
+                  <img src="LogoTTN.png" alt="TTN" class="home-banner-logo">
+                </div>
+              </div>
+  
+              <!-- STAT CARDS -->
+              <div class="home-stat-grid">
+                <div class="stat-card">
+                  <div class="stat-card-top">
+                    <div class="stat-card-label">Total Cabang</div>
+                    <div class="stat-card-icon brown"><i class="fa-solid fa-building"></i></div>
+                  </div>
+                  <div class="stat-card-value" id="statCabang">-</div>
+                  <div class="stat-card-sub" id="statCabangSub">Memuat...</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-card-top">
+                    <div class="stat-card-label">Total Marketing</div>
+                    <div class="stat-card-icon green"><i class="fa-solid fa-users"></i></div>
+                  </div>
+                  <div class="stat-card-value" id="statMarketing">-</div>
+                  <div class="stat-card-sub" id="statMarketingSub">Memuat...</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-card-top">
+                    <div class="stat-card-label">Total Akun</div>
+                    <div class="stat-card-icon purple"><i class="fa-solid fa-user-gear"></i></div>
+                  </div>
+                  <div class="stat-card-value" id="statAkun">-</div>
+                  <div class="stat-card-sub" id="statAkunSub">Memuat...</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-card-top">
+                    <div class="stat-card-label">Laporan Hari Ini</div>
+                    <div class="stat-card-icon blue"><i class="fa-solid fa-chart-bar"></i></div>
+                  </div>
+                  <div class="stat-card-value" id="statLaporan">-</div>
+                  <div class="stat-card-sub" id="statLaporanSub">Memuat...</div>
+                </div>
+              </div>
+  
+              <!-- BOTTOM GRID -->
+              <div class="home-bottom-grid">
+  
+                <!-- KIRI: DAFTAR CABANG -->
+                <div class="home-section">
+                  <div class="section-title">Daftar Cabang</div>
+                  <div class="home-cabang-list" id="homeCabangGrid">
+                    <div class="cabang-card">
+                      <div class="sk" style="width:44px;height:44px;border-radius:12px;flex-shrink:0;"></div>
+                      <div style="flex:1;">
+                        <div class="sk" style="height:14px;width:120px;margin-bottom:6px;"></div>
+                        <div class="sk" style="height:11px;width:80px;"></div>
+                      </div>
+                    </div>
+                    <div class="cabang-card">
+                      <div class="sk" style="width:44px;height:44px;border-radius:12px;flex-shrink:0;"></div>
+                      <div style="flex:1;">
+                        <div class="sk" style="height:14px;width:120px;margin-bottom:6px;"></div>
+                        <div class="sk" style="height:11px;width:80px;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+  
+                <!-- KANAN: RINGKASAN -->
+                <div class="home-section">
+                  <div class="section-title">Ringkasan</div>
+                  <div class="home-ringkasan">
+                    <div class="ringkasan-item">
+                      <div class="ringkasan-icon brown"><i class="fa-solid fa-mug-hot"></i></div>
+                      <div class="ringkasan-info">
+                        <div class="ringkasan-label">Total Omset Hari Ini</div>
+                        <div class="ringkasan-value" id="ringOmset">-</div>
+                      </div>
+                    </div>
+                    <div class="ringkasan-item">
+                      <div class="ringkasan-icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                      <div class="ringkasan-info">
+                        <div class="ringkasan-label">Cabang Aktif</div>
+                        <div class="ringkasan-value" id="ringAktif">-</div>
+                      </div>
+                    </div>
+                    <div class="ringkasan-item">
+                      <div class="ringkasan-icon blue"><i class="fa-solid fa-file-lines"></i></div>
+                      <div class="ringkasan-info">
+                        <div class="ringkasan-label">Laporan Masuk</div>
+                        <div class="ringkasan-value" id="ringLaporan">-</div>
+                      </div>
+                    </div>
+                    <div class="ringkasan-item">
+                      <div class="ringkasan-icon purple"><i class="fa-solid fa-users"></i></div>
+                      <div class="ringkasan-info">
+                        <div class="ringkasan-label">Marketing Aktif</div>
+                        <div class="ringkasan-value" id="ringMarketing">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+  
+              </div>
+            </div>
+  
+          </div>
+        </div>
+  
+        <!-- CABANG VIEW -->
+        <div class="view" id="view-cabang">
+          <div class="cabang-layout">
+  
+            <!-- KIRI: LIST -->
+            <div class="cabang-list-panel" id="cabangListPanel">
+  
+              <!-- HEADER -->
+              <div class="cabang-list-header">
+                <div class="cabang-list-title">Kantor Cabang</div>
+                <button class="cabang-add-btn" id="cabangAddBtn">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Tambah</span>
+                </button>
+              </div>
+  
+              <!-- SEARCH -->
+              <div class="cabang-search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="cabangSearch" placeholder="Cari cabang...">
+              </div>
+  
+              <!-- LIST -->
+              <div class="cabang-list-scroll" id="cabangList">
+                <!-- diisi cabang.js -->
+              </div>
+  
+            </div>
+  
+            <!-- KANAN: DETAIL PANEL -->
+            <div class="cabang-detail-wrapper">
+              <div class="cabang-detail-panel" id="cabangDetailPanel">
+                <!-- EMPTY STATE -->
+                <div class="cabang-detail-empty" id="cabangDetailEmpty">
+                  <div class="cabang-empty-icon">
+                    <i class="fa-solid fa-building"></i>
+                  </div>
+                  <div class="cabang-empty-title">Pilih Kantor Cabang</div>
+                  <div class="cabang-empty-sub">Klik salah satu cabang di kiri untuk melihat detail, edit, atau kelola data cabang.</div>
+                </div>
+                <!-- DETAIL CONTENT -->
+                <div class="cabang-detail-content" id="cabangDetailContent" style="display:none;">
+                  <!-- DETAIL HEADER -->
+                  <div class="cabang-detail-header" id="cabangDetailHeader">
+                    <div class="cabang-detail-header-top">
+                      <img id="cabangDetailFoto" src="" alt="" class="cabang-detail-foto" style="display:none;">
+                      <div class="cabang-detail-foto-placeholder" id="cabangDetailFotoPlaceholder">
+                        <i class="fa-solid fa-building"></i>
+                      </div>
+                      <div class="cabang-detail-info">
+                        <div class="cabang-detail-nama" id="cabangDetailNama">-</div>
+                        <div class="cabang-detail-pt" id="cabangDetailPt">-</div>
+                          <div class="cabang-detail-alamat" id="cabangDetailAlamat">-</div>
+                      </div>
+                      <div class="cabang-detail-actions">
+                        <button class="cabang-edit-btn" id="cabangEditBtn">
+                          <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button class="cabang-hapus-btn" id="cabangHapusBtn">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+    
+                  <!-- TABS -->
+                  <div class="cabang-tabs" id="cabangTabs">
+                    <button class="cabang-tab active" data-tab="info">Info</button>
+                    <button class="cabang-tab" data-tab="operasional">Operasional</button>
+                    <button class="cabang-tab" data-tab="bonus">Bonus</button>
+                    <button class="cabang-tab" data-tab="trikotomi">Trikotomi</button>
+                    <button class="cabang-tab" data-tab="owner">Owner</button>
+                  </div>
+    
+                  <!-- TAB CONTENTS -->
+                  <div class="cabang-tab-body" id="cabangTabBody">
+                    <!-- diisi cabang.js -->
+                  </div>
+    
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- LAPORAN VIEW -->
+        <div class="view" id="view-laporan">
+          <div class="view-scroll">
+            <div class="coming-soon">
+              <i class="fa-solid fa-chart-bar"></i>
+              <p>Laporan — Coming Soon</p>
+            </div>
+          </div>
+        </div>
+  
+        <!-- CUSTOMER VIEW -->
+        <div class="view" id="view-customer">
+          <div class="customer-layout">
+
+            <!-- KIRI: LIST CABANG + KURIR -->
+            <div class="customer-list-panel" id="customerListPanel">
+              <div class="customer-list-header">
+                <div class="customer-list-title">Kantor Cabang</div>
+              </div>
+              <div class="customer-list-scroll" id="customerCabangList">
+                <!-- diisi customer.js -->
+              </div>
+            </div>
+
+            <!-- KANAN: DETAIL KURIR -->
+            <div class="customer-detail-wrapper">
+              <div class="customer-detail-panel" id="customerDetailPanel">
+
+                <!-- EMPTY STATE -->
+                <div class="customer-detail-empty" id="customerDetailEmpty">
+                  <div class="customer-empty-icon">
+                    <i class="fa-solid fa-users"></i>
+                  </div>
+                  <div class="customer-empty-title">Pilih Kurir</div>
+                  <div class="customer-empty-sub">Klik kantor cabang lalu pilih kurir untuk melihat data customer.</div>
+                </div>
+
+                <!-- DETAIL CONTENT -->
+                <div class="customer-detail-content" id="customerDetailContent" style="display:none;">
+
+                  <!-- HEADER KURIR -->
+                  <div class="customer-detail-header" id="customerDetailHeader">
+                    <div class="customer-detail-header-top">
+                      <div id="customerKurirFotoWrap"></div>
+                      <div class="customer-detail-info">
+                        <div class="customer-detail-nama" id="customerDetailNama">-</div>
+                        <div class="customer-detail-pt" id="customerDetailPt">Kurir</div>
+                      </div>
+                      <button class="customer-add-btn" id="customerAddBtn">
+                        <i class="fa-solid fa-plus"></i> Tambah
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- TABS HARI + SEARCH -->
+                  <div class="customer-tabs-row">
+                    <div class="customer-tabs" id="customerTabs">
+                      <div class="customer-tab-wrap">
+                        <button class="customer-tab active" data-hari="Senin">Senin</button>
+                      </div>
+                      <div class="customer-tab-wrap">
+                        <button class="customer-tab" data-hari="Selasa">Selasa</button>
+                      </div>
+                      <div class="customer-tab-wrap">
+                        <button class="customer-tab" data-hari="Rabu">Rabu</button>
+                      </div>
+                      <div class="customer-tab-wrap">
+                        <button class="customer-tab" data-hari="Kamis">Kamis</button>
+                      </div>
+                      <div class="customer-tab-wrap">
+                        <button class="customer-tab" data-hari="Jumat">Jumat</button>
+                      </div>
+                      <div class="customer-tab-wrap">
+                        <button class="customer-tab" data-hari="Sabtu">Sabtu</button>
+                      </div>
+                      <div class="customer-tab-wrap">
+                        <button class="customer-tab" data-hari="Minggu">Minggu</button>
+                      </div>
+                    </div>
+                    <div class="customer-search-wrap" id="customerSearchWrap">
+                      <div class="customer-search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="customerSearchInput" class="customer-search-input" placeholder="Cari customer...">
+                      </div>
+                      <div class="customer-suggest-list" id="customerSuggestDesktop"></div>
+                    </div>
+                  </div>
+
+                  <!-- SEARCH MOBILE -->
+                  <div class="customer-search-mobile" id="customerSearchMobile" style="position:relative;">
+                    <div class="customer-search-bar">
+                      <i class="fa-solid fa-magnifying-glass"></i>
+                      <input type="text" id="customerSearchInputMobile" class="customer-search-input" placeholder="Cari customer...">
+                    </div>
+                    <div class="customer-suggest-list" id="customerSuggestMobile" style="width:100%;right:auto;left:0;"></div>
+                  </div>
+
+                  <!-- TAB BODY -->
+                  <div class="customer-tab-body" id="customerTabBody">
+                    <!-- diisi customer.js -->
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+  
+        <!-- AKUN VIEW -->
+        <div class="view" id="view-akun">
+          <div class="akun-layout">
+
+            <!-- KIRI: LIST -->
+            <div class="akun-list-panel" id="akunListPanel">
+
+              <!-- HEADER -->
+              <div class="akun-list-header">
+                <div class="akun-list-title">Kantor Cabang</div>
+              </div>
+
+              <!-- LIST -->
+              <div class="akun-list-scroll" id="akunCabangList">
+                <!-- diisi akun.js -->
+              </div>
+
+            </div>
+
+            <!-- KANAN: DETAIL PANEL -->
+            <div class="akun-detail-wrapper">
+              <div class="akun-detail-panel" id="akunDetailPanel">
+
+                <!-- EMPTY STATE -->
+                <div class="akun-detail-empty" id="akunDetailEmpty">
+                  <div class="akun-empty-icon">
+                    <i class="fa-solid fa-users"></i>
+                  </div>
+                  <div class="akun-empty-title">Pilih Kantor Cabang</div>
+                  <div class="akun-empty-sub">Klik salah satu cabang di kiri untuk melihat daftar akun.</div>
+                </div>
+
+                <!-- DETAIL CONTENT -->
+                <div class="akun-detail-content" id="akunDetailContent" style="display:none;">
+
+                  <!-- DETAIL HEADER -->
+                  <div class="akun-detail-header" id="akunDetailHeader">
+                    <div class="akun-detail-header-top">
+                      <div class="akun-detail-info">
+                        <div class="akun-detail-nama" id="akunDetailNama">-</div>
+                        <div class="akun-detail-pt" id="akunDetailPt">-</div>
+                      </div>
+                      <button class="akun-add-btn" id="akunAddBtn">
+                        <i class="fa-solid fa-plus"></i> Tambah
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- TABS -->
+                  <div class="akun-tabs" id="akunTabs">
+                    <button class="akun-tab active" data-tab="adminCabang">Admin Cabang</button>
+                    <button class="akun-tab" data-tab="produksi">Produksi</button>
+                    <button class="akun-tab" data-tab="kurir">Kurir</button>
+                    <button class="akun-tab" data-tab="hunter">Hunter</button>
+                    <button class="akun-tab" data-tab="sales">Sales</button>
+                  </div>
+
+                  <!-- TAB BODY -->
+                  <div class="akun-tab-body" id="akunTabBody">
+                    <!-- diisi akun.js -->
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+  
+      </main>
+    </div>
+  </div>
+</div>
+<!-- PETA GLOBAL -->
+<div id="petaGlobalOverlay" class="peta-global-overlay">
+  <div id="petaGlobalWrap" class="peta-global-wrap">
+      <div class="cabang-map-header">
+        <div class="cabang-map-title">
+          <div class="peta-search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="petaSearchInput" class="peta-search-input" placeholder="Cari customer...">
+          </div>
+        </div>
+        <div class="cabang-map-header-right">
+          <div class="map-tile-select-wrap" id="petaTileWrap">
+            <button class="map-tile-btn" id="petaTileBtn">
+              <i class="fa-solid fa-layer-group"></i>
+              <span id="petaTileBtnLabel">Alidade Smooth</span>
+              <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div class="map-tile-dropdown" id="petaTileDropdown"></div>
+          </div>
+          <button class="peta-locate-btn" id="petaLocateBtn">
+            <i class="fa-solid fa-location-crosshairs"></i>
+          </button>
+          <button class="cabang-map-close" id="petaGlobalClose">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div class="peta-filter-bar">
+        <div class="peta-filter-wrap" id="petaFilterPemilikWrap">
+          <button class="peta-filter-btn" id="petaFilterPemilikBtn">
+            <i class="fa-solid fa-user"></i>
+            <span id="petaFilterPemilikLabel">Pemilik</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <button class="peta-filter-clear" id="petaFilterPemilikClear" style="display:none;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="peta-filter-dropdown" id="petaFilterPemilikDropdown" style="display:none;"></div>
+        </div>
+        <div class="peta-filter-wrap" id="petaFilterHariWrap">
+          <button class="peta-filter-btn" id="petaFilterHariBtn">
+            <i class="fa-solid fa-calendar"></i>
+            <span id="petaFilterHariLabel">Hari</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <button class="peta-filter-clear" id="petaFilterHariClear" style="display:none;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div class="peta-filter-dropdown" id="petaFilterHariDropdown" style="display:none;"></div>
+        </div>
+        <div class="peta-filter-wrap" id="petaFilterNamaWrap">
+          <button class="peta-filter-btn" id="petaFilterNamaBtn">
+            <i class="fa-solid fa-tag"></i>
+            <span>Nama</span>
+          </button>
+        </div>
+      </div>
+      <div style="position:relative; flex:1; min-height:0;">
+        <div class="peta-customer-count" id="petaCustomerCount">0 Customer</div>
+        <div id="petaGlobalMapEl"></div>
+      </div>
+    </div>
+</div>
+<script type="module" src="index.js"></script>
+<script type="module" src="home.js"></script>
+<script type="module" src="cabang.js"></script>
+<script type="module" src="customer.js"></script>
+<script type="module" src="akun.js"></script>
+<script src="indexdb.js"></script>
+<script src="map.js"></script>
+<script src="crop.js"></script>
+<div id="devConsoleMount"></div>
+<script src="devconsole.js"></script>
+
+</body>
+</html>

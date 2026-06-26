@@ -1,0 +1,73 @@
+[debug] [2026-06-21T05:53:42.939Z] ----------------------------------------------------------------------
+[debug] [2026-06-21T05:53:42.964Z] Command:       /data/data/com.termux/files/usr/bin/node /data/data/com.termux/files/usr/bin/firebase init functions
+[debug] [2026-06-21T05:53:42.966Z] CLI Version:   15.20.0
+[debug] [2026-06-21T05:53:42.966Z] Platform:      android
+[debug] [2026-06-21T05:53:42.967Z] Node Version:  v26.3.1
+[debug] [2026-06-21T05:53:42.967Z] Time:          Sun Jun 21 2026 12:53:42 GMT+0700 (Western Indonesia Time)
+[debug] [2026-06-21T05:53:42.968Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-21T05:53:42.976Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /storage/emulated/0/app_adminPusat_ttn
+
+Before we get started, keep in mind:
+
+  * You are currently outside your home directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-06-21T05:53:49.040Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-06-21T05:53:49.043Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-06-21T05:54:35.294Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-21T05:54:35.296Z] > authorizing via signed-in user (sipittrader@gmail.com)
+[debug] [2026-06-21T05:54:35.301Z] Checked if tokens are valid: false, expires at: 1776297979605
+[debug] [2026-06-21T05:54:35.303Z] Checked if tokens are valid: false, expires at: 1776297979605
+[debug] [2026-06-21T05:54:35.304Z] > refreshing access token with scopes: []
+[debug] [2026-06-21T05:54:35.311Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-06-21T05:54:35.311Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-06-21T05:54:35.600Z] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-06-21T05:54:35.829Z] FirebaseError: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+    at invalidCredentialError (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/auth.js:177:12)
+    at refreshTokens (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/auth.js:590:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async getAccessToken (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/apiv2.js:52:18)
+    at async Client.addAuthHeader (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/apiv2.js:182:21)
+    at async Client.request (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/apiv2.js:129:34)
+    at async getProjectPage (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/management/projects.js:287:17)
+    at async getFirebaseProjectPage (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/management/projects.js:304:23)
+    at async selectProjectInteractively (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/management/projects.js:150:41)
+    at async Object.doSetup (/data/data/com.termux/files/usr/lib/node_modules/firebase-tools/lib/init/features/project.js:56:24)
+[error] 
+[error] Error: Failed to list Firebase projects. See firebase-debug.log for more info.
+[debug] [2026-06-21T05:55:10.699Z] ----------------------------------------------------------------------
+[debug] [2026-06-21T05:55:10.708Z] Command:       /data/data/com.termux/files/usr/bin/node /data/data/com.termux/files/usr/bin/firebase login --reauth
+[debug] [2026-06-21T05:55:10.709Z] CLI Version:   15.20.0
+[debug] [2026-06-21T05:55:10.709Z] Platform:      android
+[debug] [2026-06-21T05:55:10.710Z] Node Version:  v26.3.1
+[debug] [2026-06-21T05:55:10.710Z] Time:          Sun Jun 21 2026 12:55:10 GMT+0700 (Western Indonesia Time)
+[debug] [2026-06-21T05:55:10.711Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://accounts.google.com/o/oauth2/auth?client_id=563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com&scope=email%20openid%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloudplatformprojects.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffirebase%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&response_type=code&state=392727658&redirect_uri=http%3A%2F%2Flocalhost%3A9005&login_hint=sipittrader%40gmail.com
+[info] 
+[info] Waiting for authentication...

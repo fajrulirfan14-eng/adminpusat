@@ -1,0 +1,460 @@
+/* ── MAP CONTAINER ── */
+.cabang-map-wrap {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.cabang-map-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-card);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.cabang-map-title {
+  font-size: 14px; font-weight: 700;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.cabang-map-title i { color: var(--brand-mid); }
+
+.cabang-map-close {
+  width: 34px; height: 34px;
+  border: none;
+  background: var(--bg-hover);
+  border-radius: 10px;
+  color: var(--brand-primary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: background var(--transition-fast);
+}
+.cabang-map-close:hover { background: rgba(176,138,92,0.2); }
+
+#cabangMapEl {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  z-index: 1;
+}
+
+/* ── LEAFLET CUSTOM PIN LABEL ── */
+.map-pin-label {
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  position: relative;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.map-pin-label::after {
+  content: "";
+  position: absolute;
+  bottom: -5px; left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--brand-primary);
+  border-bottom: none;
+}
+
+/* ── LEAFLET OVERRIDE ── */
+.leaflet-container {
+  font-family: 'Poppins', sans-serif;
+  background: #f0ebe3;
+}
+.leaflet-control-attribution {
+  font-size: 1px !important;
+  opacity: 0.5;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+.cust-popup-leaflet .leaflet-popup-content-wrapper {
+  max-width: 260px !important;
+}
+
+@media (max-width: 768px) {
+  .leaflet-popup {
+    margin-bottom: 20px;
+  }
+  .peta-global-wrap .leaflet-popup-pane {
+    padding: 0 16px;
+  }
+}
+.leaflet-popup-content {
+  font-size: 12px !important;
+  color: var(--text-primary) !important;
+  margin: 8px 10px !important;
+}
+.cust-popup-leaflet .leaflet-popup-content {
+  width: auto !important;
+}
+.leaflet-popup-content strong {
+  display: block;
+  font-weight: 700;
+  color: var(--brand-primary);
+  margin-bottom: 3px;
+}
+.leaflet-popup-tip { background: #fff; }
+.cabang-map-header-right {
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* pilih map */
+.map-tile-select-wrap {
+  position: relative;
+}
+.map-tile-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 12px; font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+.map-tile-btn:hover { background: var(--brand-pale); border-color: var(--brand-mid); }
+.map-tile-btn i { font-size: 10px; color: var(--text-muted); }
+
+.map-tile-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow-md);
+  z-index: 999;
+  min-width: 160px;
+  overflow: hidden;
+  padding: 4px;
+}
+.map-tile-dropdown.show { display: block; }
+
+.map-tile-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+.map-tile-option:hover { background: var(--bg-hover); }
+.map-tile-option.active {
+  background: var(--brand-pale);
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+.map-tile-option.active::after {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 10px;
+  margin-left: auto;
+  color: var(--brand-primary);
+}
+
+/* ── CUSTOMER MAP ── */
+#custMapEl {
+  flex: 1; width: 100%; height: 100%;
+  min-height: 400px; z-index: 1;
+}
+
+/* ── CUSTOMER PIN V2 ── */
+.cust-map-pin-v2 {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  border: 2px solid rgba(255,255,255,0.6);
+}
+.cust-map-pin-v2:hover { transform: scale(1.15); }
+
+.cust-map-pin-initial-v2 {
+  font-size: 13px; font-weight: 700;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+}
+
+.cust-map-pin-foto-v2 {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.peta-global-overlay {
+  position: fixed; inset: 0; z-index: 9990;
+  background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.25s ease;
+  padding: 50px 16px;
+}
+.peta-global-overlay.show {
+  display: flex; opacity: 1;
+}
+.peta-global-wrap {
+  width: min(900px, 95vw);
+  height: 85vh;
+  background: var(--bg-card);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  transform: scale(0.96);
+  transition: transform 0.25s ease;
+}
+.peta-global-overlay.show .peta-global-wrap {
+  transform: scale(1);
+}
+#petaGlobalMapEl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .peta-global-overlay {
+    padding: 60px 12px 80px;
+  }
+  .peta-global-wrap {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+  }
+}
+
+/* ── CUSTOMER POPUP ── */
+.cust-popup {
+  display: flex; align-items: center; gap: 8px;
+}
+.cust-popup-foto {
+  width: 36px; height: 36px; border-radius: 50%;
+  object-fit: cover; flex-shrink: 0;
+  border: 2px solid var(--border-card);
+}
+.cust-popup-info {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.cust-popup-info strong {
+  font-size: 12px; font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+}
+.cust-popup-info span {
+  font-size: 10px; color: var(--text-muted);
+}
+.cust-popup-leaflet .leaflet-popup-content {
+  margin: 8px 10px;
+}
+
+/* ── PETA SEARCH & COUNT ── */
+.peta-search-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-card);
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+.peta-search-bar i { color: var(--text-muted); font-size: 12px; }
+.peta-search-input {
+  border: none; background: none;
+  font-size: 12px; color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+  outline: none; width: 140px;
+}
+.peta-search-input::placeholder { color: var(--text-muted); }
+.peta-customer-count {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 999;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--border-card);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .peta-search-input { width: 120px; }
+
+  .cabang-map-header {
+    padding: 8px 10px;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .cabang-map-title {
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .map-tile-btn {
+    padding: 4px 7px;
+    font-size: 10px;
+    gap: 3px;
+  }
+
+  .peta-search-bar {
+    padding: 4px 7px;
+    gap: 5px;
+  }
+
+  .peta-filter-bar {
+    padding: 6px 10px;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .peta-filter-bar::-webkit-scrollbar { display: none; }
+
+  .peta-filter-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .peta-locate-btn,
+  .cabang-map-close {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+}
+
+/* ── PETA FILTER BAR ── */
+.peta-filter-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-card);
+  flex-shrink: 0;
+}
+.peta-filter-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-card);
+  border-radius: 20px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 12px; font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+.peta-filter-btn.active {
+  background: var(--brand-pale);
+  border-color: var(--brand-mid);
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+.peta-filter-btn i { font-size: 10px; }
+.peta-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 4px); left: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow-md);
+  z-index: 999;
+  min-width: 160px;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 4px;
+}
+.peta-filter-dropdown::-webkit-scrollbar { display: none; }
+.peta-filter-wrap { position: relative; }
+.peta-filter-option {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.peta-filter-option:hover { background: var(--bg-hover); }
+.peta-filter-option.selected {
+  background: var(--brand-pale);
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+.peta-filter-option.selected::after {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 10px;
+  color: var(--brand-primary);
+}
+.peta-filter-wrap {
+  display: flex; align-items: center; gap: 2px;
+}
+.peta-filter-clear {
+  width: 20px; height: 20px;
+  border: none; background: var(--brand-pale);
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand-primary); font-size: 9px;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+.peta-filter-clear:hover { background: rgba(176,138,92,0.3); }
+.peta-nama-label {
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-size: 9px; font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  padding: 2px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.peta-locate-btn {
+  width: 34px; height: 34px;
+  border: none; background: var(--bg-hover);
+  border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand-primary); font-size: 14px;
+  transition: background var(--transition-fast);
+}
+.peta-locate-btn:hover { background: rgba(176,138,92,0.2); }
+.peta-locate-btn.active { background: var(--brand-pale); color: var(--brand-primary); }

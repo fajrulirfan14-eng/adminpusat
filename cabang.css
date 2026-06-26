@@ -1,0 +1,807 @@
+/* ── CABANG LAYOUT ── */
+.cabang-layout { display: flex; height: 100%; overflow: hidden; }
+
+/* ── LIST PANEL ── */
+.cabang-list-panel {
+  width: 300px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border-card);
+  height: 100%; background: var(--bg-page);
+}
+.cabang-list-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 20px 16px 12px; flex-shrink: 0;
+}
+.cabang-list-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.cabang-add-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: var(--brand-primary); color: var(--text-white);
+  border: none; border-radius: 10px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background var(--transition-fast);
+  font-family: 'Poppins', sans-serif;
+}
+.cabang-add-btn:hover { background: var(--brand-dark); }
+
+.cabang-search-wrap {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 16px 12px; padding: 10px 14px;
+  background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 12px;
+}
+.cabang-search-wrap i { color: var(--text-muted); font-size: 13px; }
+.cabang-search-wrap input {
+  flex: 1; border: none; background: none;
+  font-size: 13px; color: var(--text-primary);
+  font-family: 'Poppins', sans-serif; outline: none;
+}
+.cabang-search-wrap input::placeholder { color: var(--text-muted); }
+
+.cabang-list-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: none; padding: 0 16px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.cabang-list-scroll::-webkit-scrollbar { display: none; }
+
+/* ── SKELETON ── */
+.cabang-sk-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card); border-radius: 14px;
+}
+.cabang-sk-info { flex: 1; }
+.cabang-sk-foto { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; }
+.cabang-sk-nama { height: 13px; width: 100px; margin-bottom: 6px; }
+.cabang-sk-pt { height: 11px; width: 140px; }
+.cabang-sk {
+  background: linear-gradient(90deg, var(--border-card) 25%, rgba(176,138,92,0.1) 50%, var(--border-card) 75%);
+  background-size: 800px 100%;
+  animation: skShimmer 1.5s infinite linear;
+  border-radius: 10px;
+}
+
+/* ── CABANG ITEM ── */
+.cabang-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.cabang-item:hover { box-shadow: 0 2px 10px var(--shadow-sm); transform: translateY(-1px); }
+.cabang-item.active {
+  border-color: var(--brand-mid); background: var(--brand-pale);
+  box-shadow: 0 2px 10px rgba(176,138,92,0.15);
+}
+.cabang-item-foto { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+.cabang-item-foto-placeholder {
+  width: 46px; height: 46px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand-pale), var(--brand-mid));
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-white); font-size: 18px; flex-shrink: 0;
+}
+.cabang-item-info { flex: 1; min-width: 0; }
+.cabang-item-nama { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cabang-item-pt { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.cabang-item-arrow { color: var(--text-muted); font-size: 12px; }
+.cabang-empty-msg { color: var(--text-muted); font-size: 13px; padding: 20px 0; text-align: center; }
+.cabang-loading-msg { color: var(--text-muted); font-size: 13px; padding: 20px 0; text-align: center; }
+
+/* ── DETAIL PANEL ── */
+.cabang-detail-wrapper{
+  flex:1;
+  padding:12px;
+  background:#fff;
+  border-left:1px solid var(--border-card);
+  overflow:hidden;
+}
+
+.cabang-detail-panel {
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+  background:var(--bg-page);
+  border-radius:16px;
+}
+
+/* ── EMPTY STATE ── */
+.cabang-detail-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; padding: 40px;
+}
+.cabang-empty-icon {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, var(--brand-pale), #f5e0c8);
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; color: var(--brand-mid); margin-bottom: 4px;
+}
+.cabang-empty-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.cabang-empty-sub { font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.5; }
+
+/* ── DETAIL CONTENT ── */
+.cabang-detail-content { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+
+/* ── DETAIL HEADER ── */
+.cabang-detail-header {
+  background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 70%, var(--brand-mid) 100%);
+  padding: 24px 24px 0; margin: 12px 12px 0 12px;
+  border-radius: 14px 14px 0 0; flex-shrink: 0;
+  position: relative; overflow: hidden;
+}
+.cabang-detail-header::before {
+  content: ""; position: absolute; top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: rgba(255,255,255,0.06); border-radius: 50%;
+}
+.cabang-detail-header-top {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 16px; position: relative; z-index: 1;
+}
+.cabang-detail-foto {
+  width: 56px; height: 56px; border-radius: 14px;
+  object-fit: cover; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.cabang-detail-foto-placeholder {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-white); font-size: 22px; flex-shrink: 0;
+}
+.cabang-detail-info { flex: 1; min-width: 0; }
+.cabang-detail-nama { font-size: 17px; font-weight: 700; color: var(--text-white); }
+.cabang-detail-pt { font-size: 12px; color: var(--text-sidebar); margin-top: 2px; }
+.cabang-detail-alamat { font-size: 11px; color: var(--text-sidebar); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cabang-detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.cabang-edit-btn {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  background: var(--bg-sidebar-hover); border: 1px solid rgba(255,255,255,0.25);
+  color: var(--text-white); border-radius: 10px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif; transition: background var(--transition-fast);
+}
+.cabang-edit-btn:hover { background: var(--bg-sidebar-active); }
+.cabang-hapus-btn {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  background: rgba(220,38,38,0.25); border: 1px solid rgba(220,38,38,0.3);
+  color: #fca5a5; border-radius: 10px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif; transition: background var(--transition-fast);
+}
+.cabang-hapus-btn:hover { background: rgba(220,38,38,0.4); }
+
+/* ── TABS ── */
+.cabang-tabs {
+  display: flex; gap: 0; padding: 0 24px;
+  background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 70%, var(--brand-mid) 100%);
+  overflow-x: auto; scrollbar-width: none;
+  flex-shrink: 0; position: relative; z-index: 1;
+  margin: 0 12px 12px 12px; border-radius: 0 0 14px 14px;
+}
+.cabang-tabs::-webkit-scrollbar { display: none; }
+.cabang-tab {
+  padding: 10px 16px; border: none; background: none;
+  font-size: 13px; font-weight: 500; color: var(--text-sidebar);
+  cursor: pointer; border-bottom: 2.5px solid transparent; white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  font-family: 'Poppins', sans-serif;
+}
+.cabang-tab:hover { color: var(--text-white); }
+.cabang-tab.active { color: var(--text-white); border-bottom-color: var(--text-white); font-weight: 600; }
+
+/* ── TAB BODY ── */
+.cabang-tab-body {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 20px 24px; scrollbar-width: none; background: var(--bg-page);
+}
+.cabang-tab-body::-webkit-scrollbar { display: none; }
+
+/* ── TAB CARDS ── */
+.tab-section { margin-bottom: 20px; }
+.tab-section-title {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+}
+.tab-section-title--capitalize { text-transform: capitalize; }
+.tab-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 10px 0; border-bottom: 1px solid var(--border-card); gap: 12px;
+}
+.tab-row:last-child { border-bottom: none; }
+.tab-row-label { font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
+.tab-row-label--capitalize { text-transform: capitalize; }
+.tab-row-value { font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: right; }
+.tab-row-value--wrap { max-width: 60%; text-align: right; white-space: normal; }
+.tab-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+  box-shadow: 0 1px 4px var(--shadow-sm);
+}
+
+/* ── BTN LIHAT PETA ── */
+.btn-lihat-peta {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  background: var(--brand-pale); border: 1px solid var(--border-card);
+  border-radius: 8px; color: var(--brand-primary);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif; transition: background var(--transition-fast);
+}
+.btn-lihat-peta:hover { background: #f0dfc8; }
+
+/* ── OWNER PROFILE ── */
+.owner-profile {
+  display: flex; align-items: center; gap: 16px; padding: 16px;
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; margin-bottom: 12px; box-shadow: 0 1px 4px var(--shadow-sm);
+}
+.owner-foto { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--border-card); cursor: pointer; }
+.owner-foto-placeholder {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-pale), var(--brand-mid));
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-white); font-size: 24px; flex-shrink: 0;
+}
+.owner-profile-info { flex: 1; min-width: 0; }
+.owner-profile-nama { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.owner-profile-email { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+/* ── FOTO POPUP ── */
+.foto-popup-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.25s ease;
+}
+.foto-popup-overlay.show { opacity: 1; }
+.foto-popup-wrap {
+  position: relative; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.foto-popup-img {
+  max-width: 90%; max-height: 90%; border-radius: 16px; object-fit: contain;
+  transform-origin: center center; transform: scale(1);
+  transition: transform 0.1s ease; user-select: none;
+}
+.foto-popup-close {
+  position: absolute; top: 20px; right: 20px;
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50%; color: #fff; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── EDIT FORM ── */
+.edit-form { display: flex; flex-direction: column; gap: 12px; }
+
+.edit-foto-card { padding: 12px; }
+.edit-foto-wrap {
+  position: relative; cursor: pointer;
+  border-radius: 12px; overflow: hidden;
+}
+.edit-foto-preview {
+  width: 100%; height: 160px; object-fit: cover; display: block;
+}
+.edit-foto-empty {
+  width: 100%; height: 160px;
+  background: var(--brand-pale); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand-mid); font-size: 32px;
+}
+.edit-foto-overlay {
+  position: absolute; bottom: 8px; right: 8px;
+  background: rgba(0,0,0,0.5); color: #fff;
+  padding: 4px 10px; border-radius: 8px;
+  font-size: 11px; font-weight: 600;
+}
+.edit-foto-input { display: none; }
+
+.edit-field {
+  padding: 8px 0; border-bottom: 1px solid var(--border-card);
+}
+.edit-field:last-child { border-bottom: none; }
+.edit-field-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.edit-field-input {
+  width: 100%; border: none; background: none;
+  font-size: 13px; color: var(--text-primary);
+  font-family: 'Poppins', sans-serif; outline: none;
+}
+.edit-field-textarea { resize: none; }
+
+/* ── EDIT LOKASI ── */
+.edit-lokasi-row {
+  display: flex; align-items: center;
+  justify-content: space-between; padding: 8px 0;
+}
+.edit-lokasi-info { flex: 1; }
+.edit-lokasi-label { font-size: 12px; color: var(--text-muted); }
+.edit-lokasi-val { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+.btn-peta {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  background: var(--brand-pale); border: 1px solid var(--border-card);
+  border-radius: 10px; color: var(--brand-primary);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif; transition: background var(--transition-fast);
+}
+.btn-peta:hover { background: #f0dfc8; }
+
+/* ── EDIT LOKASI MAP ── */
+.edit-lokasi-map-actions { display: flex; align-items: center; gap: 8px; }
+.btn-ok-lokasi {
+  padding: 6px 16px;
+  background: var(--brand-primary); border: none;
+  border-radius: 8px; color: #fff;
+  font-size: 12px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.btn-ok-lokasi:hover { background: var(--brand-dark); }
+.edit-lokasi-search-bar {
+  display: flex; gap: 8px; padding: 10px 16px;
+  background: var(--bg-card); border-bottom: 1px solid var(--border-card);
+}
+.edit-lokasi-search-input {
+  flex: 1; padding: 8px 12px;
+  border: 1px solid var(--border-card); border-radius: 8px;
+  font-size: 12px; font-family: 'Poppins', sans-serif;
+  outline: none; color: var(--text-primary);
+}
+.edit-lokasi-search-btn {
+  padding: 8px 14px; background: var(--brand-pale);
+  border: 1px solid var(--border-card); border-radius: 8px;
+  color: var(--brand-primary); font-size: 12px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; cursor: pointer;
+}
+.edit-lokasi-info-bar {
+  padding: 6px 16px; font-size: 11px; color: var(--text-muted);
+  background: var(--bg-card); border-bottom: 1px solid var(--border-card);
+}
+#editLokasiMapEl { width: 100%; height: 450px; display: block; z-index: 1; min-height: 0; }
+
+#addMapOverlay #editLokasiMapEl {
+  height: 100% !important;
+  flex: 1;
+}
+
+/* ── CUSTOM DROPDOWN ── */
+.custom-dropdown { position: relative; }
+.custom-dropdown-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; border: none; background: none;
+  font-size: 13px; color: var(--text-primary);
+  font-family: 'Poppins', sans-serif; cursor: pointer; outline: none;
+}
+.custom-dropdown-arrow {
+  font-size: 10px; color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+.custom-dropdown-btn.open .custom-dropdown-arrow { transform: rotate(180deg); }
+.custom-dropdown-list {
+  position: absolute;
+  bottom: calc(100% + 4px); left: 0;
+  width: 160px;
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 12px; box-shadow: 0 -4px 24px var(--shadow-md);
+  z-index: 999; overflow: hidden; padding: 4px;
+  opacity: 0;
+  transform: translateY(6px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.custom-dropdown-list.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.custom-dropdown-option {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; border-radius: 8px;
+  font-size: 13px; color: var(--text-primary); cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.custom-dropdown-option:hover { background: var(--bg-hover); }
+.custom-dropdown-option.active { background: var(--brand-pale); color: var(--brand-primary); font-weight: 600; }
+.custom-dropdown-option i { font-size: 11px; color: var(--brand-primary); }
+
+/* ── EDIT ACTIONS ── */
+.edit-actions {
+  display: flex; gap: 10px; padding-bottom: 20px;
+}
+.btn-batal {
+  flex: 1; padding: 12px;
+  background: var(--bg-hover); border: 1px solid var(--border-card);
+  border-radius: 12px; color: var(--text-primary);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif; transition: background var(--transition-fast);
+}
+.btn-batal:hover { background: var(--border-card); }
+.btn-simpan {
+  flex: 2; padding: 12px;
+  background: var(--brand-primary); border: none;
+  border-radius: 12px; color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background var(--transition-fast);
+}
+.btn-simpan:hover { background: var(--brand-dark); }
+.btn-simpan--success { background: var(--success) !important; }
+
+/* ── EDIT VARIAN ── */
+.edit-varian-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--border-card);
+}
+.edit-varian-row:last-child { border-bottom: none; }
+.edit-varian-fields {
+  display: flex; gap: 8px; flex: 1;
+}
+.edit-varian-kode { width: 60px; flex-shrink: 0; font-weight: 700; }
+.edit-varian-nama { flex: 1; }
+.edit-varian-harga { width: 90px; flex-shrink: 0; text-align: right; }
+
+.btn-hapus-row {
+  width: 30px; height: 30px; flex-shrink: 0;
+  border: none; background: rgba(220,38,38,0.1);
+  border-radius: 8px; color: var(--danger);
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 12px; transition: background var(--transition-fast);
+}
+.btn-hapus-row:hover { background: rgba(220,38,38,0.2); }
+
+.btn-tambah-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; margin-top: 10px;
+  background: var(--brand-pale); border: 1px dashed var(--brand-mid);
+  border-radius: 10px; color: var(--brand-primary);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif; width: 100%;
+  justify-content: center; transition: background var(--transition-fast);
+}
+.btn-tambah-row:hover { background: #f0dfc8; }
+
+/* ── PENGELUARAN FIX ── */
+.edit-pen-fix-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--border-card);
+}
+.edit-pen-fix-label { font-size: 13px; color: var(--text-primary); }
+.edit-pen-fix-add {
+  display: flex; gap: 8px; margin-top: 10px; align-items: center;
+}
+.edit-pen-fix-add .edit-field-input {
+  flex: 1; padding: 6px 0;
+  border-bottom: 1px solid var(--border-card);
+}
+.edit-pen-fix-add .btn-tambah-row {
+  width: auto; margin-top: 0; padding: 8px 12px;
+}
+
+/* ── EDIT MARGIN ── */
+.edit-margin-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-card);
+}
+.edit-margin-row:last-child { border-bottom: none; }
+.edit-margin-tier {
+  font-size: 12px; font-weight: 700;
+  color: var(--brand-primary);
+  text-transform: capitalize;
+  margin-bottom: 8px;
+}
+.edit-margin-group {
+  flex: 1; display: flex; flex-direction: column; gap: 2px;
+}
+
+/* ── EDIT OWNER FOTO ── */
+.edit-owner-foto-wrap {
+  position: relative; cursor: pointer;
+  border-radius: 12px; overflow: hidden;
+}
+.edit-owner-foto-preview {
+  width: 100%; height: 160px; object-fit: cover; display: block;
+}
+.edit-owner-foto-empty {
+  width: 100%; height: 160px;
+  background: var(--brand-pale);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand-mid); font-size: 32px;
+}
+
+/* ── TAMBAH CABANG ── */
+.cabang-add-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+
+.add-header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-card);
+  flex-shrink: 0;
+  padding: 16px 20px 0;
+}
+
+.add-header-top {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.add-title {
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary);
+}
+
+.add-close-btn {
+  width: 32px; height: 32px;
+  border: none; background: var(--bg-hover);
+  border-radius: 8px; color: var(--text-muted);
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: background var(--transition-fast);
+}
+.add-close-btn:hover { background: var(--border-card); }
+
+/* ── STEP INDICATOR ── */
+.add-steps {
+  display: flex; align-items: center;
+  gap: 0; overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 0;
+}
+.add-steps::-webkit-scrollbar { display: none; }
+
+.add-step {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  flex: 1; min-width: 60px;
+  position: relative; padding-bottom: 12px;
+}
+
+.add-step::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--border-card);
+}
+
+.add-step.active::after { background: var(--brand-primary); }
+.add-step.done::after   { background: var(--success); }
+
+.add-step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--border-card);
+  color: var(--text-muted);
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.add-step.active .add-step-dot {
+  background: var(--brand-primary); color: #fff;
+}
+.add-step.done .add-step-dot {
+  background: var(--success); color: #fff;
+}
+
+.add-step-label {
+  font-size: 10px; font-weight: 500;
+  color: var(--text-muted);
+}
+.add-step.active .add-step-label { color: var(--brand-primary); font-weight: 700; }
+.add-step.done .add-step-label   { color: var(--success); }
+
+/* ── ADD BODY ── */
+.add-body {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 16px; scrollbar-width: none;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.add-body::-webkit-scrollbar { display: none; }
+
+/* ── ADD FOOTER ── */
+.add-footer {
+  display: flex; gap: 10px;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-card);
+  flex-shrink: 0;
+}
+
+.add-footer .btn-batal { flex: 1; }
+.add-footer .btn-simpan { flex: 1; }
+.add-footer .btn-batal:disabled {
+  opacity: 0.4; cursor: not-allowed;
+}
+#addMapOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+#addMapOverlay #editLokasiMapEl {
+  flex: 1;
+  width: 100%;
+  height: 0;
+  min-height: 0;
+}
+
+/* ── CONFIRM POPUP ── */
+.confirm-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+.confirm-overlay.show { opacity: 1; }
+
+.confirm-box {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 24px;
+  width: 320px; max-width: 90vw;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+.confirm-overlay.show .confirm-box { transform: scale(1); }
+
+.confirm-icon {
+  width: 56px; height: 56px;
+  background: rgba(220,38,38,0.1);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #dc2626;
+  margin: 0 auto 16px;
+}
+.confirm-title {
+  font-size: 16px; font-weight: 700;
+  color: var(--text-primary);
+  text-align: center; margin-bottom: 8px;
+}
+.confirm-msg {
+  font-size: 13px; color: var(--text-secondary);
+  text-align: center; line-height: 1.6;
+  margin-bottom: 8px;
+}
+.confirm-warning {
+  font-size: 12px; color: #dc2626;
+  text-align: center; font-weight: 600;
+  margin-bottom: 20px;
+}
+.confirm-actions {
+  display: flex; gap: 10px;
+}
+.confirm-actions .btn-batal { flex: 1; }
+.confirm-actions .btn-hapus {
+  flex: 1; padding: 12px;
+  background: #dc2626; border: none;
+  border-radius: 12px; color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background var(--transition-fast);
+}
+.confirm-actions .btn-hapus:hover { background: #b91c1c; }
+.confirm-actions .btn-hapus:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.confirm-pass-wrap {
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 8px;
+}
+.confirm-pass-wrap .edit-field-input {
+  font-size: 14px; padding: 4px 0;
+}
+.confirm-pass-error {
+  font-size: 12px; color: #dc2626;
+  margin-top: 6px; min-height: 16px;
+}
+
+/* ── WARNING POPUP ── */
+.warning-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+.warning-overlay.show { opacity: 1; }
+
+.warning-box {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 24px;
+  width: 320px; max-width: 90vw;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+.warning-overlay.show .warning-box { transform: scale(1); }
+
+.warning-icon {
+  width: 56px; height: 56px;
+  background: rgba(234,179,8,0.1);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #ca8a04;
+  margin: 0 auto 16px;
+}
+.warning-title {
+  font-size: 16px; font-weight: 700;
+  color: var(--text-primary);
+  text-align: center; margin-bottom: 8px;
+}
+.warning-list {
+  margin: 0 0 20px 0;
+  padding: 0; list-style: none;
+}
+.warning-list li {
+  font-size: 13px; color: var(--text-secondary);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-card);
+  display: flex; align-items: center; gap: 8px;
+}
+.warning-list li:last-child { border-bottom: none; }
+.warning-list li i { color: #ca8a04; font-size: 11px; flex-shrink: 0; }
+.warning-btn-ok {
+  width: 100%; padding: 12px;
+  background: var(--brand-primary); border: none;
+  border-radius: 12px; color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ── MEDIA QUERIES ── */
+@media (max-width: 768px) {
+  .cabang-list-panel { width: 100%; border-right: none; }
+  .cabang-detail-wrapper {
+    position: absolute; inset: 0; z-index: 10;
+    padding: 0;
+    transform: translateX(100%);
+    transition: transform var(--transition-slow);
+    background: var(--bg-page);
+  }
+  .cabang-detail-wrapper.show { transform: translateX(0); }
+
+  .cabang-detail-panel {
+    height: 100%; border-radius: 0;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg-page);
+  }
+  .cabang-detail-content { display: block; min-height: auto; overflow: visible; height: auto; }
+  .cabang-tab-body { overflow: visible; height: auto; padding: 16px 16px 120px; }
+  .cabang-detail-header { padding: 12px 12px 0; margin: 12px 12px 0; }
+  .cabang-detail-header-top { flex-wrap: nowrap; align-items: center; gap: 10px; }
+  .cabang-detail-foto-placeholder,
+  .cabang-detail-foto { width: 44px; height: 44px; font-size: 18px; flex-shrink: 0; }
+  .cabang-detail-info { min-width: 0; flex: 1; }
+  .cabang-detail-nama { font-size: 14px; }
+  .cabang-detail-pt { font-size: 11px; }
+  .cabang-detail-alamat { font-size: 10px; }
+  .cabang-detail-actions { gap: 6px; }
+  .cabang-edit-btn { padding: 7px 10px; font-size: 13px; }
+  .cabang-hapus-btn { padding: 7px 10px; font-size: 13px; }
+  .cabang-tabs { padding: 0 8px; margin: 0 12px 12px; justify-content: space-between; }
+  .cabang-tab { flex: 1; padding: 10px 4px; font-size: 11px; text-align: center; }
+  .add-footer {
+    padding-bottom: 80px;
+  }
+}
