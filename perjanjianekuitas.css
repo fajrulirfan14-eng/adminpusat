@@ -1,0 +1,209 @@
+/* ── PERJANJIAN EKUITAS VIEW ── */
+.pek-page {
+  width: 100%;
+  margin: 0;
+  padding: 20px 0 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── CARD INFO PERUSAHAAN ── */
+.pek-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 16px; padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.pek-card-title {
+  font-size: 14px; font-weight: 700; color: var(--text-primary);
+  text-transform: uppercase; letter-spacing: .3px;
+}
+
+/* ── MEDIA (FOTO & TTD) ── */
+.pek-media-row { display: flex; gap: 20px; flex-wrap: wrap; }
+.pek-media-item { display: flex; flex-direction: column; gap: 8px; }
+.pek-media-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+.pek-media-box {
+  position: relative;
+  width: 160px; height: 100px;
+  border: 1px dashed var(--border-card); border-radius: 12px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+.pek-media-box img {
+  width: 100%; height: 100%; object-fit: contain; background: #fff;
+}
+.pek-media-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 24px;
+}
+.pek-media-edit-btn {
+  position: absolute; bottom: 6px; right: 6px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: var(--brand-primary); color: #fff;
+  cursor: pointer; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pek-media-edit-btn:hover { background: var(--brand-dark); }
+
+/* ── FIELD GRID ── */
+.pek-field-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.pek-field-full { grid-column: 1 / -1; }
+.pek-field { display: flex; flex-direction: column; gap: 6px; }
+.pek-field-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+.pek-field-edit-wrap { display: flex; gap: 8px; }
+.pek-field-input {
+  flex: 1; padding: 9px 11px; border: 1px solid var(--border-card);
+  border-radius: 9px; font-size: 12.5px; font-family: inherit;
+  background: var(--bg-hover); color: var(--text-secondary); outline: none;
+}
+.pek-field-input:not([readonly]) { background: var(--bg-input); color: var(--text-primary); border-color: var(--brand-mid); }
+.pek-field-edit-btn {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border: 1px solid var(--border-card); background: var(--bg-hover);
+  border-radius: 9px; color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.pek-field-edit-btn:hover { background: var(--brand-pale); color: var(--brand-primary); }
+
+@media (max-width: 600px) {
+  .pek-field-grid { grid-template-columns: 1fr; }
+}
+
+/* ── KETERANGAN PLACEHOLDER ── */
+.pek-placeholder-info {
+  background: var(--warning-bg); border: 1px dashed var(--warning);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.pek-placeholder-info-title {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; color: var(--warning);
+}
+.pek-placeholder-info-list { display: flex; flex-direction: column; gap: 5px; }
+.pek-placeholder-info-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.pek-placeholder-info-desc { font-size: 10.5px; color: var(--text-secondary); }
+
+/* ── TOOLBAR PASAL ── */
+.pek-pasal-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.pek-pasal-toolbar-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.pek-add-pasal-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; background: var(--brand-primary); color: #fff;
+  border: none; border-radius: 10px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; font-family: 'Poppins', sans-serif;
+  transition: background var(--transition-fast);
+}
+.pek-add-pasal-btn:hover { background: var(--brand-dark); }
+.pek-add-pasal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── LIST PASAL ── */
+.pek-pasal-list { display: flex; flex-direction: column; gap: 12px; }
+.pek-pasal-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; padding: 16px;
+}
+.pek-pasal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.pek-pasal-nomor { font-size: 11px; font-weight: 700; color: var(--brand-primary); text-transform: uppercase; }
+.pek-pasal-actions { display: flex; gap: 6px; }
+.pek-pasal-edit-btn, .pek-pasal-delete-btn {
+  width: 30px; height: 30px; border: 1px solid var(--border-card);
+  background: var(--bg-hover); border-radius: 8px; color: var(--text-muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px;
+}
+.pek-pasal-edit-btn:hover { background: var(--brand-pale); color: var(--brand-primary); }
+.pek-pasal-delete-btn:hover { background: var(--danger-bg); color: var(--danger); }
+
+.pek-pasal-judul-input {
+  width: 100%; margin-bottom: 8px;
+  padding: 8px 10px; border: 1px solid transparent; border-radius: 9px;
+  font-size: 13.5px; font-weight: 700; color: var(--text-primary);
+  background: none; outline: none; font-family: inherit;
+}
+.pek-pasal-isi-textarea {
+  width: 100%; resize: none; overflow: hidden; min-height: 24px;
+  padding: 8px 10px; border: 1px solid transparent; border-radius: 9px;
+  font-size: 12.5px; line-height: 1.6; color: var(--text-primary);
+  background: none; outline: none; font-family: inherit;
+}
+.pek-pasal-card.editing .pek-pasal-judul-input,
+.pek-pasal-card.editing .pek-pasal-isi-textarea {
+  background: var(--bg-input); border-color: var(--brand-mid);
+}
+.pek-pasal-isi-display {
+  padding: 8px 10px; font-size: 13.5px; line-height: 1.6;
+  color: var(--text-primary); white-space: pre-wrap; word-break: break-word;
+}
+.pek-placeholder-badge {
+  background: var(--warning-bg); color: var(--warning);
+  font-weight: 600; font-size: 1em; border-radius: 4px; padding: 0 4px;
+  border: 1px dashed var(--warning);
+}
+
+/* ── CARD BARU (inline) ── */
+.pek-pasal-card-new { border: 1px dashed var(--brand-mid); background: var(--brand-pale); }
+.pek-new-actions { display: flex; gap: 10px; margin-top: 10px; }
+.pek-new-btn-cancel, .pek-new-btn-save {
+  flex: 1; padding: 10px; border-radius: 9px; border: none;
+  font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;
+}
+.pek-new-btn-cancel { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-card); }
+.pek-new-btn-save { background: var(--brand-primary); color: #fff; }
+.pek-new-btn-save:hover { background: var(--brand-dark); }
+.pek-new-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.pek-loading { text-align: center; color: var(--text-muted); font-size: 13px; padding: 40px 0; }
+
+/* ── TOAST & MODAL MANDIRI ── */
+.pek-toast {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  z-index: 99999; display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none; max-width: 90vw;
+}
+.pek-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.pek-toast-success { background: var(--success, #22c55e); }
+.pek-toast-error { background: #dc2626; }
+
+.pek-modal-overlay {
+  position: fixed; inset: 0; z-index: 100000; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+}
+.pek-modal-overlay.show { opacity: 1; pointer-events: auto; }
+.pek-modal-box {
+  width: 100%; max-width: 320px; background: var(--bg-card); border-radius: 18px;
+  padding: 24px 20px 20px; text-align: center;
+  transform: scale(0.92); transition: transform 0.2s ease;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+}
+.pek-modal-overlay.show .pek-modal-box { transform: scale(1); }
+.pek-modal-icon {
+  width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 50%;
+  background: var(--warning-bg); color: var(--warning); font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pek-modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.pek-modal-message { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
+.pek-modal-actions { display: flex; gap: 10px; }
+.pek-modal-btn-cancel, .pek-modal-btn-ok {
+  flex: 1; padding: 11px; border-radius: 12px; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;
+}
+.pek-modal-btn-cancel { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-card); }
+.pek-modal-btn-ok { background: var(--brand-primary); color: #fff; }
+.pek-modal-btn-ok:hover { background: var(--brand-dark); }
+
+@media (max-width: 768px) {
+  .pek-page { padding: 14px 0 40px; gap: 14px; }
+  .pek-card { padding: 14px; }
+}

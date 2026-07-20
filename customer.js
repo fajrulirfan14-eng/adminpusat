@@ -138,9 +138,11 @@ window.selectKurir = function(kurirId, cabangId) {
   const content = document.getElementById("customerDetailContent");
   const wrapper = document.getElementById("customerDetailPanel")?.closest(".customer-detail-wrapper");
 
+  const wasOpen = wrapper?.classList.contains("show");
   if (empty)   empty.style.display   = "none";
   if (content) content.style.display = "flex";
   if (wrapper) wrapper.classList.add("show");
+  if (!wasOpen) window.pusatPushDetailState?.("customer");
 
   if (window.innerWidth <= 768) {
     const backBtn = document.getElementById("topbarBackBtn");
@@ -210,7 +212,6 @@ function initCustomerTabs() {
     tab.onclick = () => setCustomerTab(tab.dataset.hari);
   });
 }
-
 function setCustomerTab(hari) {
   activeHari = hari;
   document.querySelectorAll(".customer-tab").forEach(t => {
@@ -277,6 +278,10 @@ async function loadCustomerTab(hari) {
 // ── BACK BTN ──
 function initCustomerBackBtn() {
   document.getElementById("topbarBackBtn")?.addEventListener("click", () => {
+    if (window.innerWidth <= 768 && history.state?.pusatDetail === "customer") {
+      history.back(); // biar popstate yang urus, state konsisten
+      return;
+    }
     const wrapper = document.getElementById("customerDetailPanel")?.closest(".customer-detail-wrapper");
     if (wrapper) wrapper.classList.remove("show");
     document.getElementById("topbarBackBtn").style.display = "none";

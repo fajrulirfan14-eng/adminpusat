@@ -1,0 +1,137 @@
+/* ── TAB NERACA SALDO: WRAPPER ── */
+.lapn-wrap { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.lapn-content-wrap { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+
+.lapn-placeholder-empty, .lapn-empty-admin {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 60px 20px;
+  background: var(--bg-card); border: 1px dashed var(--border-card);
+  border-radius: 16px;
+}
+.lapn-empty-icon {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--brand-pale), #f5e0c8);
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; color: var(--brand-mid);
+}
+.lapn-empty-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.lapn-empty-sub { font-size: 12.5px; color: var(--text-muted); text-align: center; max-width: 320px; }
+
+/* ── TOOLBAR FILTER ── */
+.lapn-toolbar { display: flex; justify-content: flex-end; }
+.lapn-filter-wrap { display: flex; align-items: center; gap: 8px; }
+.lapn-filter-btn {
+  display: flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 12px;
+  border: 1px solid var(--border-card); border-radius: 10px;
+  background: var(--bg-card); color: var(--text-primary);
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: background var(--transition-fast);
+}
+.lapn-filter-btn:hover { background: var(--bg-hover); }
+.lapn-filter-btn i:last-child { font-size: 9px; color: var(--text-muted); }
+.lapn-filter-btn.spinning i { animation: lapnSpin 0.6s linear infinite; }
+@keyframes lapnSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+.lapn-dropdown {
+  position: fixed;
+  min-width: 130px; max-height: 260px; overflow-y: auto;
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 10px; box-shadow: 0 8px 24px var(--shadow-md);
+  z-index: 500;
+}
+.lapn-dropdown-option { padding: 9px 14px; font-size: 12.5px; color: var(--text-primary); cursor: pointer; }
+.lapn-dropdown-option:hover { background: var(--bg-hover); }
+.lapn-dropdown-option.selected { color: var(--brand-primary); font-weight: 700; background: var(--brand-pale); }
+
+/* ── KPI GRID ── */
+.lapn-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.lapn-kpi-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; padding: 14px 16px;
+}
+.lapn-kpi-label { font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 6px; }
+.lapn-kpi-value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+.lapn-kpi-brown { background: var(--brand-pale); border-color: var(--brand-mid); }
+.lapn-kpi-brown .lapn-kpi-value { color: var(--brand-primary); }
+.lapn-kpi-brown .lapn-kpi-label { color: var(--brand-primary); opacity: 0.8; }
+
+.lapn-kpi-green { background: var(--success-bg); border-color: var(--success); }
+.lapn-kpi-green .lapn-kpi-value { color: var(--success); }
+.lapn-kpi-green .lapn-kpi-label { color: var(--success); opacity: 0.8; }
+
+.lapn-kpi-red { background: var(--danger-bg); border-color: var(--danger); }
+.lapn-kpi-red .lapn-kpi-value { color: var(--danger); }
+.lapn-kpi-red .lapn-kpi-label { color: var(--danger); opacity: 0.8; }
+
+.lapn-kpi-purple { background: #f5f3ff; border-color: #7c3aed; }
+.lapn-kpi-purple .lapn-kpi-value { color: #7c3aed; }
+.lapn-kpi-purple .lapn-kpi-label { color: #7c3aed; opacity: 0.8; }
+
+@media (max-width: 900px) {
+  .lapn-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── LABA BERJALAN ── */
+.lapn-laba-card {
+  background: var(--brand-pale); border: 1px solid var(--brand-mid);
+  border-radius: 14px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.lapn-laba-label { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+.lapn-laba-value { font-size: 20px; font-weight: 800; color: var(--brand-primary); }
+
+/* ── BODY LAYOUT (2 KOLOM) ── */
+.lapn-body-layout { display: flex; gap: 16px; align-items: stretch; }
+.lapn-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.lapn-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; padding: 16px;
+}
+.lapn-card-title {
+  font-size: 12px; font-weight: 700; color: var(--brand-primary);
+  text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px;
+}
+
+.lapn-preview-list-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border-card);
+  font-size: 12.5px;
+}
+.lapn-preview-list-row:last-child { border-bottom: none; }
+.lapn-preview-list-row .lapn-nama { color: var(--text-primary); }
+.lapn-preview-list-row .lapn-nilai { font-weight: 700; color: var(--text-primary); }
+.lapn-preview-list-empty { padding: 12px 0; text-align: center; font-size: 12px; color: var(--text-muted); }
+
+.lapn-total-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: auto; padding: 12px 16px;
+  background: var(--bg-page); border: 1px solid var(--border-card); border-radius: 12px;
+}
+.lapn-total-row span:first-child { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.lapn-total-row span:last-child { font-size: 15px; font-weight: 700; color: var(--brand-primary); }
+
+.lapn-updated-at { font-size: 11px; color: var(--text-muted); text-align: right; }
+
+/* ── RESPONSIVE MOBILE ── */
+@media (max-width: 768px) {
+  .lapn-wrap { gap: 12px; padding-bottom: 90px; }
+  .lapn-toolbar { justify-content: stretch; }
+  .lapn-filter-wrap { width: 100%; flex-wrap: wrap; }
+  .lapn-filter-btn { flex: 1; justify-content: center; }
+  #lapnReloadBtn { flex: 0 0 auto; width: 40px; padding: 0; }
+
+  .lapn-kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lapn-kpi-card { padding: 12px 14px; }
+  .lapn-kpi-value { font-size: 14px; }
+
+  .lapn-laba-card { padding: 14px 16px; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .lapn-laba-value { font-size: 17px; }
+
+  .lapn-body-layout { flex-direction: column; }
+  .lapn-card { padding: 12px; border-radius: 12px; }
+}

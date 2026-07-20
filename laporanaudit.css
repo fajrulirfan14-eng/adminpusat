@@ -1,0 +1,137 @@
+/* ── TAB AUDIT: WRAPPER ── */
+.lapa-wrap { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.lapa-content-wrap { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+
+.lapa-placeholder-empty, .lapa-empty-admin {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 60px 20px;
+  background: var(--bg-card); border: 1px dashed var(--border-card);
+  border-radius: 16px;
+}
+.lapa-empty-icon {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--brand-pale), #f5e0c8);
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; color: var(--brand-mid);
+}
+.lapa-empty-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.lapa-empty-sub { font-size: 12.5px; color: var(--text-muted); text-align: center; max-width: 320px; }
+
+/* ── TOOLBAR FILTER ── */
+.lapa-toolbar { display: flex; justify-content: flex-end; }
+.lapa-filter-wrap { display: flex; align-items: center; gap: 8px; }
+.lapa-filter-btn {
+  display: flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 12px;
+  border: 1px solid var(--border-card); border-radius: 10px;
+  background: var(--bg-card); color: var(--text-primary);
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: background var(--transition-fast);
+}
+.lapa-filter-btn:hover { background: var(--bg-hover); }
+.lapa-filter-btn i:last-child { font-size: 9px; color: var(--text-muted); }
+.lapa-filter-btn.spinning i { animation: lapaSpin 0.6s linear infinite; }
+@keyframes lapaSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+.lapa-dropdown {
+  position: fixed;
+  min-width: 130px; max-height: 260px; overflow-y: auto;
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 10px; box-shadow: 0 8px 24px var(--shadow-md);
+  z-index: 500;
+}
+.lapa-dropdown-option { padding: 9px 14px; font-size: 12.5px; color: var(--text-primary); cursor: pointer; }
+.lapa-dropdown-option:hover { background: var(--bg-hover); }
+.lapa-dropdown-option.selected { color: var(--brand-primary); font-weight: 700; background: var(--brand-pale); }
+
+/* ── KPI GRID ── */
+.lapa-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.lapa-kpi-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; padding: 14px 16px;
+}
+.lapa-kpi-label { font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 6px; }
+.lapa-kpi-value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+.lapa-kpi-brown { background: var(--brand-pale); border-color: var(--brand-mid); }
+.lapa-kpi-brown .lapa-kpi-value { color: var(--brand-primary); }
+.lapa-kpi-brown .lapa-kpi-label { color: var(--brand-primary); opacity: 0.8; }
+
+.lapa-kpi-green { background: var(--success-bg); border-color: var(--success); }
+.lapa-kpi-green .lapa-kpi-value { color: var(--success); }
+.lapa-kpi-green .lapa-kpi-label { color: var(--success); opacity: 0.8; }
+
+.lapa-kpi-red { background: var(--danger-bg); border-color: var(--danger); }
+.lapa-kpi-red .lapa-kpi-value { color: var(--danger); }
+.lapa-kpi-red .lapa-kpi-label { color: var(--danger); opacity: 0.8; }
+
+.lapa-kpi-purple { background: #f5f3ff; border-color: #7c3aed; }
+.lapa-kpi-purple .lapa-kpi-value { color: #7c3aed; }
+.lapa-kpi-purple .lapa-kpi-label { color: #7c3aed; opacity: 0.8; }
+
+@media (max-width: 900px) {
+  .lapa-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── CARD & TABLE ── */
+.lapa-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; padding: 16px;
+}
+.lapa-card-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.lapa-card-title i { color: var(--brand-primary); font-size: 13px; }
+
+.lapa-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border-card); }
+.lapa-table { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
+.lapa-table thead th {
+  background: var(--bg-page); color: var(--text-secondary); font-weight: 700;
+  text-align: center; padding: 9px 12px;
+  border-bottom: 1px solid var(--border-card); border-left: 1px solid var(--border-card);
+}
+.lapa-table thead th:first-child { border-left: none; }
+.lapa-th-nama { text-align: left !important; min-width: 160px; }
+
+.lapa-table tbody td {
+  padding: 9px 12px; text-align: center; color: var(--text-primary);
+  border-bottom: 1px solid var(--border-card); border-left: 1px solid var(--border-card);
+}
+.lapa-table tbody td:first-child { border-left: none; }
+.lapa-table tbody tr:last-child td { border-bottom: none; }
+.lapa-table tbody tr:hover td { background: var(--bg-hover); }
+.lapa-td-nama { text-align: left !important; font-weight: 500; color: var(--text-primary); }
+
+.lapa-kategori-row td {
+  text-align: left; font-size: 11px; font-weight: 700; color: var(--brand-primary);
+  text-transform: uppercase; letter-spacing: .3px;
+  background: var(--brand-pale); padding: 8px 12px;
+}
+.lapa-empty-row { text-align: center; color: var(--text-muted); padding: 20px; }
+
+.lapa-updated-at { font-size: 11px; color: var(--text-muted); text-align: right; }
+
+/* ── RESPONSIVE MOBILE ── */
+@media (max-width: 768px) {
+  .lapa-wrap { gap: 12px; padding-bottom: 90px; }
+  .lapa-toolbar { justify-content: stretch; }
+  .lapa-filter-wrap { width: 100%; flex-wrap: wrap; }
+  .lapa-filter-btn { flex: 1; justify-content: center; }
+  #lapaReloadBtn { flex: 0 0 auto; width: 40px; padding: 0; }
+
+  .lapa-kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lapa-kpi-card { padding: 12px 14px; }
+  .lapa-kpi-value { font-size: 14px; }
+
+  .lapa-card { padding: 12px; border-radius: 12px; }
+  .lapa-card-title { font-size: 13px; margin-bottom: 10px; }
+
+  .lapa-table { font-size: 11.5px; }
+  .lapa-table thead th { padding: 7px 10px; }
+  .lapa-table tbody td { padding: 7px 10px; }
+  .lapa-th-nama { min-width: 120px; }
+}

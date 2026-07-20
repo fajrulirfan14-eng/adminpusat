@@ -8,15 +8,30 @@
 
 <link rel="stylesheet" href="root.css">
 <link rel="stylesheet" href="map.css">
+<link rel="stylesheet" href="homechart.css">
 <link rel="stylesheet" href="index.css">
 <link rel="stylesheet" href="home.css">
 <link rel="stylesheet" href="cabang.css">
+<link rel="stylesheet" href="pembelian.css">
 <link rel="stylesheet" href="customer.css">
+<link rel="stylesheet" href="laporan.css">
+<link rel="stylesheet" href="laporanbahanbaku.css">
+<link rel="stylesheet" href="laporanrincian.css">
+<link rel="stylesheet" href="laporanaudit.css">
+<link rel="stylesheet" href="laporanneracasaldo.css">
 <link rel="stylesheet" href="akun.css">
+<link rel="stylesheet" href="profil.css">
+<link rel="stylesheet" href="peraturan.css">
+<link rel="stylesheet" href="sop.css">
+<link rel="stylesheet" href="perjanjiankaryawan.css">
+<link rel="stylesheet" href="perjanjianmitra.css">
+<link rel="stylesheet" href="perjanjianekuitas.css">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 </head>
 <body>
 
@@ -43,6 +58,10 @@
         <div class="nav-icon"><i class="fa-solid fa-house"></i></div>
         <span>Dashboard</span>
       </a>
+      <a class="nav-item" data-view="pembelianbahanbaku">
+        <div class="nav-icon"><i class="fa-solid fa-truck-fast"></i></div>
+        <span>Pembelian Bahan Baku</span>
+      </a>
       <a class="nav-item" data-view="cabang">
         <div class="nav-icon"><i class="fa-solid fa-building"></i></div>
         <span>Cabang</span>
@@ -59,6 +78,10 @@
         <div class="nav-icon"><i class="fa-solid fa-user-gear"></i></div>
         <span>Akun</span>
       </a>
+      <a class="nav-item" data-view="profil">
+        <div class="nav-icon"><i class="fa-solid fa-user"></i></div>
+        <span>Profil</span>
+      </a>
     </nav>
   </aside>
 
@@ -71,6 +94,10 @@
       <i class="fa-solid fa-house"></i>
       <span>Dashboard</span>
     </a>
+    <a class="bottom-nav-item" data-view="pembelianbahanbaku">
+      <i class="fa-solid fa-truck-fast"></i>
+      <span>Pembelian</span>
+    </a>
     <a class="bottom-nav-item" data-view="cabang">
       <i class="fa-solid fa-building"></i>
       <span>Cabang</span>
@@ -79,15 +106,31 @@
       <i class="fa-solid fa-chart-bar"></i>
       <span>Laporan</span>
     </a>
-    <a class="bottom-nav-item" data-view="customer">
-      <i class="fa-solid fa-users"></i>
-      <span>Customer</span>
-    </a>
-    <a class="bottom-nav-item" data-view="akun">
-      <i class="fa-solid fa-user-gear"></i>
-      <span>Akun</span>
-    </a>
+    <button class="bottom-nav-item" id="bottomNavMoreBtn" type="button">
+      <i class="fa-solid fa-ellipsis"></i>
+      <span>Lainnya</span>
+    </button>
   </nav>
+
+  <!-- ── BOTTOM NAV MORE SHEET ── -->
+  <div class="bottom-nav-more-sheet" id="bottomNavMoreSheet">
+    <div class="bottom-nav-more-handle"></div>
+    <div class="bottom-nav-more-title">Menu Lainnya</div>
+    <div class="bottom-nav-more-grid">
+      <button class="bottom-nav-more-item" data-view="akun">
+        <div class="bottom-nav-more-icon"><i class="fa-solid fa-user-gear"></i></div>
+        <span>Akun</span>
+      </button>
+      <button class="bottom-nav-more-item" data-view="customer">
+        <div class="bottom-nav-more-icon"><i class="fa-solid fa-users"></i></div>
+        <span>Customer</span>
+      </button>
+      <button class="bottom-nav-more-item" data-view="profil">
+        <div class="bottom-nav-more-icon"><i class="fa-solid fa-user"></i></i></div>
+        <span>Profil</span>
+      </button>
+    </div>
+  </div>
 
   <!-- ── MAIN WRAPPER ── -->
   <div class="main-wrapper" id="mainWrapper">
@@ -153,30 +196,69 @@
                 </div>
                 <div class="stat-card">
                   <div class="stat-card-top">
-                    <div class="stat-card-label">Total Marketing</div>
-                    <div class="stat-card-icon green"><i class="fa-solid fa-users"></i></div>
-                  </div>
-                  <div class="stat-card-value" id="statMarketing">-</div>
-                  <div class="stat-card-sub" id="statMarketingSub">Memuat...</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-card-top">
                     <div class="stat-card-label">Total Akun</div>
                     <div class="stat-card-icon purple"><i class="fa-solid fa-user-gear"></i></div>
                   </div>
                   <div class="stat-card-value" id="statAkun">-</div>
                   <div class="stat-card-sub" id="statAkunSub">Memuat...</div>
                 </div>
-                <div class="stat-card">
-                  <div class="stat-card-top">
-                    <div class="stat-card-label">Laporan Hari Ini</div>
-                    <div class="stat-card-icon blue"><i class="fa-solid fa-chart-bar"></i></div>
-                  </div>
-                  <div class="stat-card-value" id="statLaporan">-</div>
-                  <div class="stat-card-sub" id="statLaporanSub">Memuat...</div>
-                </div>
               </div>
   
+              <!-- GRAFIK PEMASUKAN PER CABANG -->
+              <div class="home-chart-card">
+                <div class="home-chart-header">
+                  <div class="home-chart-title">Pemasukan Harian per Cabang</div>
+                  <button class="home-chart-reload-btn" id="homeChartReloadBtn" title="Reload">
+                    <i class="fa-solid fa-rotate-right"></i>
+                  </button>
+                </div>
+                <div class="home-chart-filter-bar">
+                  <button class="home-chart-filter-btn" id="homeChartFilterBtn">
+                    <i class="fa-solid fa-filter"></i>
+                    <span id="homeChartFilterLabel">Semua Cabang</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </button>
+                  <div class="home-chart-filter-dropdown" id="homeChartFilterList" style="display:none;"></div>
+                </div>
+                <div class="home-chart-canvas-wrap">
+                  <div class="home-chart-canvas-inner">
+                    <canvas id="homeChartCanvas"></canvas>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- KPI KEUANGAN (semua cabang, bulan berjalan) -->
+              <div class="home-finance-top-grid">
+                <div class="home-finance-card home-finance-green" data-jenis="pemasukan" id="homeCardPemasukan">
+                  <div class="home-finance-top">
+                    <div class="home-finance-label">Total Pemasukan</div>
+                    <i class="fa-solid fa-arrow-trend-up home-finance-icon"></i>
+                  </div>
+                  <div class="home-finance-value" id="homeValuePemasukan">Rp 0</div>
+                  <div class="home-finance-sub" id="homeSubPemasukan">Klik untuk refresh</div>
+                </div>
+
+                <div class="home-finance-card home-finance-red" data-jenis="pengeluaran" id="homeCardPengeluaran">
+                  <div class="home-finance-top">
+                    <div class="home-finance-label">Total Pengeluaran</div>
+                    <i class="fa-solid fa-arrow-trend-down home-finance-icon"></i>
+                  </div>
+                  <div class="home-finance-value" id="homeValuePengeluaran">Rp 0</div>
+                  <div class="home-finance-sub" id="homeSubPengeluaran">Klik untuk refresh</div>
+                </div>
+              </div>
+              
+              <!-- KPI BAHAN BAKU -->
+              <div class="home-finance-card home-finance-brown home-finance-full" data-jenis="pembelian" id="homeCardPembelian">
+                <div class="home-finance-top">
+                  <div class="home-finance-label">Pembelian Bahan Baku</div>
+                  <i class="fa-solid fa-boxes-stacked home-finance-icon"></i>
+                </div>
+                <div class="home-finance-value" id="homeValuePembelian">Rp 0</div>
+                <div class="home-finance-breakdown" id="homeBreakdownPembelian"></div>
+                <div class="home-finance-sub" id="homeSubPembelian">Klik untuk refresh</div>
+              </div>
+
               <!-- BOTTOM GRID -->
               <div class="home-bottom-grid">
   
@@ -196,41 +278,6 @@
                       <div style="flex:1;">
                         <div class="sk" style="height:14px;width:120px;margin-bottom:6px;"></div>
                         <div class="sk" style="height:11px;width:80px;"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-  
-                <!-- KANAN: RINGKASAN -->
-                <div class="home-section">
-                  <div class="section-title">Ringkasan</div>
-                  <div class="home-ringkasan">
-                    <div class="ringkasan-item">
-                      <div class="ringkasan-icon brown"><i class="fa-solid fa-mug-hot"></i></div>
-                      <div class="ringkasan-info">
-                        <div class="ringkasan-label">Total Omset Hari Ini</div>
-                        <div class="ringkasan-value" id="ringOmset">-</div>
-                      </div>
-                    </div>
-                    <div class="ringkasan-item">
-                      <div class="ringkasan-icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                      <div class="ringkasan-info">
-                        <div class="ringkasan-label">Cabang Aktif</div>
-                        <div class="ringkasan-value" id="ringAktif">-</div>
-                      </div>
-                    </div>
-                    <div class="ringkasan-item">
-                      <div class="ringkasan-icon blue"><i class="fa-solid fa-file-lines"></i></div>
-                      <div class="ringkasan-info">
-                        <div class="ringkasan-label">Laporan Masuk</div>
-                        <div class="ringkasan-value" id="ringLaporan">-</div>
-                      </div>
-                    </div>
-                    <div class="ringkasan-item">
-                      <div class="ringkasan-icon purple"><i class="fa-solid fa-users"></i></div>
-                      <div class="ringkasan-info">
-                        <div class="ringkasan-label">Marketing Aktif</div>
-                        <div class="ringkasan-value" id="ringMarketing">-</div>
                       </div>
                     </div>
                   </div>
@@ -272,7 +319,7 @@
             </div>
   
             <!-- KANAN: DETAIL PANEL -->
-            <div class="cabang-detail-wrapper">
+            <div class="cabang-detail-wrapper" data-pusat-detail="cabang">
               <div class="cabang-detail-panel" id="cabangDetailPanel">
                 <!-- EMPTY STATE -->
                 <div class="cabang-detail-empty" id="cabangDetailEmpty">
@@ -326,17 +373,86 @@
             </div>
           </div>
         </div>
-  
-        <!-- LAPORAN VIEW -->
-        <div class="view" id="view-laporan">
-          <div class="view-scroll">
-            <div class="coming-soon">
-              <i class="fa-solid fa-chart-bar"></i>
-              <p>Laporan — Coming Soon</p>
+        
+        <!-- PEMBELIAN VIEW -->
+        <div class="view" id="view-pembelianbahanbaku">
+          <div class="pbb-layout">
+        
+            <!-- KIRI: LIST CABANG -->
+            <div class="pbb-list-panel" id="pbbListPanel">
+              <div class="pbb-list-header">
+                <div class="pbb-list-title">Kantor Cabang</div>
+              </div>
+              <div class="pbb-search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="pbbSearch" placeholder="Cari cabang...">
+              </div>
+              <div class="pbb-list-scroll" id="pbbCabangList">
+                <!-- diisi pembelianbahanbaku.js -->
+              </div>
             </div>
+        
+            <!-- KANAN: DETAIL PANEL -->
+            <div class="pbb-detail-wrapper" data-pusat-detail="pembelianbahanbaku">
+              <div class="pbb-detail-panel" id="pbbDetailPanel">
+        
+                <!-- EMPTY STATE -->
+                <div class="pbb-detail-empty" id="pbbDetailEmpty">
+                  <div class="pbb-empty-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                  <div class="pbb-empty-title">Pilih Kantor Cabang</div>
+                  <div class="pbb-empty-sub">Klik salah satu cabang di kiri untuk kelola pembelian bahan baku.</div>
+                </div>
+        
+                <!-- BELUM ADA ADMIN CABANG -->
+                <div class="pbb-detail-empty" id="pbbDetailNoAdmin" style="display:none;">
+                  <div class="pbb-empty-icon"><i class="fa-solid fa-user-slash"></i></div>
+                  <div class="pbb-empty-title">Admin Cabang Belum Ada</div>
+                  <div class="pbb-empty-sub">Cabang ini belum punya Admin Cabang aktif. Buat dulu di menu Akun sebelum kelola pembelian.</div>
+                </div>
+        
+                <!-- DETAIL CONTENT -->
+                <div class="pbb-detail-content" id="pbbDetailContent" style="display:none;">
+        
+                  <div class="pbb-detail-header">
+                    <div class="pbb-detail-header-top">
+                      <button class="pbb-back-btn" id="pbbBackBtn"><i class="fa-solid fa-arrow-left"></i></button>
+                      <div class="pbb-detail-info">
+                        <div class="pbb-detail-nama" id="pbbDetailNama">-</div>
+                        <div class="pbb-detail-sub" id="pbbDetailSub">-</div>
+                      </div>
+                      <div class="pbb-filter-wrap">
+                        <button class="pbb-filter-btn pbb-view-toggle-btn" id="pbbViewToggleBtn" title="Tampilan Tabel">
+                          <i class="fa-solid fa-table"></i>
+                        </button>
+
+                        <button class="pbb-filter-btn" id="pbbBulanBtn">
+                          <i class="fa-solid fa-calendar"></i>
+                          <span id="pbbBulanLabel">Juli</span>
+                          <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="pbb-dropdown" id="pbbBulanDropdown" style="display:none"></div>
+        
+                        <button class="pbb-filter-btn" id="pbbTahunBtn">
+                          <span id="pbbTahunLabel">2026</span>
+                          <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="pbb-dropdown" id="pbbTahunDropdown" style="display:none"></div>
+                      </div>
+                    </div>
+                  </div>
+        
+                  <div class="pbb-body" id="pbbBody">
+                    <div class="pbb-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>
+                  </div>
+        
+                </div>
+        
+              </div>
+            </div>
+        
           </div>
         </div>
-  
+        
         <!-- CUSTOMER VIEW -->
         <div class="view" id="view-customer">
           <div class="customer-layout">
@@ -352,7 +468,7 @@
             </div>
 
             <!-- KANAN: DETAIL KURIR -->
-            <div class="customer-detail-wrapper">
+            <div class="customer-detail-wrapper" data-pusat-detail="customer">
               <div class="customer-detail-panel" id="customerDetailPanel">
 
                 <!-- EMPTY STATE -->
@@ -436,6 +552,56 @@
 
           </div>
         </div>
+        
+        <!-- LAPORAN VIEW -->
+        <div class="view" id="view-laporan">
+          <div class="lap-layout">
+        
+            <!-- KIRI: LIST -->
+            <div class="lap-list-panel" id="lapListPanel">
+              <div class="lap-list-header">
+                <div class="lap-list-title">Laporan</div>
+              </div>
+              <div class="lap-list-scroll" id="lapList">
+                <!-- diisi laporan.js -->
+              </div>
+            </div>
+        
+            <!-- KANAN: DETAIL PANEL -->
+            <div class="lap-detail-wrapper" data-pusat-detail="laporan">
+              <div class="lap-detail-panel" id="lapDetailPanel">
+        
+                <!-- EMPTY STATE -->
+                <div class="lap-detail-empty" id="lapDetailEmpty">
+                  <div class="lap-empty-icon"><i class="fa-solid fa-chart-bar"></i></div>
+                  <div class="lap-empty-title">Pilih Jenis Laporan</div>
+                  <div class="lap-empty-sub">Klik salah satu jenis laporan di kiri untuk melihat datanya.</div>
+                </div>
+        
+                <!-- DETAIL CONTENT -->
+                <div class="lap-detail-content" id="lapDetailContent" style="display:none;">
+                  <div class="lap-detail-header">
+                    <div class="lap-detail-title" id="lapDetailTitle">-</div>
+                  </div>
+        
+                  <!-- TABS -->
+                  <div class="lap-tabs" id="lapTabs">
+                    <button class="lap-tab active" data-tab="rincian">Rincian</button>
+                    <button class="lap-tab" data-tab="audit">Audit</button>
+                    <button class="lap-tab" data-tab="neracasaldo">Neraca Saldo</button>
+                  </div>
+        
+                  <!-- TAB BODY -->
+                  <div class="lap-detail-body" id="lapDetailBody">
+                    <!-- diisi laporan.js sesuai tab aktif -->
+                  </div>
+                </div>
+        
+              </div>
+            </div>
+        
+          </div>
+        </div>
   
         <!-- AKUN VIEW -->
         <div class="view" id="view-akun">
@@ -457,7 +623,7 @@
             </div>
 
             <!-- KANAN: DETAIL PANEL -->
-            <div class="akun-detail-wrapper">
+            <div class="akun-detail-wrapper" data-pusat-detail="akun">
               <div class="akun-detail-panel" id="akunDetailPanel">
 
                 <!-- EMPTY STATE -->
@@ -492,6 +658,7 @@
                     <button class="akun-tab" data-tab="kurir">Kurir</button>
                     <button class="akun-tab" data-tab="hunter">Hunter</button>
                     <button class="akun-tab" data-tab="sales">Sales</button>
+                    <button class="akun-tab" data-tab="investor">Investor</button>
                   </div>
 
                   <!-- TAB BODY -->
@@ -506,13 +673,488 @@
 
           </div>
         </div>
+        
+        <!-- PROFIL VIEW -->
+        <div class="view" id="view-profil">
+          <div class="view-scroll">
+            <div class="profil-page">
+        
+              <!-- HEADER FOTO -->
+              <div class="profil-header">
+                <div class="profil-foto-wrap" id="profilFotoWrap">
+                  <div class="profil-foto-placeholder" id="profilFotoPlaceholder">A</div>
+                  <img id="profilFotoImg" src="" alt="" style="display:none;">
+                  <button class="profil-foto-edit-btn" id="profilFotoEditBtn" title="Ganti Foto">
+                    <i class="fa-solid fa-camera"></i>
+                  </button>
+                  <input type="file" id="profilFotoInput" accept="image/*" style="display:none;">
+                </div>
+                <div class="profil-foto-preview-overlay" id="profilFotoPreviewOverlay">
+                  <button class="profil-foto-preview-close" id="profilFotoPreviewClose"><i class="fa-solid fa-xmark"></i></button>
+                  <img id="profilFotoPreviewImg" src="" alt="">
+                </div>
+                <div class="profil-nama" id="profilNamaDisplay">-</div>
+                <div class="profil-role-badge" id="profilRoleBadge">-</div>
+              </div>
+        
+              <div class="profil-cards-grid">
+                <!-- CARD INFO -->
+                <div class="profil-card">
+                  <div class="profil-card-title">Informasi Akun</div>
+        
+                  <div class="profil-field">
+                    <label class="profil-field-label">Nama Lengkap</label>
+                    <div class="profil-field-edit-wrap">
+                      <input type="text" class="profil-field-input" id="profilNamaInput" readonly>
+                      <button class="profil-field-edit-btn" id="profilNamaEditBtn"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                  </div>
+        
+                  <div class="profil-field">
+                    <label class="profil-field-label">Email</label>
+                    <input type="text" class="profil-field-input" id="profilEmailInput" readonly>
+                  </div>
+                </div>
+        
+                <!-- CARD PENGATURAN -->
+                <div class="profil-card">
+                  <div class="profil-card-title">Pengaturan</div>
+        
+                  <div class="profil-menu-list">
+                    <button class="profil-menu-item" id="profilMenuAksesibilitas">
+                      <div class="profil-menu-icon"><i class="fa-solid fa-universal-access"></i></div>
+                      <span class="profil-menu-label">Aksesibilitas</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+        
+                    <button class="profil-menu-item" data-view="peraturan">
+                      <div class="profil-menu-icon"><i class="fa-solid fa-book"></i></div>
+                      <span class="profil-menu-label">Peraturan Perusahaan</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+        
+                    <button class="profil-menu-item" data-view="perjanjiankaryawan">
+                      <div class="profil-menu-icon"><i class="fa-solid fa-file-signature"></i></div>
+                      <span class="profil-menu-label">Surat Perjanjian Karyawan</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+        
+                    <button class="profil-menu-item" data-view="perjanjianmitra">
+                      <div class="profil-menu-icon"><i class="fa-solid fa-file-signature"></i></div>
+                      <span class="profil-menu-label">Surat Perjanjian Mitra</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+        
+                    <button class="profil-menu-item" data-view="perjanjianekuitas">
+                      <div class="profil-menu-icon"><i class="fa-solid fa-file-signature"></i></div>
+                      <span class="profil-menu-label">Surat Perjanjian Ekuitas</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+        
+                    <button class="profil-menu-item" data-view="sop">
+                      <div class="profil-menu-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                      <span class="profil-menu-label">SOP</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+        
+                    <button class="profil-menu-item profil-menu-item-danger" id="profilBtnLogout">
+                      <div class="profil-menu-icon danger"><i class="fa-solid fa-right-from-bracket"></i></div>
+                      <span class="profil-menu-label">Keluar Akun</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        
+        <!-- PERATURAN VIEW -->
+        <div class="view" id="view-peraturan">
+          <div class="peraturan-layout">
+        
+            <!-- KIRI: LIST -->
+            <div class="peraturan-list-panel" id="peraturanListPanel">
+              <div class="peraturan-list-header">
+                <div class="peraturan-list-title-row">
+                  <div class="peraturan-list-title">Peraturan Perusahaan</div>
+                  <button class="peraturan-add-bab-btn" id="peraturanAddBabBtn" title="Tambah Bab">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+                <div class="peraturan-list-search-wrap">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="peraturanBabSearch" placeholder="Cari bab...">
+                </div>
+              </div>
+              <div class="peraturan-list-scroll" id="peraturanList">
+                <!-- diisi peraturan.js -->
+              </div>
+            </div>
+        
+            <!-- KANAN: DETAIL PANEL -->
+            <div class="peraturan-detail-wrapper" data-pusat-detail="peraturan">
+              <div class="peraturan-detail-panel" id="peraturanDetailPanel">
+        
+                <!-- EMPTY STATE -->
+                <div class="peraturan-detail-empty" id="peraturanDetailEmpty">
+                  <div class="peraturan-empty-icon"><i class="fa-solid fa-book"></i></div>
+                  <div class="peraturan-empty-title">Pilih Kategori</div>
+                  <div class="peraturan-empty-sub">Klik salah satu kategori di kiri untuk melihat isi peraturan.</div>
+                </div>
+        
+                <!-- DETAIL CONTENT -->
+                <div class="peraturan-detail-content" id="peraturanDetailContent" style="display:none;">
+                  <div class="peraturan-detail-header">
+                    <div class="peraturan-detail-title-wrap">
+                      <input type="text" class="peraturan-detail-title-input" id="peraturanDetailTitleInput" readonly>
+                      <button class="peraturan-detail-title-edit-btn" id="peraturanDetailTitleEditBtn" title="Edit Judul"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                    <div class="peraturan-detail-toolbar">
+                      <div class="peraturan-search-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="peraturanPasalSearch" placeholder="Cari pasal...">
+                      </div>
+                      <button class="peraturan-add-pasal-btn" id="peraturanAddPasalBtn">
+                        <i class="fa-solid fa-plus"></i> Tambah Pasal
+                      </button>
+                    </div>
+                  </div>
+                  <div class="peraturan-detail-body" id="peraturanDetailBody">
+                    <div class="peraturan-body-empty">
+                      <div class="peraturan-empty-icon"><i class="fa-solid fa-file-lines"></i></div>
+                      <div class="peraturan-empty-title">Belum Ada Konten</div>
+                      <div class="peraturan-empty-sub">Isi peraturan untuk kategori ini akan ditampilkan di sini.</div>
+                    </div>
+                  </div>
+                </div>
+        
+              </div>
+            </div>
+        
+          </div>
+        </div>
+        
+        <!-- SOP VIEW -->
+        <div class="view" id="view-sop">
+          <div class="sop-layout">
+        
+            <!-- KIRI: LIST -->
+            <div class="sop-list-panel" id="sopListPanel">
+              <div class="sop-list-header">
+                <div class="sop-list-title-row">
+                  <div class="sop-list-title">SOP</div>
+                  <button class="sop-add-bab-btn" id="sopAddBabBtn" title="Tambah SOP">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+                <div class="sop-list-search-wrap">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="sopBabSearch" placeholder="Cari SOP...">
+                </div>
+              </div>
+              <div class="sop-list-scroll" id="sopList">
+                <!-- diisi sop.js -->
+              </div>
+            </div>
+        
+            <!-- KANAN: DETAIL PANEL -->
+            <div class="sop-detail-wrapper" data-pusat-detail="sop">
+              <div class="sop-detail-panel" id="sopDetailPanel">
+        
+                <!-- EMPTY STATE -->
+                <div class="sop-detail-empty" id="sopDetailEmpty">
+                  <div class="sop-empty-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                  <div class="sop-empty-title">Pilih SOP</div>
+                  <div class="sop-empty-sub">Klik salah satu SOP di kiri untuk melihat isi langkah kerjanya.</div>
+                </div>
+        
+                <!-- DETAIL CONTENT -->
+                <div class="sop-detail-content" id="sopDetailContent" style="display:none;">
+                  <div class="sop-detail-header">
+                    <div class="sop-detail-title-wrap">
+                      <input type="text" class="sop-detail-title-input" id="sopDetailTitleInput" readonly>
+                      <button class="sop-detail-title-edit-btn" id="sopDetailTitleEditBtn" title="Edit Judul"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                    <div class="sop-detail-toolbar">
+                      <div class="sop-search-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="sopLangkahSearch" placeholder="Cari langkah...">
+                      </div>
+                      <button class="sop-add-langkah-btn" id="sopAddLangkahBtn">
+                        <i class="fa-solid fa-plus"></i> Tambah Langkah
+                      </button>
+                    </div>
+                  </div>
+                  <div class="sop-detail-body" id="sopDetailBody">
+                    <div class="sop-body-empty">
+                      <div class="sop-empty-icon"><i class="fa-solid fa-list-check"></i></div>
+                      <div class="sop-empty-title">Belum Ada Langkah</div>
+                      <div class="sop-empty-sub">Fitur ini masih placeholder, belum terhubung ke database.</div>
+                    </div>
+                  </div>
+                </div>
+        
+              </div>
+            </div>
+        
+          </div>
+        </div>
+        
+        <!-- PERJANJIAN KARYAWAN VIEW -->
+        <div class="view" id="view-perjanjiankaryawan">
+          <div class="view-scroll">
+            <div class="pkr-page">
+        
+              <!-- CARD INFO PERUSAHAAN -->
+              <div class="pkr-card">
+                <div class="pkr-card-title">Info Perusahaan</div>
+        
+                <div class="pkr-media-row">
+                  <div class="pkr-media-item">
+                    <div class="pkr-media-label">Logo Perusahaan</div>
+                    <div class="pkr-media-box" id="pkrFotoBox">
+                      <div class="pkr-media-placeholder" id="pkrFotoPlaceholder"><i class="fa-solid fa-image"></i></div>
+                      <img id="pkrFotoImg" src="" alt="" style="display:none;">
+                      <button class="pkr-media-edit-btn" id="pkrFotoEditBtn"><i class="fa-solid fa-camera"></i></button>
+                      <input type="file" id="pkrFotoInput" accept="image/*" style="display:none;">
+                    </div>
+                  </div>
+                  <div class="pkr-media-item">
+                    <div class="pkr-media-label">Tanda Tangan</div>
+                    <div class="pkr-media-box" id="pkrTtdBox">
+                      <div class="pkr-media-placeholder" id="pkrTtdPlaceholder"><i class="fa-solid fa-signature"></i></div>
+                      <img id="pkrTtdImg" src="" alt="" style="display:none;">
+                      <button class="pkr-media-edit-btn" id="pkrTtdEditBtn"><i class="fa-solid fa-camera"></i></button>
+                      <input type="file" id="pkrTtdInput" accept="image/*" style="display:none;">
+                    </div>
+                  </div>
+                </div>
+        
+                <div class="pkr-field-grid" id="pkrFieldGrid">
+                  <!-- diisi perjanjiankaryawan.js -->
+                </div>
+              </div>
+        
+              <!-- KETERANGAN PLACEHOLDER -->
+              <div class="pkr-placeholder-info">
+                <div class="pkr-placeholder-info-title"><i class="fa-solid fa-circle-info"></i> Placeholder Otomatis</div>
+                <div class="pkr-placeholder-info-list">
+                  <div class="pkr-placeholder-info-row">
+                    <span class="pkr-placeholder-badge">"nama"</span>
+                    <span class="pkr-placeholder-info-desc">Nama karyawan</span>
+                  </div>
+                  <div class="pkr-placeholder-info-row">
+                    <span class="pkr-placeholder-badge">"kantorCabang"</span>
+                    <span class="pkr-placeholder-info-desc">Nama kantor cabang karyawan</span>
+                  </div>
+                </div>
+              </div>
+        
+              <!-- TOOLBAR PASAL -->
+              <div class="pkr-pasal-toolbar">
+                <div class="pkr-pasal-toolbar-title">Pasal Perjanjian</div>
+                <button class="pkr-add-pasal-btn" id="pkrAddPasalBtn">
+                  <i class="fa-solid fa-plus"></i> Tambah Pasal
+                </button>
+              </div>
+        
+              <!-- LIST PASAL -->
+              <div class="pkr-pasal-list" id="pkrPasalList">
+                <!-- diisi perjanjiankaryawan.js -->
+              </div>
+        
+            </div>
+          </div>
+        </div>
+        
+        <!-- PERJANJIAN MITRA VIEW -->
+        <div class="view" id="view-perjanjianmitra">
+          <div class="view-scroll">
+            <div class="pkm-page">
+        
+              <!-- CARD INFO PERUSAHAAN -->
+              <div class="pkm-card">
+                <div class="pkm-card-title">Info Perusahaan</div>
+        
+                <div class="pkm-media-row">
+                  <div class="pkm-media-item">
+                    <div class="pkm-media-label">Logo Perusahaan</div>
+                    <div class="pkm-media-box" id="pkmFotoBox">
+                      <div class="pkm-media-placeholder" id="pkmFotoPlaceholder"><i class="fa-solid fa-image"></i></div>
+                      <img id="pkmFotoImg" src="" alt="" style="display:none;">
+                      <button class="pkm-media-edit-btn" id="pkmFotoEditBtn"><i class="fa-solid fa-camera"></i></button>
+                      <input type="file" id="pkmFotoInput" accept="image/*" style="display:none;">
+                    </div>
+                  </div>
+                  <div class="pkm-media-item">
+                    <div class="pkm-media-label">Tanda Tangan</div>
+                    <div class="pkm-media-box" id="pkmTtdBox">
+                      <div class="pkm-media-placeholder" id="pkmTtdPlaceholder"><i class="fa-solid fa-signature"></i></div>
+                      <img id="pkmTtdImg" src="" alt="" style="display:none;">
+                      <button class="pkm-media-edit-btn" id="pkmTtdEditBtn"><i class="fa-solid fa-camera"></i></button>
+                      <input type="file" id="pkmTtdInput" accept="image/*" style="display:none;">
+                    </div>
+                  </div>
+                </div>
+        
+                <div class="pkm-field-grid" id="pkmFieldGrid">
+                  <!-- diisi perjanjianmitra.js -->
+                </div>
+              </div>
+        
+              <!-- KETERANGAN PLACEHOLDER -->
+              <div class="pkm-placeholder-info">
+                <div class="pkm-placeholder-info-title"><i class="fa-solid fa-circle-info"></i> Placeholder Otomatis</div>
+                <div class="pkm-placeholder-info-list">
+                  <div class="pkm-placeholder-info-row">
+                    <span class="pkm-placeholder-badge">"kantorCabang"</span>
+                    <span class="pkm-placeholder-info-desc">Nama kantor cabang mitra</span>
+                  </div>
+                  <div class="pkm-placeholder-info-row">
+                    <span class="pkm-placeholder-badge">"namaOwner"</span>
+                    <span class="pkm-placeholder-info-desc">Nama pemilik/owner mitra</span>
+                  </div>
+                </div>
+              </div>
+        
+              <!-- TOOLBAR PASAL -->
+              <div class="pkm-pasal-toolbar">
+                <div class="pkm-pasal-toolbar-title">Pasal Perjanjian</div>
+                <button class="pkm-add-pasal-btn" id="pkmAddPasalBtn">
+                  <i class="fa-solid fa-plus"></i> Tambah Pasal
+                </button>
+              </div>
+        
+              <!-- LIST PASAL -->
+              <div class="pkm-pasal-list" id="pkmPasalList">
+                <!-- diisi perjanjianmitra.js -->
+              </div>
+        
+            </div>
+          </div>
+        </div>
+        
+        <!-- PERJANJIAN EKUITAS VIEW -->
+        <div class="view" id="view-perjanjianekuitas">
+          <div class="view-scroll">
+            <div class="pek-page">
+        
+              <!-- CARD INFO PERUSAHAAN -->
+              <div class="pek-card">
+                <div class="pek-card-title">Info Perusahaan</div>
+        
+                <div class="pek-media-row">
+                  <div class="pek-media-item">
+                    <div class="pek-media-label">Logo Perusahaan</div>
+                    <div class="pek-media-box" id="pekFotoBox">
+                      <div class="pek-media-placeholder" id="pekFotoPlaceholder"><i class="fa-solid fa-image"></i></div>
+                      <img id="pekFotoImg" src="" alt="" style="display:none;">
+                      <button class="pek-media-edit-btn" id="pekFotoEditBtn"><i class="fa-solid fa-camera"></i></button>
+                      <input type="file" id="pekFotoInput" accept="image/*" style="display:none;">
+                    </div>
+                  </div>
+                  <div class="pek-media-item">
+                    <div class="pek-media-label">Tanda Tangan</div>
+                    <div class="pek-media-box" id="pekTtdBox">
+                      <div class="pek-media-placeholder" id="pekTtdPlaceholder"><i class="fa-solid fa-signature"></i></div>
+                      <img id="pekTtdImg" src="" alt="" style="display:none;">
+                      <button class="pek-media-edit-btn" id="pekTtdEditBtn"><i class="fa-solid fa-camera"></i></button>
+                      <input type="file" id="pekTtdInput" accept="image/*" style="display:none;">
+                    </div>
+                  </div>
+                </div>
+        
+                <div class="pek-field-grid" id="pekFieldGrid">
+                  <!-- diisi perjanjianekuitas.js -->
+                </div>
+              </div>
+        
+              <!-- KETERANGAN PLACEHOLDER -->
+              <div class="pek-placeholder-info">
+                <div class="pek-placeholder-info-title"><i class="fa-solid fa-circle-info"></i> Placeholder Otomatis</div>
+                <div class="pek-placeholder-info-list">
+                  <div class="pek-placeholder-info-row">
+                    <span class="pek-placeholder-badge">"ekuitas"</span>
+                    <span class="pek-placeholder-info-desc">Jumlah ekuitas investor</span>
+                  </div>
+                  <div class="pek-placeholder-info-row">
+                    <span class="pek-placeholder-badge">"cabangEkuitas"</span>
+                    <span class="pek-placeholder-info-desc">Kantor cabang investasi</span>
+                  </div>
+                  <div class="pek-placeholder-info-row">
+                    <span class="pek-placeholder-badge">"tanggalInvest"</span>
+                    <span class="pek-placeholder-info-desc">Tanggal join investor</span>
+                  </div>
+                </div>
+              </div>
+        
+              <!-- TOOLBAR PASAL -->
+              <div class="pek-pasal-toolbar">
+                <div class="pek-pasal-toolbar-title">Pasal Perjanjian</div>
+                <button class="pek-add-pasal-btn" id="pekAddPasalBtn">
+                  <i class="fa-solid fa-plus"></i> Tambah Pasal
+                </button>
+              </div>
+        
+              <!-- LIST PASAL -->
+              <div class="pek-pasal-list" id="pekPasalList">
+                <!-- diisi perjanjianekuitas.js -->
+              </div>
+        
+            </div>
+          </div>
+        </div>
+        
+        <!-- SHEET AKSESIBILITAS -->
+        <div class="profil-aksesibilitas-overlay" id="profilAksesibilitasOverlay">
+          <div class="profil-aksesibilitas-sheet" id="profilAksesibilitasSheet">
+            <div class="profil-aksesibilitas-handle"></div>
+            <div class="profil-aksesibilitas-header">
+              <div class="profil-aksesibilitas-title">Aksesibilitas</div>
+              <button class="profil-aksesibilitas-close" id="profilAksesibilitasClose"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="profil-aksesibilitas-body">
+        
+              <div class="profil-akses-item">
+                <div class="profil-akses-info">
+                  <div class="profil-akses-label">Mode Gelap</div>
+                  <div class="profil-akses-sub">Ubah tampilan jadi gelap</div>
+                </div>
+                <button class="profil-akses-switch" id="profilDarkModeSwitch">
+                  <div class="profil-akses-switch-knob"></div>
+                </button>
+              </div>
+        
+              <div class="profil-akses-item profil-akses-item-column">
+                <div class="profil-akses-info">
+                  <div class="profil-akses-label">Ukuran Teks</div>
+                  <div class="profil-akses-sub" id="profilTextSizeLabel">Normal (100%)</div>
+                </div>
+                <div class="profil-akses-textsize-control">
+                  <button class="profil-akses-textsize-btn" id="profilTextSizeMinus"><i class="fa-solid fa-minus"></i></button>
+                  <div class="profil-akses-progress-track">
+                    <div class="profil-akses-progress-fill" id="profilTextSizeProgress"></div>
+                  </div>
+                  <button class="profil-akses-textsize-btn" id="profilTextSizePlus"><i class="fa-solid fa-plus"></i></button>
+                </div>
+              </div>
+        
+              <button class="profil-akses-reset-btn" id="profilAksesReset">
+                <i class="fa-solid fa-rotate-left"></i> Kembalikan Default
+              </button>
+        
+            </div>
+          </div>
+        </div>
   
       </main>
     </div>
   </div>
 </div>
 <!-- PETA GLOBAL -->
-<div id="petaGlobalOverlay" class="peta-global-overlay">
+<div id="petaGlobalOverlay" class="peta-global-overlay" data-pusat-detail="petaGlobal">
   <div id="petaGlobalWrap" class="peta-global-wrap">
       <div class="cabang-map-header">
         <div class="cabang-map-title">
@@ -576,9 +1218,22 @@
 </div>
 <script type="module" src="index.js"></script>
 <script type="module" src="home.js"></script>
+<script src="homechart.js"></script>
 <script type="module" src="cabang.js"></script>
+<script type="module" src="pembelian.js"></script>
 <script type="module" src="customer.js"></script>
+<script type="module" src="laporan.js"></script>
+<script type="module" src="laporanbahanbaku.js"></script>
+<script src="laporanrincian.js"></script>
+<script src="laporanaudit.js"></script>
+<script src="laporanneracasaldo.js"></script>
 <script type="module" src="akun.js"></script>
+<script type="module" src="profil.js"></script>
+<script type="module" src="peraturan.js"></script>
+<script type="module" src="sop.js"></script>
+<script type="module" src="perjanjiankaryawan.js"></script>
+<script type="module" src="perjanjianmitra.js"></script>
+<script type="module" src="perjanjianekuitas.js"></script>
 <script src="indexdb.js"></script>
 <script src="map.js"></script>
 <script src="crop.js"></script>

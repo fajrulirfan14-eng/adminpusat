@@ -192,9 +192,20 @@ window.openCabangMap = async function(activeCabang) {
 };
 
 // ── OPEN PETA GLOBAL ──
+let _petaGlobalCloserRegistered = false;
+
 window.openPetaGlobal = async function(focusCustomer = null) {
   const overlay = document.getElementById("petaGlobalOverlay");
   if (!overlay) return;
+
+  // daftarkan di sini (bukan top-level file) supaya gak kejebak masalah urutan
+  // load script; saat fungsi ini dipanggil, main.js dipastikan sudah ke-load.
+  if (!_petaGlobalCloserRegistered && window.registerPusatOverlayCloser) {
+    window.registerPusatOverlayCloser("petaGlobal", closePetaGlobal);
+    _petaGlobalCloserRegistered = true;
+  }
+
+  window.pusatPushOverlayState?.("petaGlobal");
 
   const tileDropdown = document.getElementById("petaTileDropdown");
   tileDropdown.innerHTML = Object.keys(mapTiles).map(k => `

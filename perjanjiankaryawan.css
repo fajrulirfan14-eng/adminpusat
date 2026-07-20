@@ -1,0 +1,210 @@
+/* ── PERJANJIAN KARYAWAN VIEW ── */
+.pkr-page {
+  width: 100%;
+  margin: 0;
+  padding: 20px 0 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── CARD INFO PERUSAHAAN ── */
+.pkr-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 16px; padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.pkr-card-title {
+  font-size: 14px; font-weight: 700; color: var(--text-primary);
+  text-transform: uppercase; letter-spacing: .3px;
+}
+
+/* ── MEDIA (FOTO & TTD) ── */
+.pkr-media-row { display: flex; gap: 20px; flex-wrap: wrap; }
+.pkr-media-item { display: flex; flex-direction: column; gap: 8px; }
+.pkr-media-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+.pkr-media-box {
+  position: relative;
+  width: 160px; height: 100px;
+  border: 1px dashed var(--border-card); border-radius: 12px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+.pkr-media-box img {
+  width: 100%; height: 100%; object-fit: contain; background: #fff;
+}
+.pkr-media-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 24px;
+}
+.pkr-media-edit-btn {
+  position: absolute; bottom: 6px; right: 6px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: var(--brand-primary); color: #fff;
+  cursor: pointer; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pkr-media-edit-btn:hover { background: var(--brand-dark); }
+
+/* ── FIELD GRID ── */
+.pkr-field-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.pkr-field-full { grid-column: 1 / -1; }
+.pkr-field { display: flex; flex-direction: column; gap: 6px; }
+.pkr-field-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+.pkr-field-edit-wrap { display: flex; gap: 8px; }
+.pkr-field-input {
+  flex: 1; padding: 9px 11px; border: 1px solid var(--border-card);
+  border-radius: 9px; font-size: 12.5px; font-family: inherit;
+  background: var(--bg-hover); color: var(--text-secondary); outline: none;
+}
+.pkr-field-input:not([readonly]) { background: var(--bg-input); color: var(--text-primary); border-color: var(--brand-mid); }
+.pkr-field-edit-btn {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border: 1px solid var(--border-card); background: var(--bg-hover);
+  border-radius: 9px; color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.pkr-field-edit-btn:hover { background: var(--brand-pale); color: var(--brand-primary); }
+
+@media (max-width: 600px) {
+  .pkr-field-grid { grid-template-columns: 1fr; }
+}
+
+/* ── KETERANGAN PLACEHOLDER ── */
+.pkr-placeholder-info {
+  background: var(--warning-bg); border: 1px dashed var(--warning);
+  border-radius: 12px; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pkr-placeholder-info-title {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; color: var(--warning);
+}
+.pkr-placeholder-info-list { display: flex; flex-direction: column; gap: 5px; }
+.pkr-placeholder-info-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.pkr-placeholder-info-desc { font-size: 10.5px; color: var(--text-secondary); }
+.pkr-placeholder-info .pkr-placeholder-badge { font-size: 10.5px; padding: 0 4px; }
+
+/* ── TOOLBAR PASAL ── */
+.pkr-pasal-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.pkr-pasal-toolbar-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.pkr-add-pasal-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; background: var(--brand-primary); color: #fff;
+  border: none; border-radius: 10px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; font-family: 'Poppins', sans-serif;
+  transition: background var(--transition-fast);
+}
+.pkr-add-pasal-btn:hover { background: var(--brand-dark); }
+.pkr-add-pasal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── LIST PASAL ── */
+.pkr-pasal-list { display: flex; flex-direction: column; gap: 12px; }
+.pkr-pasal-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 14px; padding: 16px;
+}
+.pkr-pasal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.pkr-pasal-nomor { font-size: 11px; font-weight: 700; color: var(--brand-primary); text-transform: uppercase; }
+.pkr-pasal-actions { display: flex; gap: 6px; }
+.pkr-pasal-edit-btn, .pkr-pasal-delete-btn {
+  width: 30px; height: 30px; border: 1px solid var(--border-card);
+  background: var(--bg-hover); border-radius: 8px; color: var(--text-muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px;
+}
+.pkr-pasal-edit-btn:hover { background: var(--brand-pale); color: var(--brand-primary); }
+.pkr-pasal-delete-btn:hover { background: var(--danger-bg); color: var(--danger); }
+
+.pkr-pasal-judul-input {
+  width: 100%; margin-bottom: 8px;
+  padding: 8px 10px; border: 1px solid transparent; border-radius: 9px;
+  font-size: 13.5px; font-weight: 700; color: var(--text-primary);
+  background: none; outline: none; font-family: inherit;
+}
+.pkr-pasal-isi-textarea {
+  width: 100%; resize: none; overflow: hidden; min-height: 24px;
+  padding: 8px 10px; border: 1px solid transparent; border-radius: 9px;
+  font-size: 12.5px; line-height: 1.6; color: var(--text-primary);
+  background: none; outline: none; font-family: inherit;
+}
+.pkr-pasal-card.editing .pkr-pasal-judul-input,
+.pkr-pasal-card.editing .pkr-pasal-isi-textarea {
+  background: var(--bg-input); border-color: var(--brand-mid);
+}
+.pkr-pasal-isi-display {
+  padding: 8px 10px; font-size: 12.5px; line-height: 1.6;
+  color: var(--text-primary); white-space: pre-wrap; word-break: break-word;
+}
+.pkr-placeholder-badge {
+  background: var(--warning-bg); color: var(--warning);
+  font-weight: 500; font-size: 0.85em; border-radius: 4px; padding: 0 4px;
+  border: 1px dashed var(--warning);
+}
+
+/* ── CARD BARU (inline) ── */
+.pkr-pasal-card-new { border: 1px dashed var(--brand-mid); background: var(--brand-pale); }
+.pkr-new-actions { display: flex; gap: 10px; margin-top: 10px; }
+.pkr-new-btn-cancel, .pkr-new-btn-save {
+  flex: 1; padding: 10px; border-radius: 9px; border: none;
+  font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;
+}
+.pkr-new-btn-cancel { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-card); }
+.pkr-new-btn-save { background: var(--brand-primary); color: #fff; }
+.pkr-new-btn-save:hover { background: var(--brand-dark); }
+.pkr-new-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.pkr-loading { text-align: center; color: var(--text-muted); font-size: 13px; padding: 40px 0; }
+
+/* ── TOAST & MODAL MANDIRI ── */
+.pkr-toast {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  z-index: 99999; display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none; max-width: 90vw;
+}
+.pkr-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.pkr-toast-success { background: var(--success, #22c55e); }
+.pkr-toast-error { background: #dc2626; }
+
+.pkr-modal-overlay {
+  position: fixed; inset: 0; z-index: 100000; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+}
+.pkr-modal-overlay.show { opacity: 1; pointer-events: auto; }
+.pkr-modal-box {
+  width: 100%; max-width: 320px; background: var(--bg-card); border-radius: 18px;
+  padding: 24px 20px 20px; text-align: center;
+  transform: scale(0.92); transition: transform 0.2s ease;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+}
+.pkr-modal-overlay.show .pkr-modal-box { transform: scale(1); }
+.pkr-modal-icon {
+  width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 50%;
+  background: var(--warning-bg); color: var(--warning); font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pkr-modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.pkr-modal-message { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
+.pkr-modal-actions { display: flex; gap: 10px; }
+.pkr-modal-btn-cancel, .pkr-modal-btn-ok {
+  flex: 1; padding: 11px; border-radius: 12px; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;
+}
+.pkr-modal-btn-cancel { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-card); }
+.pkr-modal-btn-ok { background: var(--brand-primary); color: #fff; }
+.pkr-modal-btn-ok:hover { background: var(--brand-dark); }
+
+@media (max-width: 768px) {
+  .pkr-page { padding: 14px 0 40px; gap: 14px; }
+  .pkr-card { padding: 14px; }
+}

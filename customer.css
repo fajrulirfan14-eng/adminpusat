@@ -86,7 +86,7 @@
   width: 36px; height: 36px; border-radius: 50%;
   background: linear-gradient(135deg, var(--brand-pale), var(--brand-mid));
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 14px; font-weight: 700; flex-shrink: 0;
+  color: var(--bg-card); font-size: 14px; font-weight: 700; flex-shrink: 0;
 }
 .customer-kurir-nama {
   flex: 1; font-size: 13px; font-weight: 600; color: var(--text-primary);
@@ -112,7 +112,7 @@
 /* ── DETAIL WRAPPER ── */
 .customer-detail-wrapper {
   flex: 1; padding: 12px;
-  background: #fff;
+  background: var(--bg-card);
   border-left: 1px solid var(--border-card);
   overflow: hidden;
 }

@@ -93,7 +93,7 @@
 .cabang-detail-wrapper{
   flex:1;
   padding:12px;
-  background:#fff;
+  background:var(--bg-card);
   border-left:1px solid var(--border-card);
   overflow:hidden;
 }

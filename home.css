@@ -47,15 +47,15 @@
 /* ── STAT GRID ── */
 .home-stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  width: 100%;
 }
 .stat-card {
   background: var(--bg-card);
   border-radius: 16px;
   padding: 20px;
   border: 1px solid var(--border-card);
-  box-shadow: 0 2px 8px var(--shadow-sm);
   display: flex; flex-direction: column; gap: 10px;
   transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
@@ -75,10 +75,64 @@
 .stat-card-value { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1; }
 .stat-card-sub { font-size: 11px; color: var(--text-muted); }
 
+/* ── FINANCE GRID ── */
+.home-finance-top-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 14px; }
+.home-finance-card {
+  border-radius: 16px; padding: 18px;
+  border: 1px solid var(--border-card);
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.home-finance-card:hover { box-shadow: 0 4px 16px var(--shadow-md); transform: translateY(-2px); }
+.home-finance-card.loading { opacity: 0.6; pointer-events: none; }
+.home-finance-card.home-finance-full { margin-bottom: 24px; }
+.home-finance-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.home-finance-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.home-finance-icon { font-size: 16px; }
+.home-finance-value { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.home-finance-sub { font-size: 10.5px; color: var(--text-muted); margin-top: 8px; }
+
+.home-finance-green { background: var(--success-bg); border-color: var(--success); }
+.home-finance-green .home-finance-value, .home-finance-green .home-finance-icon { color: var(--success); }
+.home-finance-green .home-finance-label { color: var(--success); opacity: 0.85; }
+
+.home-finance-red { background: var(--danger-bg); border-color: var(--danger); }
+.home-finance-red .home-finance-value, .home-finance-red .home-finance-icon { color: var(--danger); }
+.home-finance-red .home-finance-label { color: var(--danger); opacity: 0.85; }
+
+.home-finance-brown { background: var(--brand-pale); border-color: var(--brand-mid); }
+.home-finance-brown .home-finance-value, .home-finance-brown .home-finance-icon { color: var(--brand-primary); }
+.home-finance-brown .home-finance-label { color: var(--brand-primary); opacity: 0.85; }
+
+/* ── BREAKDOWN JENIS LOYANG (di card Pembelian Bahan Baku) ── */
+.home-finance-breakdown {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 8px; padding-top: 10px;
+  border-top: 1px dashed var(--brand-mid);
+}
+.home-finance-breakdown-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 11.5px;
+}
+.home-finance-breakdown-jenis {
+  color: var(--brand-primary); font-weight: 600;
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.home-finance-breakdown-qty {
+  background: rgba(255,255,255,0.6); color: var(--brand-primary);
+  font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 20px; flex-shrink: 0;
+}
+.home-finance-breakdown-total { color: var(--text-primary); font-weight: 700; flex-shrink: 0; }
+
+@media (max-width: 768px) {
+  .home-finance-top-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+
 /* ── BOTTOM GRID ── */
 .home-bottom-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr;
   gap: 20px;
 }
 
@@ -125,35 +179,6 @@
   box-shadow: 0 0 0 3px rgba(22,163,74,0.2);
 }
 
-/* ── RINGKASAN ── */
-.home-ringkasan {
-  background: var(--bg-card);
-  border-radius: 16px;
-  border: 1px solid var(--border-card);
-  box-shadow: 0 2px 8px var(--shadow-sm);
-  overflow: hidden;
-}
-.ringkasan-item {
-  display: flex; align-items: center; gap: 14px;
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--border-card);
-  transition: background var(--transition-fast);
-}
-.ringkasan-item:last-child { border-bottom: none; }
-.ringkasan-item:hover { background: var(--bg-hover); }
-.ringkasan-icon {
-  width: 38px; height: 38px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; flex-shrink: 0;
-}
-.ringkasan-icon.brown  { background: #fdf0e0; color: var(--brand-mid); }
-.ringkasan-icon.green  { background: #f0fdf4; color: #16a34a; }
-.ringkasan-icon.blue   { background: #eff6ff; color: #2563eb; }
-.ringkasan-icon.purple { background: #f5f3ff; color: #7c3aed; }
-.ringkasan-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
-.ringkasan-value { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-
 /* ── SKELETON ── */
 @keyframes skShimmer {
   0%   { background-position: -600px 0 }
@@ -173,10 +198,10 @@
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   .home-stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .home-bottom-grid { grid-template-columns: 1fr; }
+  .home-finance-top-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
-  .home-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .home-stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .stat-card { padding: 14px; }
   .stat-card-value { font-size: 20px; }
   .home-banner { padding: 20px; }

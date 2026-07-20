@@ -1,3 +1,26 @@
+
+// ── TOAST (khusus view Akun) ──
+function showAkunToast(message, type = "success") {
+  document.getElementById("akunToast")?.remove();
+
+  const toast = document.createElement("div");
+  toast.id = "akunToast";
+  toast.className = `akun-toast akun-toast-${type}`;
+  toast.innerHTML = `
+    <i class="fa-solid ${type === "error" ? "fa-circle-exclamation" : "fa-circle-check"}"></i>
+    <span>${message}</span>
+  `;
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => toast.classList.add("show"));
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+window.showAkunToast = showAkunToast;
+
 // ── AKUN VIEW ──
 let akunCabangData = [];
 let activeAkunCabangId = null;
@@ -75,9 +98,11 @@ window.selectAkunCabang = async function(id) {
   const content = document.getElementById("akunDetailContent");
   const wrapper = document.getElementById("akunDetailPanel")?.closest(".akun-detail-wrapper");
 
+  const wasOpen = wrapper?.classList.contains("show");
   if (empty)   empty.style.display   = "none";
   if (content) content.style.display = "flex";
   if (wrapper) wrapper.classList.add("show");
+  if (!wasOpen) window.pusatPushDetailState?.("akun");
 
   if (window.innerWidth <= 768) {
     const backBtn = document.getElementById("topbarBackBtn");
@@ -209,6 +234,10 @@ async function loadMarketingTab(role) {
 // ── BACK BTN ──
 function initAkunBackBtn() {
   document.getElementById("topbarBackBtn")?.addEventListener("click", () => {
+    if (window.innerWidth <= 768 && history.state?.pusatDetail === "akun") {
+      history.back(); // biar popstate yang urus, state konsisten
+      return;
+    }
     const wrapper = document.getElementById("akunDetailPanel")?.closest(".akun-detail-wrapper");
     if (wrapper) wrapper.classList.remove("show");
     document.getElementById("topbarBackBtn").style.display = "none";
@@ -229,12 +258,51 @@ const secondaryApp = initializeApp({
   appId: "1:354760960352:web:7d6a6c07dace937a74d605",
 }, "secondary");
 const secondaryAuth = getAuth(secondaryApp);
+// ── CEK ADMIN CABANG AKTIF ──
+async function getActiveAdminCabang(cabangId) {
+  try {
+    const snap = await window.getDocs(
+      window.query(
+        window.collection(window.db, "users"),
+        window.where("idCabang", "==", cabangId),
+        window.where("role", "==", "adminCabang"),
+        window.where("status", "==", true)
+      )
+    );
+    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+  } catch (e) {
+    console.error("❌ getActiveAdminCabang:", e);
+    return null;
+  }
+}
+
 // ── ADD BTN ──
 function initAkunAddBtn() {
-  document.getElementById("akunAddBtn").onclick = () => {
+  document.getElementById("akunAddBtn").onclick = async () => {
     const activeTab = document.querySelector(".akun-tab.active")?.dataset.tab;
-    if (activeTab === "adminCabang") renderTambahAkun();
-    else renderTambahMarketing(activeTab);
+
+    if (activeTab === "adminCabang") {
+      const existing = await getActiveAdminCabang(activeAkunCabangId);
+      if (existing) {
+        showAkunToast("Cabang ini sudah punya Admin Cabang aktif", "error");
+        return;
+      }
+      renderTambahAkun();
+    } else if (activeTab === "investor") {
+      const existing = await getActiveAdminCabang(activeAkunCabangId);
+      if (!existing) {
+        showAkunToast("Admin Cabang belum ada, silakan buat dulu", "error");
+        return;
+      }
+      renderTambahInvestor();
+    } else {
+      const existing = await getActiveAdminCabang(activeAkunCabangId);
+      if (!existing) {
+        showAkunToast("Admin Cabang belum ada, silakan buat dulu", "error");
+        return;
+      }
+      renderTambahMarketing(activeTab);
+    }
   };
 }
 // ── TAMBAH AKUN ADMIN CABANG ──
@@ -307,6 +375,23 @@ function renderTambahAkun() {
         ${editAkunField("Password", "akunAddPassword", "", "password")}
       </div>
 
+      <!-- PEMBAGIAN LABA BERSIH (khusus Admin Cabang) -->
+      <div class="tab-card">
+        <div class="tab-section-title">Pembagian Laba Bersih (%)</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Manager</div>
+          <input id="akunAddLabaManager" type="number" class="edit-field-input" value="0">
+        </div>
+        <div class="edit-field">
+          <div class="edit-field-label">Kas</div>
+          <input id="akunAddLabaKas" type="number" class="edit-field-input" value="0">
+        </div>
+        <div class="edit-field">
+          <div class="edit-field-label">Dividen</div>
+          <input id="akunAddLabaDividen" type="number" class="edit-field-input" value="0">
+        </div>
+      </div>
+
       <div id="akunSheetError" style="color:#dc2626;font-size:12px;text-align:center;min-height:16px;margin-top:4px;"></div>
 
     </div>
@@ -325,7 +410,7 @@ function renderTambahAkun() {
   });
 
   let tempFotoBlob = null;
-
+  let tempTtdBlob  = null;
   const closeSheet = () => {
     overlay.classList.remove("show");
     sheet.classList.remove("show");
@@ -536,6 +621,12 @@ function renderTambahAkun() {
 
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan data...`;
 
+      const pembagianLabaBersih = {
+        manager: parseInt(document.getElementById("akunAddLabaManager")?.value) || 0,
+        kas:     parseInt(document.getElementById("akunAddLabaKas")?.value) || 0,
+        dividen: parseInt(document.getElementById("akunAddLabaDividen")?.value) || 0,
+      };
+
       // Simpan ke Firestore
       await window.setDoc(window.doc(window.db, "users", newUid), {
         id:           newUid,
@@ -551,6 +642,7 @@ function renderTambahAkun() {
         idCabang:     activeAkunCabangId,
         kantorCabang: activeAkunCabang?.namaCabang || "",
         varian:       varianUsers,
+        pembagianLabaBersih,
         status:       true,
         createdBy:    newUid,
         createdAt:    window.serverTimestamp(),
@@ -581,24 +673,301 @@ function renderTambahAkun() {
     }
   };
 }
+// ── TAMBAH AKUN INVESTOR ──
+async function renderTambahInvestor() {
+  document.getElementById("akunSheetOverlay")?.remove();
+  document.getElementById("akunSheet")?.remove();
+
+  const adminCabang = await getActiveAdminCabang(activeAkunCabangId);
+  if (!adminCabang) {
+    showAkunToast("Admin Cabang belum ada, silakan buat dulu", "error");
+    return;
+  }
+  const createdBy = adminCabang.id;
+  const namaCabangAktif = activeAkunCabang?.namaCabang || "-";
+
+  const overlay = document.createElement("div");
+  overlay.id = "akunSheetOverlay";
+  overlay.className = "akun-sheet-overlay";
+  document.body.appendChild(overlay);
+
+  const sheet = document.createElement("div");
+  sheet.id = "akunSheet";
+  sheet.className = "akun-sheet";
+  sheet.innerHTML = `
+    <div class="akun-sheet-handle"></div>
+    <div class="akun-sheet-header">
+      <div class="akun-sheet-info">
+        <div class="akun-sheet-nama">Tambah Investor</div>
+        <div class="akun-sheet-role">${namaCabangAktif}</div>
+      </div>
+      <button class="akun-sheet-close" id="akunSheetClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="akun-sheet-body" id="akunSheetBody">
+
+      <div class="tab-card">
+        <div class="tab-section-title">Foto Profil</div>
+        <div class="edit-foto-wrap" id="akunSheetFotoWrap" style="cursor:pointer;">
+          <div class="edit-foto-empty"><i class="fa-solid fa-user"></i></div>
+          <div class="edit-foto-overlay"><i class="fa-solid fa-camera"></i> Pilih Foto</div>
+        </div>
+        <input type="file" id="akunSheetFotoInput" accept="image/*" class="edit-foto-input">
+      </div>
+
+      <div class="tab-card">
+        <div class="tab-section-title">Data Pribadi</div>
+        ${editAkunField("Nama", "akunAddNama", "")}
+        ${editAkunField("NIK", "akunAddNik", "")}
+        ${editAkunField("No Telepon", "akunAddNoTelepon", "")}
+        ${editAkunField("Alamat", "akunAddAlamat", "", "textarea")}
+        ${editAkunField("Pekerjaan", "akunAddPekerjaan", "")}
+        ${editAkunField("Tempat, Tanggal Lahir", "akunAddTtl", "")}
+      </div>
+
+      <div class="tab-card">
+        <div class="tab-section-title">Data Investasi</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Cabang Ekuitas</div>
+          <input id="akunAddCabangEkuitas" type="text" class="edit-field-input" value="${namaCabangAktif}" readonly style="opacity:0.7;">
+        </div>
+        ${editAkunField("Tanggal Investasi", "akunAddTanggalInvest", "")}
+        <div class="edit-field">
+          <div class="edit-field-label">Ekuitas (Rp)</div>
+          <input id="akunAddEkuitas" type="text" inputmode="numeric" class="edit-field-input rp-input" value="">
+        </div>
+      </div>
+
+      <div class="tab-card edit-foto-card">
+        <div class="tab-section-title">Tanda Tangan</div>
+        <div class="edit-foto-wrap" id="akunAddTtdWrap" style="cursor:pointer;">
+          <div class="edit-foto-empty"><i class="fa-solid fa-signature"></i></div>
+          <div class="edit-foto-overlay"><i class="fa-solid fa-camera"></i> Pilih Gambar</div>
+        </div>
+        <input type="file" id="akunAddTtdInput" accept="image/*" class="edit-foto-input">
+      </div>
+
+      <div class="tab-card">
+        <div class="tab-section-title">Akun</div>
+        ${editAkunField("Email", "akunAddEmail", "")}
+        ${editAkunField("Password", "akunAddPassword", "", "password")}
+      </div>
+
+      <div id="akunSheetError" style="color:#dc2626;font-size:12px;text-align:center;min-height:16px;margin-top:4px;"></div>
+
+    </div>
+
+    <div class="akun-sheet-footer">
+      <button class="btn-simpan" id="akunSheetSimpan" style="flex:1;">
+        <i class="fa-solid fa-user-plus"></i> Buat Akun
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => { overlay.classList.add("show"); sheet.classList.add("show"); });
+
+  let tempFotoBlob = null;
+  let tempTtdBlob  = null;
+
+  const closeSheet = () => {
+    overlay.classList.remove("show");
+    sheet.classList.remove("show");
+    setTimeout(() => { overlay.remove(); sheet.remove(); }, 350);
+  };
+
+  document.getElementById("akunSheetClose").onclick = closeSheet;
+
+  // Swipe
+  let startY = 0, dragging = false, currentDy = 0;
+  sheet.addEventListener("touchstart", e => {
+    if (window.innerWidth >= 769) return;
+    const touchY = e.touches[0].clientY;
+    const headerEl = sheet.querySelector(".akun-sheet-header");
+    const headerBottom = headerEl.getBoundingClientRect().bottom;
+    if (touchY > headerBottom) return;
+    startY = touchY; currentDy = 0; dragging = true;
+    sheet.style.willChange = "transform";
+    sheet.style.transition = "none";
+  }, { passive: true });
+  sheet.addEventListener("touchmove", e => {
+    if (!dragging) return;
+    currentDy = e.touches[0].clientY - startY;
+    if (currentDy < 0) currentDy = 0;
+    const r = currentDy > 120 ? 120 + (currentDy - 120) * 0.25 : currentDy;
+    sheet.style.transform = `translateY(${r}px)`;
+  }, { passive: true });
+  sheet.addEventListener("touchend", () => {
+    if (!dragging) return;
+    dragging = false; sheet.style.willChange = "";
+    if (currentDy > 90) {
+      sheet.style.transition = "transform 0.28s cubic-bezier(0.4,0,0.6,1)";
+      sheet.style.transform = "translateY(110%)";
+      overlay.style.transition = "opacity 0.28s ease";
+      overlay.style.opacity = "0";
+      setTimeout(() => { overlay.remove(); sheet.remove(); }, 300);
+    } else {
+      sheet.style.transition = "transform 0.22s cubic-bezier(0.2,0,0,1)";
+      sheet.style.transform = "translateY(0)";
+      setTimeout(() => { sheet.style.transition = ""; }, 220);
+    }
+  }, { passive: true });
+
+  // format ribuan buat Ekuitas
+  const ekuitasInput = document.getElementById("akunAddEkuitas");
+  ekuitasInput.addEventListener("input", () => {
+    const digits = ekuitasInput.value.replace(/\D/g, "");
+    ekuitasInput.value = digits ? parseInt(digits, 10).toLocaleString("id-ID") : "";
+  });
+
+  // Foto profil
+  const fotoWrap  = document.getElementById("akunSheetFotoWrap");
+  const fotoInput = document.getElementById("akunSheetFotoInput");
+  fotoWrap.onclick = () => fotoInput.click();
+  fotoInput.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    window.openCropModal({ file, ratio: 1, outputSize: { w: 400, h: 400 }, onSave: blob => {
+      tempFotoBlob = blob;
+      const url = URL.createObjectURL(blob);
+      fotoWrap.querySelector(".edit-foto-empty, .edit-foto-preview").outerHTML =
+        `<img src="${url}" class="edit-foto-preview">`;
+    }});
+  };
+
+  // TTD
+  const ttdWrap  = document.getElementById("akunAddTtdWrap");
+  const ttdInput = document.getElementById("akunAddTtdInput");
+  ttdWrap.onclick = () => ttdInput.click();
+  ttdInput.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    window.openCropModal({ file, ratio: 16/9, outputSize: { w: 800, h: 450 }, onSave: blob => {
+      tempTtdBlob = blob;
+      const url = URL.createObjectURL(blob);
+      ttdWrap.querySelector(".edit-foto-empty, .edit-foto-preview").outerHTML =
+        `<img src="${url}" class="edit-foto-preview">`;
+    }});
+  };
+
+  // Simpan
+  document.getElementById("akunSheetSimpan").onclick = async () => {
+    const btn   = document.getElementById("akunSheetSimpan");
+    const errEl = document.getElementById("akunSheetError");
+    errEl.textContent = "";
+
+    const nama          = document.getElementById("akunAddNama").value.trim();
+    const nik            = document.getElementById("akunAddNik").value.trim();
+    const noTelepon       = document.getElementById("akunAddNoTelepon").value.trim();
+    const alamat          = document.getElementById("akunAddAlamat").value.trim();
+    const pekerjaan       = document.getElementById("akunAddPekerjaan").value.trim();
+    const ttl             = document.getElementById("akunAddTtl").value.trim();
+    const tanggalInvest   = document.getElementById("akunAddTanggalInvest").value.trim();
+    const ekuitasRaw      = document.getElementById("akunAddEkuitas").value.replace(/\D/g, "");
+    const email           = document.getElementById("akunAddEmail").value.trim();
+    const password        = document.getElementById("akunAddPassword").value;
+
+    if (!nama)     return errEl.textContent = "Nama wajib diisi";
+    if (!nik)      return errEl.textContent = "NIK wajib diisi";
+    if (!noTelepon) return errEl.textContent = "No Telepon wajib diisi";
+    if (!alamat)   return errEl.textContent = "Alamat wajib diisi";
+    if (!email)    return errEl.textContent = "Email wajib diisi";
+    if (!password || password.length < 6) return errEl.textContent = "Password min. 6 karakter";
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Membuat akun...`;
+
+    try {
+      const adminCheck = await getActiveAdminCabang(activeAkunCabangId);
+      if (!adminCheck) {
+        errEl.textContent = "Admin Cabang tidak aktif/tidak ditemukan. Akun batal dibuat.";
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Buat Akun`;
+        return;
+      }
+
+      const cred   = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      const newUid = cred.user.uid;
+
+      let fotoUrl = "";
+      if (tempFotoBlob) {
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload foto 0%...`;
+        const compressed = await window.compressImage(tempFotoBlob, 400, 0.78);
+        const ref = window.storageRef(window.storage, `fotoUsers/${newUid}`);
+        fotoUrl = await window.uploadWithProgress(ref, compressed, "image/jpeg", pct => {
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload foto ${pct}%...`;
+        });
+      }
+
+      let ttdUrl = "";
+      if (tempTtdBlob) {
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload TTD 0%...`;
+        const compressedTtd = await window.compressImage(tempTtdBlob, 800, 0.78);
+        const ttdRef = window.storageRef(window.storage, `ttd/${newUid}.png`);
+        ttdUrl = await window.uploadWithProgress(ttdRef, compressedTtd, "image/png", pct => {
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload TTD ${pct}%...`;
+        });
+      }
+
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan data...`;
+
+      await window.setDoc(window.doc(window.db, "users", newUid), {
+        id: newUid,
+        nama,
+        nik,
+        noTelepon,
+        alamat,
+        pekerjaan,
+        tempatTanggalLahir: ttl,
+        tanggalInvest,
+        ekuitas: parseInt(ekuitasRaw, 10) || 0,
+        return: 0,
+        email,
+        foto: fotoUrl,
+        ttd: ttdUrl,
+        role: "investor",
+        idCabang: activeAkunCabangId,
+        cabangEkuitas: namaCabangAktif,
+        status: true,
+        createdBy: adminCheck.id,
+        createdAt: window.serverTimestamp(),
+      });
+
+      await secondaryAuth.signOut();
+
+      btn.innerHTML = `<i class="fa-solid fa-check"></i> Berhasil!`;
+      btn.classList.add("btn-simpan--success");
+
+      setTimeout(() => {
+        closeSheet();
+        loadMarketingTab("investor");
+      }, 1000);
+
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Buat Akun`;
+      if (e.code === "auth/email-already-in-use") errEl.textContent = "Email sudah digunakan.";
+      else if (e.code === "auth/invalid-email")   errEl.textContent = "Format email tidak valid.";
+      else errEl.textContent = "Gagal membuat akun, coba lagi.";
+    }
+  };
+}
+
 // ── TAMBAH AKUN MARKETING ──
 async function renderTambahMarketing(role) {
   document.getElementById("akunSheetOverlay")?.remove();
   document.getElementById("akunSheet")?.remove();
 
-  // Ambil UID adminCabang aktif di cabang ini
-  let createdBy = activeAkunCabangId;
-  try {
-    const adminSnap = await window.getDocs(
-      window.query(
-        window.collection(window.db, "users"),
-        window.where("idCabang", "==", activeAkunCabangId),
-        window.where("role", "==", "adminCabang"),
-        window.where("status", "==", true)
-      )
-    );
-    if (!adminSnap.empty) createdBy = adminSnap.docs[0].id;
-  } catch(e) { console.error(e); }
+  // Wajib ada adminCabang aktif — validasi ulang (jaga-jaga race condition sejak tombol diklik)
+  const adminCabang = await getActiveAdminCabang(activeAkunCabangId);
+  if (!adminCabang) {
+    showAkunToast("Admin Cabang belum ada, silakan buat dulu", "error");
+    return;
+  }
+  const createdBy = adminCabang.id;
 
   const overlay = document.createElement("div");
   overlay.id = "akunSheetOverlay";
@@ -660,6 +1029,18 @@ async function renderTambahMarketing(role) {
         </button>
       </div>
 
+      ${role === "produksi" ? `
+      <div class="tab-card" id="akunAddJenisLoyangCard">
+        <div class="tab-section-title">Jenis Loyang</div>
+        <div id="akunAddJenisLoyangList">
+          <div class="akun-empty-msg"><i class="fa-solid fa-spinner fa-spin"></i> Memuat loyang...</div>
+        </div>
+        <button class="btn-tambah-row" id="akunAddTambahJenisLoyang">
+          <i class="fa-solid fa-plus"></i> Tambah Jenis Loyang
+        </button>
+      </div>
+      ` : ""}
+
       <div id="akunSheetError" style="color:#dc2626;font-size:12px;text-align:center;min-height:16px;margin-top:4px;"></div>
     </div>
 
@@ -718,8 +1099,10 @@ async function renderTambahMarketing(role) {
     }
   }, { passive: true });
 
-  // Varian
+  // Varian & Jenis Loyang
   let varianList = [];
+  let jenisLoyangList = [];
+
   window.getDoc(window.doc(window.db, "kantorCabang", activeAkunCabangId)).then(snap => {
     const kantorData   = snap.data() || {};
     const varianKantor = kantorData.varian || {};
@@ -730,6 +1113,16 @@ async function renderTambahMarketing(role) {
       hargaProduksi: 0, isAktif: true,
     }));
     renderVarianList();
+
+    if (role === "produksi") {
+      const loyangKantor = kantorData.loyang || [];
+      jenisLoyangList = loyangKantor.map(l => ({
+        jenisLoyang: l.jenisLoyang || "",
+        status:      l.status !== false,
+        upah:        l.upah || 0,
+      }));
+      renderJenisLoyangList();
+    }
   });
 
   function renderVarianList() {
@@ -789,10 +1182,59 @@ async function renderTambahMarketing(role) {
     });
   }
 
+  function renderJenisLoyangList() {
+    const container = document.getElementById("akunAddJenisLoyangList");
+    if (!container) return;
+    container.innerHTML = jenisLoyangList.map((l, i) => `
+      <div class="akun-varian-row">
+        <div class="akun-varian-header">
+          <div style="display:flex;gap:8px;align-items:center;flex:1;">
+            <input class="edit-field-input akun-add-loyang-jenis" style="flex:1;"
+              value="${l.jenisLoyang}" placeholder="Jenis Loyang" data-index="${i}">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="akun-varian-toggle">
+              <input type="checkbox" class="akun-add-loyang-status" data-index="${i}" ${l.status ? 'checked' : ''}>
+              <span class="akun-toggle-label">Aktif</span>
+            </label>
+            <button class="btn-hapus-row akun-add-hapus-loyang" data-index="${i}">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="akun-varian-fields">
+          <div class="edit-field" style="flex:1;">
+            <div class="edit-field-label">Upah</div>
+            <input class="edit-field-input akun-add-loyang-upah" type="number"
+              value="${l.upah}" data-index="${i}">
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    container.querySelectorAll(".akun-add-loyang-jenis").forEach(el => {
+      el.oninput = () => { jenisLoyangList[parseInt(el.dataset.index)].jenisLoyang = el.value; };
+    });
+    container.querySelectorAll(".akun-add-loyang-upah").forEach(el => {
+      el.oninput = () => { jenisLoyangList[parseInt(el.dataset.index)].upah = parseInt(el.value) || 0; };
+    });
+    container.querySelectorAll(".akun-add-loyang-status").forEach(el => {
+      el.onchange = () => { jenisLoyangList[parseInt(el.dataset.index)].status = el.checked; };
+    });
+    container.querySelectorAll(".akun-add-hapus-loyang").forEach(el => {
+      el.onclick = () => { jenisLoyangList.splice(parseInt(el.dataset.index), 1); renderJenisLoyangList(); };
+    });
+  }
+
   document.getElementById("akunAddTambahVarian").onclick = () => {
     varianList.push({ kode: "", nama: "", hargaKonsumen: 0, hargaProduksi: 0, isAktif: true });
     renderVarianList();
   };
+
+  document.getElementById("akunAddTambahJenisLoyang")?.addEventListener("click", () => {
+    jenisLoyangList.push({ jenisLoyang: "", status: true, upah: 0 });
+    renderJenisLoyangList();
+  });
 
   // Foto
   const fotoWrap  = document.getElementById("akunSheetFotoWrap");
@@ -829,26 +1271,36 @@ async function renderTambahMarketing(role) {
     const errEl = document.getElementById("akunSheetError");
     errEl.textContent = "";
 
-    const nama     = document.getElementById("akunAddNama").value.trim();
-    const nik      = document.getElementById("akunAddNik").value.trim();
-    const noTelpon = document.getElementById("akunAddNoTelpon").value.trim();
-    const alamat   = document.getElementById("akunAddAlamat").value.trim();
-    const motivasi = document.getElementById("akunAddMotivasi").value.trim();
-    const tglRaw   = document.getElementById("akunAddTanggalLahir").value;
-    const email    = document.getElementById("akunAddEmail").value.trim();
-    const password = document.getElementById("akunAddPassword").value;
+    const nama      = document.getElementById("akunAddNama").value.trim();
+    const nik       = document.getElementById("akunAddNik").value.trim();
+    const noTelpon  = document.getElementById("akunAddNoTelpon").value.trim();
+    const alamat    = document.getElementById("akunAddAlamat").value.trim();
+    const motivasi  = document.getElementById("akunAddMotivasi").value.trim();
+    const tglRaw    = document.getElementById("akunAddTanggalLahir").value;
+    const email     = document.getElementById("akunAddEmail").value.trim();
+    const password  = document.getElementById("akunAddPassword").value;
 
-    if (!nama)                            return errEl.textContent = "Nama wajib diisi";
-    if (!nik)                             return errEl.textContent = "NIK wajib diisi";
-    if (!noTelpon)                        return errEl.textContent = "No Telpon wajib diisi";
-    if (!alamat)                          return errEl.textContent = "Alamat wajib diisi";
-    if (!email)                           return errEl.textContent = "Email wajib diisi";
+    if (!nama)                        return errEl.textContent = "Nama wajib diisi";
+    if (!nik)                         return errEl.textContent = "NIK wajib diisi";
+    if (!noTelpon)                    return errEl.textContent = "No Telpon wajib diisi";
+    if (!alamat)                      return errEl.textContent = "Alamat wajib diisi";
+    if (!email)                       return errEl.textContent = "Email wajib diisi";
     if (!password || password.length < 6) return errEl.textContent = "Password min. 6 karakter";
 
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Membuat akun...`;
 
     try {
+      // Re-cek adminCabang aktif tepat sebelum eksekusi
+      const adminCheck = await getActiveAdminCabang(activeAkunCabangId);
+      if (!adminCheck) {
+        errEl.textContent = "Admin Cabang tidak aktif/tidak ditemukan. Akun batal dibuat.";
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Buat Akun`;
+        return;
+      }
+      const createdByFinal = adminCheck.id;
+
       const varianUsers = varianList.map(v => ({
         [v.kode]: {
           hargaKonsumen: v.hargaKonsumen,
@@ -873,7 +1325,7 @@ async function renderTambahMarketing(role) {
 
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan data...`;
 
-      await window.setDoc(window.doc(window.db, "users", newUid), {
+      const payloadUser = {
         id:           newUid,
         nama, nik, noTelpon, alamat, motivasi,
         tanggalLahir: tglRaw ? new Date(tglRaw) : null,
@@ -884,9 +1336,19 @@ async function renderTambahMarketing(role) {
         kantorCabang: activeAkunCabang?.namaCabang || "",
         varian:       varianUsers,
         status:       true,
-        createdBy,
+        createdBy: createdByFinal,
         createdAt:    window.serverTimestamp(),
-      });
+      };
+
+      if (role === "produksi") {
+        payloadUser.loyang = jenisLoyangList.map(l => ({
+          jenisLoyang: l.jenisLoyang,
+          status: l.status,
+          upah: l.upah,
+        }));
+      }
+
+      await window.setDoc(window.doc(window.db, "users", newUid), payloadUser);
 
       await secondaryAuth.signOut();
 
@@ -967,6 +1429,43 @@ function renderAkunSheet(u) {
         <input type="file" id="akunSheetFotoInput" accept="image/*" class="edit-foto-input">
       </div>
 
+      ${u.role === "investor" ? `
+      <!-- DATA PRIBADI (khusus Investor) -->
+      <div class="tab-card">
+        <div class="tab-section-title">Data Pribadi</div>
+        ${editAkunField("Nama", "akunEditNama", u.nama)}
+        ${editAkunField("NIK", "akunEditNik", u.nik)}
+        ${editAkunField("No Telepon", "akunEditNoTelepon", u.noTelepon)}
+        ${editAkunField("Alamat", "akunEditAlamat", u.alamat, "textarea")}
+        ${editAkunField("Pekerjaan", "akunEditPekerjaan", u.pekerjaan)}
+        ${editAkunField("Tempat, Tanggal Lahir", "akunEditTtl", u.tempatTanggalLahir)}
+      </div>
+
+      <div class="tab-card">
+        <div class="tab-section-title">Data Investasi</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Cabang Ekuitas</div>
+          <input id="akunEditCabangEkuitas" type="text" class="edit-field-input" value="${u.cabangEkuitas || ""}" readonly style="opacity:0.7;">
+        </div>
+        ${editAkunField("Tanggal Investasi", "akunEditTanggalInvest", u.tanggalInvest)}
+        <div class="edit-field">
+          <div class="edit-field-label">Ekuitas (Rp)</div>
+          <input id="akunEditEkuitas" type="text" inputmode="numeric" class="edit-field-input" value="${(u.ekuitas || 0).toLocaleString("id-ID")}">
+        </div>
+      </div>
+
+      <div class="tab-card edit-foto-card">
+        <div class="tab-section-title">Tanda Tangan</div>
+        <div class="edit-foto-wrap" id="akunEditTtdWrap" style="cursor:pointer;">
+          ${u.ttd
+            ? `<img src="${u.ttd}" class="edit-foto-preview">`
+            : `<div class="edit-foto-empty"><i class="fa-solid fa-signature"></i></div>`
+          }
+          <div class="edit-foto-overlay"><i class="fa-solid fa-camera"></i> Ganti TTD</div>
+        </div>
+        <input type="file" id="akunEditTtdInput" accept="image/*" class="edit-foto-input">
+      </div>
+      ` : `
       <!-- DATA UMUM -->
       <div class="tab-card">
         <div class="tab-section-title">Data Umum</div>
@@ -985,6 +1484,25 @@ function renderAkunSheet(u) {
         </div>
         ${u.role === "adminCabang" ? editAkunField("Kantor Cabang", "akunEditKantorCabang", u.kantorCabang) : ""}
       </div>
+
+      ${u.role === "adminCabang" ? `
+      <!-- PEMBAGIAN LABA BERSIH (khusus Admin Cabang) -->
+      <div class="tab-card">
+        <div class="tab-section-title">Pembagian Laba Bersih (%)</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Manager</div>
+          <input id="akunEditLabaManager" type="number" class="edit-field-input" value="${u.pembagianLabaBersih?.manager || 0}">
+        </div>
+        <div class="edit-field">
+          <div class="edit-field-label">Kas</div>
+          <input id="akunEditLabaKas" type="number" class="edit-field-input" value="${u.pembagianLabaBersih?.kas || 0}">
+        </div>
+        <div class="edit-field">
+          <div class="edit-field-label">Dividen</div>
+          <input id="akunEditLabaDividen" type="number" class="edit-field-input" value="${u.pembagianLabaBersih?.dividen || 0}">
+        </div>
+      </div>
+      ` : ""}
 
       <!-- VARIAN -->
       <div class="tab-card">
@@ -1016,6 +1534,45 @@ function renderAkunSheet(u) {
         }).join("")}
       </div>
 
+      ${u.role === "produksi" ? `
+      <!-- JENIS LOYANG (khusus Produksi) -->
+      <div class="tab-card" id="akunEditJenisLoyangCard">
+        <div class="tab-section-title">Jenis Loyang</div>
+        <div id="akunEditJenisLoyangList">
+          ${(u.loyang || []).map((l, i) => `
+            <div class="akun-varian-row" data-index="${i}">
+              <div class="akun-varian-header">
+                <div style="display:flex;gap:8px;align-items:center;flex:1;">
+                  <input class="edit-field-input akun-edit-loyang-jenis" style="flex:1;"
+                    value="${l.jenisLoyang || ""}" placeholder="Jenis Loyang" data-index="${i}">
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <label class="akun-varian-toggle">
+                    <input type="checkbox" class="akun-edit-loyang-status" data-index="${i}" ${l.status !== false ? 'checked' : ''}>
+                    <span class="akun-toggle-label">Aktif</span>
+                  </label>
+                  <button class="btn-hapus-row akun-edit-hapus-loyang" data-index="${i}">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="akun-varian-fields">
+                <div class="edit-field" style="flex:1;">
+                  <div class="edit-field-label">Upah</div>
+                  <input class="edit-field-input akun-edit-loyang-upah" type="number"
+                    value="${l.upah || 0}" data-index="${i}">
+                </div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="akunEditTambahJenisLoyang">
+          <i class="fa-solid fa-plus"></i> Tambah Jenis Loyang
+        </button>
+      </div>
+      ` : ""}
+      `}
+
       <div id="akunSheetError" style="color:#dc2626;font-size:12px;text-align:center;min-height:16px;margin-top:4px;"></div>
     </div>
 
@@ -1039,6 +1596,57 @@ function renderAkunSheet(u) {
   });
 
   let tempFotoBlob = null;
+  let jenisLoyangEditList = JSON.parse(JSON.stringify(u.loyang || []));
+
+  function renderJenisLoyangEditList() {
+    const container = document.getElementById("akunEditJenisLoyangList");
+    if (!container) return;
+
+    container.innerHTML = jenisLoyangEditList.map((l, i) => `
+      <div class="akun-varian-row" data-index="${i}">
+        <div class="akun-varian-header">
+          <div style="display:flex;gap:8px;align-items:center;flex:1;">
+            <input class="edit-field-input akun-edit-loyang-jenis" style="flex:1;"
+              value="${l.jenisLoyang || ""}" placeholder="Jenis Loyang" data-index="${i}">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="akun-varian-toggle">
+              <input type="checkbox" class="akun-edit-loyang-status" data-index="${i}" ${l.status !== false ? 'checked' : ''}>
+              <span class="akun-toggle-label">Aktif</span>
+            </label>
+            <button class="btn-hapus-row akun-edit-hapus-loyang" data-index="${i}">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="akun-varian-fields">
+          <div class="edit-field" style="flex:1;">
+            <div class="edit-field-label">Upah</div>
+            <input class="edit-field-input akun-edit-loyang-upah" type="number"
+              value="${l.upah || 0}" data-index="${i}">
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    container.querySelectorAll(".akun-edit-loyang-jenis").forEach(el => {
+      el.oninput = () => { jenisLoyangEditList[parseInt(el.dataset.index)].jenisLoyang = el.value; };
+    });
+    container.querySelectorAll(".akun-edit-loyang-upah").forEach(el => {
+      el.oninput = () => { jenisLoyangEditList[parseInt(el.dataset.index)].upah = parseInt(el.value) || 0; };
+    });
+    container.querySelectorAll(".akun-edit-loyang-status").forEach(el => {
+      el.onchange = () => { jenisLoyangEditList[parseInt(el.dataset.index)].status = el.checked; };
+    });
+    container.querySelectorAll(".akun-edit-hapus-loyang").forEach(el => {
+      el.onclick = () => { jenisLoyangEditList.splice(parseInt(el.dataset.index), 1); renderJenisLoyangEditList(); };
+    });
+  }
+
+  document.getElementById("akunEditTambahJenisLoyang")?.addEventListener("click", () => {
+    jenisLoyangEditList.push({ jenisLoyang: "", status: true, upah: 0 });
+    renderJenisLoyangEditList();
+  });
 
   // Close
   const closeSheet = () => {
@@ -1113,6 +1721,23 @@ function renderAkunSheet(u) {
     }});
   };
 
+  // TTD (khusus Investor)
+  const ttdWrap  = document.getElementById("akunEditTtdWrap");
+  const ttdInput = document.getElementById("akunEditTtdInput");
+  if (ttdWrap && ttdInput) {
+    ttdWrap.onclick = () => ttdInput.click();
+    ttdInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      window.openCropModal({ file, ratio: 16/9, outputSize: { w: 800, h: 450 }, onSave: blob => {
+        tempTtdBlob = blob;
+        const url = URL.createObjectURL(blob);
+        ttdWrap.querySelector(".edit-foto-preview, .edit-foto-empty").outerHTML =
+          `<img src="${url}" class="edit-foto-preview">`;
+      }});
+    };
+  }
+
   // Toggle status
   document.getElementById("akunSheetToggleStatus").onclick = () => {
     showConfirmToggleStatus(u, isAktif, closeSheet);
@@ -1127,34 +1752,77 @@ function renderAkunSheet(u) {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
 
     try {
-      // Baca varian dari DOM
-      const varianFinal = (u.varian || []).map((v, i) => {
-        const kode = Object.keys(v)[0];
-        return {
-          [kode]: {
-            hargaKonsumen: parseInt(document.getElementById(`akunVarianKonsumen_${i}`)?.value) || 0,
-            hargaProduksi: parseInt(document.getElementById(`akunVarianProduksi_${i}`)?.value) || 0,
-            isAktif: document.getElementById(`akunVarianAktif_${i}`)?.checked ?? true,
-          }
+      let updates = {};
+
+      if (u.role === "investor") {
+        updates = {
+          nama:               document.getElementById("akunEditNama").value.trim(),
+          nik:                document.getElementById("akunEditNik").value.trim(),
+          noTelepon:          document.getElementById("akunEditNoTelepon").value.trim(),
+          alamat:             document.getElementById("akunEditAlamat").value.trim(),
+          pekerjaan:          document.getElementById("akunEditPekerjaan").value.trim(),
+          tempatTanggalLahir: document.getElementById("akunEditTtl").value.trim(),
+          tanggalInvest:      document.getElementById("akunEditTanggalInvest").value.trim(),
+          ekuitas:            parseInt(document.getElementById("akunEditEkuitas").value.replace(/\D/g, "")) || 0,
         };
-      });
 
-      const tglRaw = document.getElementById("akunEditTanggalLahir").value;
-      const updates = {
-        nama:         document.getElementById("akunEditNama").value.trim(),
-        nik:          document.getElementById("akunEditNik").value.trim(),
-        noTelpon:     document.getElementById("akunEditNoTelpon").value.trim(),
-        alamat:       document.getElementById("akunEditAlamat").value.trim(),
-        motivasi:     document.getElementById("akunEditMotivasi").value.trim(),
-        tanggalLahir: tglRaw ? new Date(tglRaw) : null,
-        varian:       varianFinal,
-      };
+        if (tempTtdBlob) {
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload TTD 0%...`;
+          const compressedTtd = await window.compressImage(tempTtdBlob, 800, 0.78);
+          const ttdRef = window.storageRef(window.storage, `ttd/${u.id}.png`);
+          updates.ttd = await window.uploadWithProgress(ttdRef, compressedTtd, "image/png", pct => {
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload TTD ${pct}%...`;
+          });
+        }
+      } else {
+        // Baca varian dari DOM
+        const varianFinal = (u.varian || []).map((v, i) => {
+          const kode = Object.keys(v)[0];
+          return {
+            [kode]: {
+              hargaKonsumen: parseInt(document.getElementById(`akunVarianKonsumen_${i}`)?.value) || 0,
+              hargaProduksi: parseInt(document.getElementById(`akunVarianProduksi_${i}`)?.value) || 0,
+              isAktif: document.getElementById(`akunVarianAktif_${i}`)?.checked ?? true,
+            }
+          };
+        });
 
-      if (u.role === "adminCabang") {
-        updates.kantorCabang = document.getElementById("akunEditKantorCabang").value.trim();
+        const tglRaw = document.getElementById("akunEditTanggalLahir").value;
+        updates = {
+          nama:         document.getElementById("akunEditNama").value.trim(),
+          nik:          document.getElementById("akunEditNik").value.trim(),
+          noTelpon:     document.getElementById("akunEditNoTelpon").value.trim(),
+          alamat:       document.getElementById("akunEditAlamat").value.trim(),
+          motivasi:     document.getElementById("akunEditMotivasi").value.trim(),
+          tanggalLahir: tglRaw ? new Date(tglRaw) : null,
+          varian:       varianFinal,
+        };
+
+        if (u.role === "adminCabang") {
+          updates.kantorCabang = document.getElementById("akunEditKantorCabang").value.trim();
+          updates.pembagianLabaBersih = {
+            manager: parseInt(document.getElementById("akunEditLabaManager")?.value) || 0,
+            kas:     parseInt(document.getElementById("akunEditLabaKas")?.value) || 0,
+            dividen: parseInt(document.getElementById("akunEditLabaDividen")?.value) || 0,
+          };
+        }
+
+        if (u.role === "produksi") {
+          const loyangFinal = [];
+          document.querySelectorAll("#akunEditJenisLoyangList .akun-edit-loyang-jenis").forEach((el, i) => {
+            const upahEl   = document.querySelectorAll("#akunEditJenisLoyangList .akun-edit-loyang-upah")[i];
+            const statusEl = document.querySelectorAll("#akunEditJenisLoyangList .akun-edit-loyang-status")[i];
+            loyangFinal.push({
+              jenisLoyang: el.value.trim(),
+              upah: parseInt(upahEl?.value) || 0,
+              status: statusEl?.checked ?? true,
+            });
+          });
+          updates.loyang = loyangFinal;
+        }
       }
 
-      // Upload foto
+      // Upload foto profil (berlaku semua role)
       if (tempFotoBlob) {
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Kompres foto...`;
         const compressed = await window.compressImage(tempFotoBlob, 400, 0.78);

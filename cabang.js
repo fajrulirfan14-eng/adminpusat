@@ -3,6 +3,45 @@ window.cabangData = [];
 let cabangData = window.cabangData;
 let activeCabangId = null;
 
+// ── FORMAT RIBUAN (Rp) ──
+function rpFormat(val) {
+  const digits = String(val || "").replace(/\D/g, "");
+  if (!digits) return "";
+  return parseInt(digits, 10).toLocaleString("id-ID");
+}
+function rpNum(val) {
+  return parseInt(String(val || "").replace(/\D/g, ""), 10) || 0;
+}
+async function hashPassword(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+window.hashPassword = hashPassword;
+
+// ── SIMPAN PASSWORD ASLI KE COLLECTION "akun" (buat ditampilkan di UI) ──
+async function simpanAkunPassword(cabangId, passwordAsli, namaCabang) {
+  try {
+    await window.setDoc(window.doc(window.db, "akun", cabangId), {
+      idCabang: cabangId,
+      password: passwordAsli,
+      kantorCabang: namaCabang
+    }, { merge: true });
+  } catch (err) {
+    console.error("❌ simpanAkunPassword:", err);
+  }
+}
+document.addEventListener("input", e => {
+  if (e.target.matches(".rp-input")) {
+    const fromEnd = e.target.value.length - e.target.selectionStart;
+    e.target.value = rpFormat(e.target.value);
+    const pos = Math.max(0, e.target.value.length - fromEnd);
+    e.target.setSelectionRange(pos, pos);
+  }
+});
+
 // ── FOTO POPUP ──
 function openFotoPopup(url) {
   const existing = document.getElementById("fotoPopupOverlay");
@@ -152,10 +191,13 @@ window.selectCabang = function(id) {
   const empty   = document.getElementById("cabangDetailEmpty");
   const content = document.getElementById("cabangDetailContent");
   const panel   = document.getElementById("cabangDetailPanel");
+  const wrapper = panel?.closest(".cabang-detail-wrapper");
 
+  const wasOpen = wrapper?.classList.contains("show");
   if (empty)   empty.style.display   = "none";
   if (content) content.style.display = "flex";
-  if (panel) panel.closest(".cabang-detail-wrapper")?.classList.add("show");
+  if (wrapper) wrapper.classList.add("show");
+  if (!wasOpen) window.pusatPushDetailState?.("cabang");
 
   if (window.innerWidth <= 768) {
     const backBtn = document.getElementById("topbarBackBtn");
@@ -227,7 +269,7 @@ function renderTabContent(tab, c) {
             </button>
           </span>
         </div>
-        <div class="tab-row"><span class="tab-row-label">Password Page</span><span class="tab-row-value">${c.pagePassword || "-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Password Page</span><span class="tab-row-value" id="infoPagePasswordVal">Memuat...</span></div>
         <div class="tab-row">
           <span class="tab-row-label">Akun Cabang</span>
           <span class="tab-row-value">
@@ -243,26 +285,30 @@ function renderTabContent(tab, c) {
         <div class="tab-row"><span class="tab-row-label">Produksi</span><span class="tab-row-value">${c.hariLibur?.produksi || "-"}</span></div>
       </div>
     `;
+    loadAkunPasswordDisplay(c.id);
   }
 
   else if (tab === "operasional") {
     const varian = c.varian || {};
     const harga  = c.harga  || {};
     const pengeluaran = c.pengeluaran || {};
+    const pengeluaranDistribusi = c.pengeluaranDistribusi || {};
+    const loyang = c.loyang || [];
+    const potongan = c.potongan || {};
     body.innerHTML = `
       <div class="tab-card">
         <div class="tab-section-title">Varian & Harga</div>
         ${Object.keys(varian).map(k => `
           <div class="tab-row">
             <span class="tab-row-label">${varian[k]} (${k})</span>
-            <span class="tab-row-value">Rp ${(harga[k]||0).toLocaleString("id-ID")}</span>
+            <span class="tab-row-value">${(harga[k]||0).toLocaleString("id-ID")}</span>
           </div>
         `).join("")}
       </div>
       <div class="tab-card">
         <div class="tab-section-title">Upah</div>
-        <div class="tab-row"><span class="tab-row-label">Upah Harian</span><span class="tab-row-value">Rp ${(c.upahHarian||0).toLocaleString("id-ID")}</span></div>
-        <div class="tab-row"><span class="tab-row-label">Upah Hunter</span><span class="tab-row-value">Rp ${(c.upahHunter||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Upah Harian</span><span class="tab-row-value">${(c.upahHarian||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Upah Hunter</span><span class="tab-row-value">${(c.upahHunter||0).toLocaleString("id-ID")}</span></div>
       </div>
       <div class="tab-card">
         <div class="tab-section-title">Pengeluaran Fix</div>
@@ -275,9 +321,41 @@ function renderTabContent(tab, c) {
         ${(pengeluaran.variable||[]).map(item => `
           <div class="tab-row">
             <span class="tab-row-label">${item.jenis}</span>
-            <span class="tab-row-value">Rp ${(item.harga||0).toLocaleString("id-ID")}</span>
+            <span class="tab-row-value">${(item.harga||0).toLocaleString("id-ID")}</span>
           </div>
         `).join("")}
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Loyang</div>
+        ${loyang.map(item => `
+          <div class="tab-row">
+            <span class="tab-row-label">${item.jenisLoyang || "-"} ${item.status ? "" : "(Nonaktif)"}</span>
+            <span class="tab-row-value">Upah: ${(item.upah||0).toLocaleString("id-ID")} · Harga Paket: ${(item.hargaPaket||0).toLocaleString("id-ID")}</span>
+          </div>
+        `).join("")}
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Pengeluaran Distribusi (Fix)</div>
+        ${(pengeluaranDistribusi.fix||[]).map(item => `
+          <div class="tab-row"><span class="tab-row-label">${item}</span><span class="tab-row-value">-</span></div>
+        `).join("")}
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Pengeluaran Distribusi (Variable)</div>
+        ${(pengeluaranDistribusi.variable||[]).map(item => `
+          <div class="tab-row">
+            <span class="tab-row-label">${item.jenis}</span>
+            <span class="tab-row-value">${(item.harga||0).toLocaleString("id-ID")}</span>
+          </div>
+        `).join("")}
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Potongan</div>
+        <div class="tab-row"><span class="tab-row-label">Kelipatan Upah - Batas</span><span class="tab-row-value">${potongan.kelipatanUpah?.batas ?? "-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Kelipatan Upah - Kelipatan</span><span class="tab-row-value">${potongan.kelipatanUpah?.kelipatan ?? "-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Kelipatan Upah - Potongan</span><span class="tab-row-value">${(potongan.kelipatanUpah?.potonganUpah||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Setengah Upah - Batas</span><span class="tab-row-value">${potongan.setengahUpah?.batas ?? "-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Setengah Upah - Potongan</span><span class="tab-row-value">${(potongan.setengahUpah?.potonganUpah||0).toLocaleString("id-ID")}</span></div>
       </div>
     `;
   }
@@ -289,22 +367,22 @@ function renderTabContent(tab, c) {
       <div class="tab-card">
         <div class="tab-section-title">Bonus Data</div>
         <div class="tab-row"><span class="tab-row-label">Target Customer</span><span class="tab-row-value">${bonus.data?.targetCustomer||"-"}</span></div>
-        <div class="tab-row"><span class="tab-row-label">Insentif</span><span class="tab-row-value">Rp ${(bonus.data?.insentif||0).toLocaleString("id-ID")}</span></div>
-        <div class="tab-row"><span class="tab-row-label">Kehadiran</span><span class="tab-row-value">Rp ${(bonus.kehadiran||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Insentif</span><span class="tab-row-value">${(bonus.data?.insentif||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Kehadiran</span><span class="tab-row-value">${(bonus.kehadiran||0).toLocaleString("id-ID")}</span></div>
         <div class="tab-row"><span class="tab-row-label">Ketentuan</span><span class="tab-row-value">${bonus.ketentuan||"-"} hari</span></div>
       </div>
       <div class="tab-card">
         <div class="tab-section-title">Bonus Customer</div>
         <div class="tab-row"><span class="tab-row-label">Target</span><span class="tab-row-value">${bonus.customer?.target||"-"}</span></div>
         <div class="tab-row"><span class="tab-row-label">Kelipatan</span><span class="tab-row-value">${bonus.customer?.kelipatan||"-"}</span></div>
-        <div class="tab-row"><span class="tab-row-label">Uang</span><span class="tab-row-value">Rp ${(bonus.customer?.uang||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Uang</span><span class="tab-row-value">${(bonus.customer?.uang||0).toLocaleString("id-ID")}</span></div>
       </div>
       <div class="tab-card">
         <div class="tab-section-title">Bonus Margin</div>
         ${Object.keys(margin).map(tier => `
           <div class="tab-row">
             <span class="tab-row-label tab-row-label--capitalize">${tier}</span>
-            <span class="tab-row-value">${margin[tier].minimal}-${margin[tier].maksimal} → Rp ${(margin[tier].uang||0).toLocaleString("id-ID")}</span>
+            <span class="tab-row-value">${margin[tier].minimal}-${margin[tier].maksimal} → ${(margin[tier].uang||0).toLocaleString("id-ID")}</span>
           </div>
         `).join("")}
       </div>
@@ -331,6 +409,17 @@ function renderTabContent(tab, c) {
   else if (tab === "owner") {
     body.innerHTML = `<div class="cabang-loading-msg">Memuat data owner...</div>`;
     loadOwnerData(c.id);
+  }
+}
+async function loadAkunPasswordDisplay(cabangId) {
+  const el = document.getElementById("infoPagePasswordVal");
+  if (!el) return;
+  try {
+    const snap = await window.getDoc(window.doc(window.db, "akun", cabangId));
+    el.textContent = snap.exists() ? (snap.data()?.password || "-") : "-";
+  } catch (err) {
+    console.error("❌ loadAkunPasswordDisplay:", err);
+    el.textContent = "-";
   }
 }
 
@@ -389,6 +478,10 @@ function initCabangSearch() {
 // ── BACK BTN ──
 function initCabangBackBtn() {
   document.getElementById("topbarBackBtn")?.addEventListener("click", () => {
+    if (window.innerWidth <= 768 && history.state?.pusatDetail === "cabang") {
+      history.back(); // biar popstate yang urus, state konsisten
+      return;
+    }
     document.getElementById("cabangDetailPanel")?.closest(".cabang-detail-wrapper")?.classList.remove("show");
     document.getElementById("topbarBackBtn").style.display = "none";
     activeCabangId = null;
@@ -648,6 +741,13 @@ function renderEditOperasional(cabang) {
   const harga       = { ...( cabang.harga        || {}) };
   const penFix      = [...( cabang.pengeluaran?.fix      || [])];
   const penVariable = [...( cabang.pengeluaran?.variable || [])];
+  const loyang         = JSON.parse(JSON.stringify(cabang.loyang || []));
+  const penDistFix     = [...(cabang.pengeluaranDistribusi?.fix || [])];
+  const penDistVariable = JSON.parse(JSON.stringify(cabang.pengeluaranDistribusi?.variable || []));
+  const potongan = JSON.parse(JSON.stringify(cabang.potongan || {
+    kelipatanUpah: { batas: 0, kelipatan: 0, potonganUpah: 0 },
+    setengahUpah:  { batas: 0, potonganUpah: 0 }
+  }));
 
   function render() {
     body.innerHTML = `
@@ -662,11 +762,9 @@ function renderEditOperasional(cabang) {
                 <div class="edit-varian-fields">
                   <input class="edit-field-input edit-varian-kode" value="${k}" placeholder="Kode" data-original="${k}">
                   <input class="edit-field-input edit-varian-nama" value="${varian[k]}" placeholder="Nama">
-                  <input class="edit-field-input edit-varian-harga" type="number" value="${harga[k] || 0}" placeholder="Harga">
+                  <input class="edit-field-input edit-varian-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(harga[k]||0)}" placeholder="Harga">
                 </div>
-                <button class="btn-hapus-row" data-key="${k}">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
+                <button class="btn-hapus-row" data-key="${k}"><i class="fa-solid fa-trash"></i></button>
               </div>
             `).join("")}
           </div>
@@ -680,11 +778,11 @@ function renderEditOperasional(cabang) {
           <div class="tab-section-title">Upah</div>
           <div class="edit-field">
             <div class="edit-field-label">Upah Harian</div>
-            <input id="editUpahHarian" type="number" class="edit-field-input" value="${cabang.upahHarian || 0}">
+            <input id="editUpahHarian" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(cabang.upahHarian || 0)}">
           </div>
           <div class="edit-field">
             <div class="edit-field-label">Upah Hunter</div>
-            <input id="editUpahHunter" type="number" class="edit-field-input" value="${cabang.upahHunter || 0}">
+            <input id="editUpahHunter" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(cabang.upahHunter || 0)}">
           </div>
         </div>
 
@@ -717,7 +815,7 @@ function renderEditOperasional(cabang) {
               <div class="edit-varian-row" data-index="${i}">
                 <div class="edit-varian-fields">
                   <input class="edit-field-input edit-pen-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
-                  <input class="edit-field-input edit-pen-var-harga" type="number" value="${item.harga || 0}" placeholder="Harga" data-index="${i}">
+                  <input class="edit-field-input edit-pen-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga || 0)}" placeholder="Harga" data-index="${i}">
                 </div>
                 <button class="btn-hapus-row btn-hapus-var" data-index="${i}">
                   <i class="fa-solid fa-trash"></i>
@@ -728,6 +826,98 @@ function renderEditOperasional(cabang) {
           <button class="btn-tambah-row" id="btnTambahVar">
             <i class="fa-solid fa-plus"></i> Tambah Variable
           </button>
+        </div>
+
+        <!-- LOYANG -->
+        <div class="tab-card">
+          <div class="tab-section-title">Loyang</div>
+          <div id="editLoyangList">
+            ${loyang.map((item, i) => `
+              <div class="edit-varian-row" data-index="${i}">
+                <div class="edit-varian-fields">
+                  <input class="edit-field-input edit-loyang-jenis" value="${item.jenisLoyang||""}" placeholder="Jenis Loyang" data-index="${i}">
+                  <input class="edit-field-input edit-loyang-upah rp-input" type="text" inputmode="numeric" value="${rpFormat(item.upah||0)}" placeholder="Upah" data-index="${i}">
+                  <input class="edit-field-input edit-loyang-hargapaket rp-input" type="text" inputmode="numeric" value="${rpFormat(item.hargaPaket||0)}" placeholder="Harga Paket" data-index="${i}">
+                  <label class="edit-loyang-status-label">
+                    <input type="checkbox" class="edit-loyang-status" data-index="${i}" ${item.status !== false ? "checked" : ""}> Aktif
+                  </label>
+                </div>
+                <button class="btn-hapus-row btn-hapus-loyang" data-index="${i}">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="btnTambahLoyang">
+            <i class="fa-solid fa-plus"></i> Tambah Loyang
+          </button>
+        </div>
+
+        <!-- PENGELUARAN DISTRIBUSI FIX -->
+        <div class="tab-card">
+          <div class="tab-section-title">Pengeluaran Distribusi (Fix)</div>
+          <div id="editPenDistFixList">
+            ${penDistFix.map((item, i) => `
+              <div class="edit-pen-fix-row" data-index="${i}">
+                <input class="edit-field-input edit-pendist-fix-input" value="${item}" placeholder="Nama pengeluaran..." data-index="${i}">
+                <button class="btn-hapus-row btn-hapus-pendist-fix" data-index="${i}">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            `).join("")}
+          </div>
+          <div class="edit-pen-fix-add">
+            <input id="editPenDistFixInput" class="edit-field-input" placeholder="Nama pengeluaran...">
+            <button class="btn-tambah-row" id="btnTambahPenDistFix">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- PENGELUARAN DISTRIBUSI VARIABLE -->
+        <div class="tab-card">
+          <div class="tab-section-title">Pengeluaran Distribusi (Variable)</div>
+          <div id="editPenDistVarList">
+            ${penDistVariable.map((item, i) => `
+              <div class="edit-varian-row" data-index="${i}">
+                <div class="edit-varian-fields">
+                  <input class="edit-field-input edit-pendist-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
+                  <input class="edit-field-input edit-pendist-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga || 0)}" placeholder="Harga" data-index="${i}">
+                </div>
+                <button class="btn-hapus-row btn-hapus-pendist-var" data-index="${i}">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="btnTambahPenDistVar">
+            <i class="fa-solid fa-plus"></i> Tambah Variable
+          </button>
+        </div>
+
+        <!-- POTONGAN -->
+        <div class="tab-card">
+          <div class="tab-section-title">Potongan</div>
+          <div class="edit-field">
+            <div class="edit-field-label">Kelipatan Upah - Batas</div>
+            <input id="editPotKelipatanBatas" type="number" class="edit-field-input" value="${potongan.kelipatanUpah?.batas||0}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Kelipatan Upah - Kelipatan</div>
+            <input id="editPotKelipatanKelipatan" type="number" class="edit-field-input" value="${potongan.kelipatanUpah?.kelipatan||0}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Kelipatan Upah - Potongan (Rp)</div>
+            <input id="editPotKelipatanPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(potongan.kelipatanUpah?.potonganUpah||0)}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Setengah Upah - Batas</div>
+            <input id="editPotSetengahBatas" type="number" class="edit-field-input" value="${potongan.setengahUpah?.batas||0}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Setengah Upah - Potongan (Rp)</div>
+            <input id="editPotSetengahPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(potongan.setengahUpah?.potonganUpah||0)}">
+          </div>
         </div>
 
         <!-- ACTIONS -->
@@ -757,23 +947,15 @@ function renderEditOperasional(cabang) {
       };
     });
 
-    // sync varian input live
     document.querySelectorAll(".edit-varian-row[data-key]").forEach(row => {
       const oldKey  = row.dataset.key;
       const kodeEl  = row.querySelector(".edit-varian-kode");
       const namaEl  = row.querySelector(".edit-varian-nama");
       const hargaEl = row.querySelector(".edit-varian-harga");
 
-      kodeEl.oninput = () => {
-        const newKey = kodeEl.value.toUpperCase();
-        delete varian[oldKey];
-        delete harga[oldKey];
-        varian[newKey] = namaEl.value;
-        harga[newKey]  = parseInt(hargaEl.value) || 0;
-        row.dataset.key = newKey;
-      };
+      kodeEl.oninput  = () => { const nk = kodeEl.value.toUpperCase(); delete varian[oldKey]; delete harga[oldKey]; varian[nk] = namaEl.value; harga[nk] = rpNum(hargaEl.value); row.dataset.key = nk; };
       namaEl.oninput  = () => { varian[kodeEl.value.toUpperCase()] = namaEl.value; };
-      hargaEl.oninput = () => { harga[kodeEl.value.toUpperCase()]  = parseInt(hargaEl.value) || 0; };
+      hargaEl.oninput = () => { harga[kodeEl.value.toUpperCase()]  = rpNum(hargaEl.value); };
     });
 
     // ── PENGELUARAN FIX events ──
@@ -793,13 +975,6 @@ function renderEditOperasional(cabang) {
       el.oninput = () => { penFix[parseInt(el.dataset.index)] = el.value; };
     });
 
-    document.querySelectorAll(".btn-hapus-fix").forEach(btn => {
-      btn.onclick = () => {
-        penFix.splice(parseInt(btn.dataset.index), 1);
-        render();
-      };
-    });
-
     // ── PENGELUARAN VARIABLE events ──
     document.getElementById("btnTambahVar").onclick = () => {
       penVariable.push({ jenis: "", harga: 0 });
@@ -817,7 +992,55 @@ function renderEditOperasional(cabang) {
       el.oninput = () => { penVariable[parseInt(el.dataset.index)].jenis = el.value; };
     });
     document.querySelectorAll(".edit-pen-var-harga").forEach(el => {
-      el.oninput = () => { penVariable[parseInt(el.dataset.index)].harga = parseInt(el.value) || 0; };
+      el.oninput = () => { penVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
+    });
+
+    // ── LOYANG events ──
+    document.getElementById("btnTambahLoyang").onclick = () => {
+      loyang.push({ jenisLoyang: "", status: true, upah: 0, hargaPaket: 0 });
+      render();
+    };
+    document.querySelectorAll(".btn-hapus-loyang").forEach(btn => {
+      btn.onclick = () => { loyang.splice(parseInt(btn.dataset.index), 1); render(); };
+    });
+    document.querySelectorAll(".edit-loyang-jenis").forEach(el => {
+      el.oninput = () => { loyang[parseInt(el.dataset.index)].jenisLoyang = el.value; };
+    });
+    document.querySelectorAll(".edit-loyang-upah").forEach(el => {
+      el.oninput = () => { loyang[parseInt(el.dataset.index)].upah = rpNum(el.value); };
+    });
+    document.querySelectorAll(".edit-loyang-hargapaket").forEach(el => {
+      el.oninput = () => { loyang[parseInt(el.dataset.index)].hargaPaket = rpNum(el.value); };
+    });
+    document.querySelectorAll(".edit-loyang-status").forEach(el => {
+      el.onchange = () => { loyang[parseInt(el.dataset.index)].status = el.checked; };
+    });
+
+    // ── PENGELUARAN DISTRIBUSI FIX events ──
+    document.getElementById("btnTambahPenDistFix").onclick = () => {
+      penDistFix.push("");
+      render();
+    };
+    document.querySelectorAll(".btn-hapus-pendist-fix").forEach(btn => {
+      btn.onclick = () => { penDistFix.splice(parseInt(btn.dataset.index), 1); render(); };
+    });
+    document.querySelectorAll(".edit-pendist-fix-input").forEach(el => {
+      el.oninput = () => { penDistFix[parseInt(el.dataset.index)] = el.value; };
+    });
+
+    // ── PENGELUARAN DISTRIBUSI VARIABLE events ──
+    document.getElementById("btnTambahPenDistVar").onclick = () => {
+      penDistVariable.push({ jenis: "", harga: 0 });
+      render();
+    };
+    document.querySelectorAll(".btn-hapus-pendist-var").forEach(btn => {
+      btn.onclick = () => { penDistVariable.splice(parseInt(btn.dataset.index), 1); render(); };
+    });
+    document.querySelectorAll(".edit-pendist-var-jenis").forEach(el => {
+      el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].jenis = el.value; };
+    });
+    document.querySelectorAll(".edit-pendist-var-harga").forEach(el => {
+      el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
     });
 
     // ── BATAL ──
@@ -830,20 +1053,18 @@ function renderEditOperasional(cabang) {
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
 
       try {
-        // Baca varian & harga langsung dari DOM
         const varianFinal = {};
         const hargaFinal  = {};
         document.querySelectorAll(".edit-varian-row[data-key]").forEach(row => {
           const kode  = row.querySelector(".edit-varian-kode")?.value?.trim().toUpperCase();
           const nama  = row.querySelector(".edit-varian-nama")?.value?.trim();
-          const hargaVal = parseInt(row.querySelector(".edit-varian-harga")?.value) || 0;
+          const hargaVal = rpNum(row.querySelector(".edit-varian-harga")?.value);
           if (kode && nama) {
             varianFinal[kode] = nama;
             hargaFinal[kode]  = hargaVal;
           }
         });
 
-        // Baca pengeluaran variable dari DOM
         const penVariableFinal = [];
         document.querySelectorAll(".edit-pen-var-jenis").forEach((el, i) => {
           const jenis = el.value?.trim();
@@ -851,16 +1072,58 @@ function renderEditOperasional(cabang) {
           if (jenis) {
             penVariableFinal.push({
               jenis,
-              harga: parseInt(hargaEl?.value) || 0
+              harga: rpNum(hargaEl?.value)
             });
           }
         });
+
+        const penDistVariableFinal = [];
+        document.querySelectorAll(".edit-pendist-var-jenis").forEach((el, i) => {
+          const jenis = el.value?.trim();
+          const hargaEl = document.querySelectorAll(".edit-pendist-var-harga")[i];
+          if (jenis) {
+            penDistVariableFinal.push({
+              jenis,
+              harga: rpNum(hargaEl?.value)
+            });
+          }
+        });
+
+        const loyangFinal = [];
+        document.querySelectorAll(".edit-loyang-jenis").forEach((el, i) => {
+          const jenisLoyang = el.value?.trim();
+          const upahEl       = document.querySelectorAll(".edit-loyang-upah")[i];
+          const hargaPaketEl = document.querySelectorAll(".edit-loyang-hargapaket")[i];
+          const statusEl     = document.querySelectorAll(".edit-loyang-status")[i];
+          if (jenisLoyang) {
+            loyangFinal.push({
+              jenisLoyang,
+              upah: rpNum(upahEl?.value),
+              hargaPaket: rpNum(hargaPaketEl?.value),
+              status: statusEl?.checked ?? true
+            });
+          }
+        });
+
         const updates = {
           varian: varianFinal,
           harga:  hargaFinal,
-          upahHarian: parseInt(document.getElementById("editUpahHarian").value) || 0,
-          upahHunter: parseInt(document.getElementById("editUpahHunter").value) || 0,
-          pengeluaran: { fix: penFix, variable: penVariableFinal }
+          upahHarian: rpNum(document.getElementById("editUpahHarian").value),
+          upahHunter: rpNum(document.getElementById("editUpahHunter").value),
+          pengeluaran: { fix: penFix, variable: penVariableFinal },
+          pengeluaranDistribusi: { fix: penDistFix, variable: penDistVariableFinal },
+          loyang: loyangFinal,
+          potongan: {
+            kelipatanUpah: {
+              batas:       parseInt(document.getElementById("editPotKelipatanBatas").value) || 0,
+              kelipatan:   parseInt(document.getElementById("editPotKelipatanKelipatan").value) || 0,
+              potonganUpah: rpNum(document.getElementById("editPotKelipatanPotongan").value),
+            },
+            setengahUpah: {
+              batas:       parseInt(document.getElementById("editPotSetengahBatas").value) || 0,
+              potonganUpah: rpNum(document.getElementById("editPotSetengahPotongan").value),
+            }
+          }
         };
 
         await new Promise(r => setTimeout(r, 1000));
@@ -912,11 +1175,11 @@ function renderEditBonus(cabang) {
           </div>
           <div class="edit-field">
             <div class="edit-field-label">Insentif (Rp)</div>
-            <input id="editBonusInsentif" type="number" class="edit-field-input" value="${data.insentif || 0}">
+            <input id="editBonusInsentif" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(data.insentif || 0)}">
           </div>
           <div class="edit-field">
             <div class="edit-field-label">Kehadiran (Rp)</div>
-            <input id="editBonusKehadiran" type="number" class="edit-field-input" value="${bonus.kehadiran || 0}">
+            <input id="editBonusKehadiran" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(bonus.kehadiran || 0)}">
           </div>
           <div class="edit-field">
             <div class="edit-field-label">Ketentuan (hari)</div>
@@ -937,7 +1200,7 @@ function renderEditBonus(cabang) {
           </div>
           <div class="edit-field">
             <div class="edit-field-label">Uang (Rp)</div>
-            <input id="editBonusCustUang" type="number" class="edit-field-input" value="${cust.uang || 0}">
+            <input id="editBonusCustUang" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(cust.uang || 0)}">
           </div>
         </div>
 
@@ -959,7 +1222,7 @@ function renderEditBonus(cabang) {
                   </div>
                   <div class="edit-margin-group">
                     <div class="edit-field-label">Uang (Rp)</div>
-                    <input class="edit-field-input edit-margin-uang" type="number" value="${margin[tier].uang || 0}" data-tier="${tier}">
+                    <input class="edit-field-input edit-margin-uang rp-input" type="text" inputmode="numeric" value="${rpFormat(margin[tier].uang || 0)}" data-tier="${tier}">
                   </div>
                 </div>
               </div>
@@ -986,7 +1249,7 @@ function renderEditBonus(cabang) {
       el.oninput = () => { margin[el.dataset.tier].maksimal = parseInt(el.value) || 0; };
     });
     document.querySelectorAll(".edit-margin-uang").forEach(el => {
-      el.oninput = () => { margin[el.dataset.tier].uang = parseInt(el.value) || 0; };
+      el.oninput = () => { margin[el.dataset.tier].uang = rpNum(el.value); };
     });
 
     // batal
@@ -1003,15 +1266,15 @@ function renderEditBonus(cabang) {
           bonus: {
             data: {
               targetCustomer: parseInt(document.getElementById("editBonusTargetCustomer").value) || 0,
-              insentif:       parseInt(document.getElementById("editBonusInsentif").value)       || 0,
+              insentif:       rpNum(document.getElementById("editBonusInsentif").value),
             },
             customer: {
               target:    parseInt(document.getElementById("editBonusCustTarget").value)    || 0,
               kelipatan: parseInt(document.getElementById("editBonusCustKelipatan").value) || 0,
-              uang:      parseInt(document.getElementById("editBonusCustUang").value)      || 0,
+              uang:      rpNum(document.getElementById("editBonusCustUang").value),
             },
             margin,
-            kehadiran: parseInt(document.getElementById("editBonusKehadiran").value) || 0,
+            kehadiran: rpNum(document.getElementById("editBonusKehadiran").value),
             ketentuan: parseInt(document.getElementById("editBonusKetentuan").value) || 0,
           }
         };
@@ -1384,11 +1647,15 @@ function renderEditInfo(cabang) {
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
     try {
+      const passwordRaw = document.getElementById("editPassword").value.trim();
+      const passwordHashed = passwordRaw ? await hashPassword(passwordRaw) : cabang.pagePassword;
+      const namaCabangBaru = document.getElementById("editNamaCabang").value.trim();
+
       const updates = {
-        namaCabang:   document.getElementById("editNamaCabang").value.trim(),
+        namaCabang:   namaCabangBaru,
         namaPt:       document.getElementById("editNamaPt").value.trim(),
         alamatCabang: document.getElementById("editAlamat").value.trim(),
-        pagePassword: document.getElementById("editPassword").value.trim(),
+        pagePassword: passwordHashed,
         hariLibur: {
           distribusi: getDropdownVal("editHariDistribusi"),
           produksi:   getDropdownVal("editHariProduksi"),
@@ -1406,6 +1673,10 @@ function renderEditInfo(cabang) {
 
       await new Promise(r => setTimeout(r, 1000));
       await window.updateDoc(window.doc(window.db, "kantorCabang", cabang.id), updates);
+
+      if (passwordRaw) {
+        await simpanAkunPassword(cabang.id, passwordRaw, namaCabangBaru);
+      }
 
       const idx = cabangData.findIndex(c => c.id === cabang.id);
       if (idx !== -1) {
@@ -1544,7 +1815,13 @@ function renderTambahCabang() {
     operasional: {
       varian: {}, harga: {},
       upahHarian: 0, upahHunter: 0,
-      pengeluaran: { fix: [], variable: [] }
+      pengeluaran: { fix: [], variable: [] },
+      pengeluaranDistribusi: { fix: [], variable: [] },
+      loyang: [],
+      potongan: {
+        kelipatanUpah: { batas: 0, kelipatan: 0, potonganUpah: 0 },
+        setengahUpah:  { batas: 0, potonganUpah: 0 }
+      }
     },
     bonus: {
       data: { targetCustomer: 0, insentif: 0 },
@@ -1688,6 +1965,7 @@ function renderTambahCabang() {
         const file = e.target.files[0];
         if (!file) return;
         window.openCropModal({ file, ratio: 16/9, outputSize: { w: 1280, h: 720 }, onSave: blob => {
+          saveCurrentStep(); // simpan isian form dulu SEBELUM render ulang, biar ga ke-reset
           tempFotoKantorBlob = blob;
           renderStepBody();
         }});
@@ -1723,6 +2001,9 @@ function renderTambahCabang() {
       const harga       = op.harga;
       const penFix      = op.pengeluaran.fix;
       const penVariable = op.pengeluaran.variable;
+      const loyang          = op.loyang;
+      const penDistFix      = op.pengeluaranDistribusi.fix;
+      const penDistVariable = op.pengeluaranDistribusi.variable;
 
       body.innerHTML = `
         <div class="tab-card">
@@ -1733,7 +2014,7 @@ function renderTambahCabang() {
                 <div class="edit-varian-fields">
                   <input class="edit-field-input edit-varian-kode" value="${k}" placeholder="Kode" data-original="${k}">
                   <input class="edit-field-input edit-varian-nama" value="${varian[k]}" placeholder="Nama">
-                  <input class="edit-field-input edit-varian-harga" type="number" value="${harga[k]||0}" placeholder="Harga">
+                  <input class="edit-field-input edit-varian-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(harga[k]||0)}" placeholder="Harga">
                 </div>
                 <button class="btn-hapus-row" data-key="${k}"><i class="fa-solid fa-trash"></i></button>
               </div>
@@ -1745,8 +2026,14 @@ function renderTambahCabang() {
         </div>
         <div class="tab-card">
           <div class="tab-section-title">Upah</div>
-          ${editField("Upah Harian", "addUpahHarian", op.upahHarian || 0)}
-          ${editField("Upah Hunter", "addUpahHunter", op.upahHunter || 0)}
+          <div class="edit-field">
+            <div class="edit-field-label">Upah Harian</div>
+            <input id="addUpahHarian" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahHarian || 0)}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Upah Hunter</div>
+            <input id="addUpahHunter" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahHunter || 0)}">
+          </div>
         </div>
         <div class="tab-card">
           <div class="tab-section-title">Pengeluaran Fix</div>
@@ -1769,7 +2056,7 @@ function renderTambahCabang() {
               <div class="edit-varian-row">
                 <div class="edit-varian-fields">
                   <input class="edit-field-input edit-pen-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
-                  <input class="edit-field-input edit-pen-var-harga" type="number" value="${item.harga||0}" placeholder="Harga" data-index="${i}">
+                  <input class="edit-field-input edit-pen-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga||0)}" placeholder="Harga" data-index="${i}">
                 </div>
                 <button class="btn-hapus-row btn-hapus-var" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
               </div>
@@ -1778,6 +2065,88 @@ function renderTambahCabang() {
           <button class="btn-tambah-row" id="addTambahVar">
             <i class="fa-solid fa-plus"></i> Tambah Variable
           </button>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Loyang</div>
+          <div id="addLoyangList">
+            ${loyang.map((item, i) => `
+              <div class="edit-varian-row" data-index="${i}">
+                <div class="edit-varian-fields">
+                  <input class="edit-field-input add-loyang-jenis" value="${item.jenisLoyang||""}" placeholder="Jenis Loyang" data-index="${i}">
+                  <input class="edit-field-input add-loyang-upah rp-input" type="text" inputmode="numeric" value="${rpFormat(item.upah||0)}" placeholder="Upah" data-index="${i}">
+                  <input class="edit-field-input add-loyang-hargapaket rp-input" type="text" inputmode="numeric" value="${rpFormat(item.hargaPaket||0)}" placeholder="Harga Paket" data-index="${i}">
+                  <label class="add-loyang-status-label">
+                    <input type="checkbox" class="add-loyang-status" data-index="${i}" ${item.status !== false ? "checked" : ""}> Aktif
+                  </label>
+                </div>
+                <button class="btn-hapus-row btn-hapus-loyang" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="addTambahLoyang">
+            <i class="fa-solid fa-plus"></i> Tambah Loyang
+          </button>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Pengeluaran Distribusi (Fix)</div>
+          <div id="addPenDistFixList">
+            ${penDistFix.map((item, i) => `
+              <div class="edit-pen-fix-row">
+                <input class="edit-field-input add-pendist-fix" value="${item}" placeholder="Nama pengeluaran..." data-index="${i}">
+                <button class="btn-hapus-row btn-hapus-pendist-fix" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            `).join("")}
+          </div>
+          <div class="edit-pen-fix-add">
+            <input id="addPenDistFixInput" class="edit-field-input" placeholder="Nama pengeluaran...">
+            <button class="btn-tambah-row" id="addTambahPenDistFix">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Pengeluaran Distribusi (Variable)</div>
+          <div id="addPenDistVarList">
+            ${penDistVariable.map((item, i) => `
+              <div class="edit-varian-row">
+                <div class="edit-varian-fields">
+                  <input class="edit-field-input add-pendist-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
+                  <input class="edit-field-input add-pendist-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga||0)}" placeholder="Harga" data-index="${i}">
+                </div>
+                <button class="btn-hapus-row btn-hapus-pendist-var" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="addTambahPenDistVar">
+            <i class="fa-solid fa-plus"></i> Tambah Variable
+          </button>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Potongan</div>
+          <div class="edit-field">
+            <div class="edit-field-label">Kelipatan Upah - Batas</div>
+            <input id="addPotKelipatanBatas" type="number" class="edit-field-input" value="${op.potongan.kelipatanUpah.batas||0}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Kelipatan Upah - Kelipatan</div>
+            <input id="addPotKelipatanKelipatan" type="number" class="edit-field-input" value="${op.potongan.kelipatanUpah.kelipatan||0}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Kelipatan Upah - Potongan (Rp)</div>
+            <input id="addPotKelipatanPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.kelipatanUpah.potonganUpah||0)}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Setengah Upah - Batas</div>
+            <input id="addPotSetengahBatas" type="number" class="edit-field-input" value="${op.potongan.setengahUpah.batas||0}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Setengah Upah - Potongan (Rp)</div>
+            <input id="addPotSetengahPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.setengahUpah.potonganUpah||0)}">
+          </div>
         </div>
       `;
 
@@ -1817,7 +2186,52 @@ function renderTambahCabang() {
         el.oninput = () => { penVariable[parseInt(el.dataset.index)].jenis = el.value; };
       });
       document.querySelectorAll(".edit-pen-var-harga").forEach(el => {
-        el.oninput = () => { penVariable[parseInt(el.dataset.index)].harga = parseInt(el.value)||0; };
+        el.oninput = () => { penVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
+      });
+
+      document.getElementById("addTambahLoyang").onclick = () => {
+        loyang.push({ jenisLoyang: "", status: true, upah: 0, hargaPaket: 0 });
+        renderStepBody();
+      };
+      document.querySelectorAll(".btn-hapus-loyang").forEach(btn => {
+        btn.onclick = () => { loyang.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+      });
+      document.querySelectorAll(".add-loyang-jenis").forEach(el => {
+        el.oninput = () => { loyang[parseInt(el.dataset.index)].jenisLoyang = el.value; };
+      });
+      document.querySelectorAll(".add-loyang-upah").forEach(el => {
+        el.oninput = () => { loyang[parseInt(el.dataset.index)].upah = rpNum(el.value); };
+      });
+      document.querySelectorAll(".add-loyang-hargapaket").forEach(el => {
+        el.oninput = () => { loyang[parseInt(el.dataset.index)].hargaPaket = rpNum(el.value); };
+      });
+      document.querySelectorAll(".add-loyang-status").forEach(el => {
+        el.onchange = () => { loyang[parseInt(el.dataset.index)].status = el.checked; };
+      });
+
+      document.getElementById("addTambahPenDistFix").onclick = () => {
+        const val = document.getElementById("addPenDistFixInput").value.trim();
+        if (!val) return;
+        penDistFix.push(val); renderStepBody();
+      };
+      document.querySelectorAll(".btn-hapus-pendist-fix").forEach(btn => {
+        btn.onclick = () => { penDistFix.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+      });
+      document.querySelectorAll(".add-pendist-fix").forEach(el => {
+        el.oninput = () => { penDistFix[parseInt(el.dataset.index)] = el.value; };
+      });
+
+      document.getElementById("addTambahPenDistVar").onclick = () => {
+        penDistVariable.push({ jenis: "", harga: 0 }); renderStepBody();
+      };
+      document.querySelectorAll(".btn-hapus-pendist-var").forEach(btn => {
+        btn.onclick = () => { penDistVariable.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+      });
+      document.querySelectorAll(".add-pendist-var-jenis").forEach(el => {
+        el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].jenis = el.value; };
+      });
+      document.querySelectorAll(".add-pendist-var-harga").forEach(el => {
+        el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
       });
     }
 
@@ -1827,15 +2241,24 @@ function renderTambahCabang() {
         <div class="tab-card">
           <div class="tab-section-title">Bonus Data</div>
           ${editField("Target Customer", "addBonusTargetCustomer", b.data.targetCustomer)}
-          ${editField("Insentif (Rp)",   "addBonusInsentif",       b.data.insentif)}
-          ${editField("Kehadiran (Rp)",  "addBonusKehadiran",      b.kehadiran)}
+          <div class="edit-field">
+            <div class="edit-field-label">Insentif (Rp)</div>
+            <input id="addBonusInsentif" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(b.data.insentif || 0)}">
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Kehadiran (Rp)</div>
+            <input id="addBonusKehadiran" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(b.kehadiran || 0)}">
+          </div>
           ${editField("Ketentuan (hari)","addBonusKetentuan",      b.ketentuan)}
         </div>
         <div class="tab-card">
           <div class="tab-section-title">Bonus Customer</div>
           ${editField("Target",    "addBonusCustTarget",    b.customer.target)}
           ${editField("Kelipatan", "addBonusCustKelipatan", b.customer.kelipatan)}
-          ${editField("Uang (Rp)", "addBonusCustUang",      b.customer.uang)}
+          <div class="edit-field">
+            <div class="edit-field-label">Uang (Rp)</div>
+            <input id="addBonusCustUang" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(b.customer.uang || 0)}">
+          </div>
         </div>
         <div class="tab-card">
           <div class="tab-section-title">Bonus Margin</div>
@@ -1853,7 +2276,7 @@ function renderTambahCabang() {
                 </div>
                 <div class="edit-margin-group">
                   <div class="edit-field-label">Uang (Rp)</div>
-                  <input class="edit-field-input" type="number" id="addMargin_${tier}_uang" value="${b.margin[tier].uang}">
+                  <input class="edit-field-input rp-input" type="text" inputmode="numeric" id="addMargin_${tier}_uang" value="${rpFormat(b.margin[tier].uang || 0)}">
                 </div>
               </div>
             </div>
@@ -1918,6 +2341,7 @@ function renderTambahCabang() {
         const file = e.target.files[0];
         if (!file) return;
         window.openCropModal({ file, ratio: 16/9, outputSize: { w: 1280, h: 720 }, onSave: blob => {
+          saveCurrentStep(); // simpan isian form dulu SEBELUM render ulang, biar ga ke-reset
           tempFotoOwnerBlob = blob;
           renderStepBody();
         }});
@@ -1943,21 +2367,28 @@ function renderTambahCabang() {
       };
     }
     else if (currentStep === 2) {
-      newData.operasional.upahHarian = n("addUpahHarian");
-      newData.operasional.upahHunter = n("addUpahHunter");
+      const rp = id => rpNum(document.getElementById(id)?.value);
+      newData.operasional.upahHarian = rp("addUpahHarian");
+      newData.operasional.upahHunter = rp("addUpahHunter");
+      newData.operasional.potongan.kelipatanUpah.batas        = n("addPotKelipatanBatas");
+      newData.operasional.potongan.kelipatanUpah.kelipatan    = n("addPotKelipatanKelipatan");
+      newData.operasional.potongan.kelipatanUpah.potonganUpah = rp("addPotKelipatanPotongan");
+      newData.operasional.potongan.setengahUpah.batas         = n("addPotSetengahBatas");
+      newData.operasional.potongan.setengahUpah.potonganUpah  = rp("addPotSetengahPotongan");
     }
     else if (currentStep === 3) {
+      const rp = id => rpNum(document.getElementById(id)?.value);
       newData.bonus.data.targetCustomer = n("addBonusTargetCustomer");
-      newData.bonus.data.insentif       = n("addBonusInsentif");
-      newData.bonus.kehadiran           = n("addBonusKehadiran");
+      newData.bonus.data.insentif       = rp("addBonusInsentif");
+      newData.bonus.kehadiran           = rp("addBonusKehadiran");
       newData.bonus.ketentuan           = n("addBonusKetentuan");
       newData.bonus.customer.target     = n("addBonusCustTarget");
       newData.bonus.customer.kelipatan  = n("addBonusCustKelipatan");
-      newData.bonus.customer.uang       = n("addBonusCustUang");
+      newData.bonus.customer.uang       = rp("addBonusCustUang");
       Object.keys(newData.bonus.margin).forEach(tier => {
         newData.bonus.margin[tier].minimal  = n(`addMargin_${tier}_min`);
         newData.bonus.margin[tier].maksimal = n(`addMargin_${tier}_max`);
-        newData.bonus.margin[tier].uang     = n(`addMargin_${tier}_uang`);
+        newData.bonus.margin[tier].uang     = rp(`addMargin_${tier}_uang`);
       });
     }
     else if (currentStep === 4) {
@@ -1990,8 +2421,14 @@ function renderTambahCabang() {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
 
     try {
+      const passwordRawWizard = newData.info.pagePassword;
+      const passwordHashed = passwordRawWizard
+        ? await hashPassword(passwordRawWizard)
+        : "";
+
       const payload = {
         ...newData.info,
+        pagePassword: passwordHashed,
         ...newData.operasional,
         bonus:      newData.bonus,
         trikotomi:  newData.trikotomi,
@@ -2001,6 +2438,10 @@ function renderTambahCabang() {
 
       // Simpan kantorCabang dulu untuk dapat docRef.id
       const docRef = await window.addDoc(window.collection(window.db, "kantorCabang"), payload);
+
+      if (passwordRawWizard) {
+        await simpanAkunPassword(docRef.id, passwordRawWizard, newData.info.namaCabang);
+      }
 
       // Upload foto kantor langsung ke path final
       if (tempFotoKantorBlob) {

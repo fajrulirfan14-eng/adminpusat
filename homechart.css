@@ -1,0 +1,120 @@
+/* ── CARD GRAFIK ── */
+.home-chart-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 16px; padding: 18px;
+  margin-bottom: 24px;
+}
+.home-chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.home-chart-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.home-chart-reload-btn {
+  width: 32px; height: 32px; border: 1px solid var(--border-card);
+  background: var(--bg-hover); border-radius: 9px; color: var(--brand-primary);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.home-chart-reload-btn:hover { background: var(--brand-pale); }
+.home-chart-reload-btn.spinning i { animation: homeChartSpin 0.6s linear infinite; }
+@keyframes homeChartSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+/* ── FILTER BAR & TOMBOL ── */
+.home-chart-filter-bar { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border-card); }
+.home-chart-filter-btn {
+  display: flex; align-items: center; gap: 8px;
+  height: 36px; padding: 0 14px;
+  border: 1px solid var(--border-card); border-radius: 10px;
+  background: var(--bg-page); color: var(--text-primary);
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: background var(--transition-fast);
+}
+.home-chart-filter-btn:hover { background: var(--bg-hover); }
+.home-chart-filter-btn i:first-child { color: var(--brand-primary); font-size: 11px; }
+.home-chart-filter-btn i:last-child { color: var(--text-muted); font-size: 9px; }
+
+/* ── FILTER DROPDOWN ── */
+.home-chart-filter-bar { position: relative; }
+.home-chart-filter-dropdown {
+  min-width: 220px; max-height: 320px; overflow-y: auto;
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 6px; z-index: 500; scrollbar-width: none;
+}
+.home-chart-filter-dropdown::-webkit-scrollbar { display: none; }
+
+.home-chart-filter-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 7px; border-radius: 10px; cursor: pointer;
+  font-size: 11px; color: var(--text-primary);
+}
+.home-chart-filter-option:hover { background: var(--bg-hover); }
+.home-chart-filter-option.selected { background: var(--brand-pale); font-weight: 600; }
+.home-chart-filter-option i { margin-left: auto; color: var(--brand-primary); font-size: 12px; }
+.home-chart-filter-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.home-chart-filter-nama { flex: 1; }
+
+.home-chart-filter-divider { height: 1px; background: var(--border-card); margin: 6px 4px; }
+.gabungan-option { font-weight: 600; }
+.gabungan-dot {
+  width: 20px; height: 20px; border-radius: 6px;
+  background: var(--brand-pale) !important;
+  color: var(--brand-primary); font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── CANVAS ── */
+.home-chart-canvas-wrap { position: relative; height: 320px; width: 100%; }
+.home-chart-canvas-inner { height: 100%; width: 100%; }
+
+@media (max-width: 768px) {
+  .home-chart-canvas-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .home-chart-canvas-inner {
+    min-width: 560px;
+  }
+}
+
+.home-chart-reveal {
+  clip-path: inset(0 100% 0 0);
+  animation: homeChartRevealAnim 1.3s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+@keyframes homeChartRevealAnim {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+/* ── TOOLTIP CUSTOM ── */
+.home-chart-tooltip {
+  position: fixed; pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+  background: #fff; border: 1px solid var(--border-card);
+  border-radius: 10px; padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  opacity: 0; transition: opacity 0.1s ease;
+  z-index: 99999; white-space: nowrap;
+  font-family: 'Poppins', sans-serif;
+  min-width: 160px;
+}
+.home-chart-tooltip-date { font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 3px; }
+.home-chart-tooltip-cabang { font-size: 12.5px; font-weight: 700; margin-bottom: 1px; }
+.home-chart-tooltip-total { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+.home-chart-tooltip-breakdown {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding-top: 5px; border-top: 1px dashed var(--border-card);
+}
+.home-chart-tooltip-breakdown span {
+  font-size: 10px; color: var(--text-secondary); font-weight: 500;
+}
+.home-chart-loading, .home-chart-empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 320px; color: var(--text-muted); font-size: 12.5px; gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .home-chart-card { padding: 14px; }
+  .home-chart-canvas-wrap { height: 200px; }
+}

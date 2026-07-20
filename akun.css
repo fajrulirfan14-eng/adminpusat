@@ -67,7 +67,7 @@
 .akun-detail-wrapper {
   flex: 1;
   padding: 12px;
-  background: #fff;
+  background: var(--bg-card);
   border-left: 1px solid var(--border-card);
   overflow: hidden;
 }
@@ -317,6 +317,34 @@
 .akun-varian-fields {
   display: flex; gap: 12px;
 }
+
+/* ── TOAST ── */
+.akun-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+  max-width: 90vw;
+}
+.akun-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.akun-toast-success { background: var(--success, #22c55e); }
+.akun-toast-error   { background: #dc2626; }
 
 @media (min-width: 769px) {
   .akun-sheet {

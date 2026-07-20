@@ -213,26 +213,21 @@
 .peta-global-overlay {
   position: fixed; inset: 0; z-index: 9990;
   background: rgba(0,0,0,0.6);
-  display: none; align-items: center; justify-content: center;
+  display: none;
   opacity: 0; transition: opacity 0.25s ease;
-  padding: 50px 16px;
+  padding: 0;
 }
 .peta-global-overlay.show {
   display: flex; opacity: 1;
 }
 .peta-global-wrap {
-  width: min(900px, 95vw);
-  height: 85vh;
+  width: 100%;
+  height: 100%;
   background: var(--bg-card);
-  border-radius: 20px;
+  border-radius: 0;
   overflow: hidden;
   display: flex; flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  transform: scale(0.96);
-  transition: transform 0.25s ease;
-}
-.peta-global-overlay.show .peta-global-wrap {
-  transform: scale(1);
+  box-shadow: none;
 }
 #petaGlobalMapEl {
   position: absolute;
@@ -240,17 +235,6 @@
   width: 100%;
   height: 100%;
   z-index: 1;
-}
-
-@media (max-width: 768px) {
-  .peta-global-overlay {
-    padding: 60px 12px 80px;
-  }
-  .peta-global-wrap {
-    width: 100%;
-    height: 100%;
-    border-radius: 16px;
-  }
 }
 
 /* ── CUSTOMER POPUP ── */
