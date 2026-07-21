@@ -1,0 +1,25 @@
+{
+  "name": "Teh Tarik Nusantara Pusati",
+  "short_name": "TTN Pusat",
+  "description": "Aplikasi administrasi distribusi Teh Tarik Nusantara",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#C9A67B",
+  "background_color": "#efe5d7",
+  "icons": [
+    {
+      "src": "icon_48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icon_32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "id"
+}
