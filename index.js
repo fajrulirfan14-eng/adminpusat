@@ -264,7 +264,7 @@ function initPullToRefresh() {
       document.getElementById("akunSheet")?.classList.contains("show") ||
       document.getElementById("custSheet")?.classList.contains("show") ||
       document.getElementById("pbbSheet")?.classList.contains("show") ||
-      document.getElementById("confirmOverlay")?.classList.contains("show") ||
+      document.getElementById("akunConfirmOverlay")?.classList.contains("show") ||
       document.getElementById("warningOverlay")?.classList.contains("show") ||
       document.getElementById("petaGlobalOverlay")?.classList.contains("show") ||
       document.getElementById("profilAksesibilitasOverlay")?.classList.contains("show")

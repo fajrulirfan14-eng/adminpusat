@@ -1379,6 +1379,44 @@ window.openAkunDetail = async function(uid) {
   renderAkunSheet(u);
 };
 
+async function loadAkunPasswordForSheet(uid) {
+  const valueEl   = document.getElementById("akunSheetPasswordValue");
+  const toggleBtn = document.getElementById("akunSheetPasswordToggle");
+  if (!valueEl) return;
+
+  try {
+    const snap = await window.getDocs(
+      window.query(
+        window.collection(window.db, "akun"),
+        window.where("uid", "==", uid)
+      )
+    );
+
+    if (snap.empty) {
+      valueEl.textContent = "-";
+      return;
+    }
+
+    const rawPassword = snap.docs[0].data().password || "-";
+    let visible = false;
+
+    const render = () => {
+      valueEl.textContent = visible ? rawPassword : "•".repeat(Math.min(rawPassword.length, 10));
+    };
+    render();
+
+    toggleBtn?.addEventListener("click", () => {
+      visible = !visible;
+      render();
+      const icon = toggleBtn.querySelector("i");
+      if (icon) icon.className = visible ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    });
+  } catch (e) {
+    console.error("❌ loadAkunPasswordForSheet:", e);
+    valueEl.textContent = "Gagal memuat";
+  }
+}
+
 function renderAkunSheet(u) {
   // Hapus sheet lama
   document.getElementById("akunSheetOverlay")?.remove();
@@ -1439,6 +1477,15 @@ function renderAkunSheet(u) {
         ${editAkunField("Alamat", "akunEditAlamat", u.alamat, "textarea")}
         ${editAkunField("Pekerjaan", "akunEditPekerjaan", u.pekerjaan)}
         ${editAkunField("Tempat, Tanggal Lahir", "akunEditTtl", u.tempatTanggalLahir)}
+        <div class="edit-field">
+          <div class="edit-field-label">Password</div>
+          <div class="akun-password-display">
+            <span id="akunSheetPasswordValue" class="akun-password-text">Memuat...</span>
+            <button type="button" class="akun-password-toggle" id="akunSheetPasswordToggle" title="Lihat password">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="tab-card">
@@ -1483,6 +1530,15 @@ function renderAkunSheet(u) {
           }">
         </div>
         ${u.role === "adminCabang" ? editAkunField("Kantor Cabang", "akunEditKantorCabang", u.kantorCabang) : ""}
+        <div class="edit-field">
+          <div class="edit-field-label">Password</div>
+          <div class="akun-password-display">
+            <span id="akunSheetPasswordValue" class="akun-password-text">Memuat...</span>
+            <button type="button" class="akun-password-toggle" id="akunSheetPasswordToggle" title="Lihat password">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
       </div>
 
       ${u.role === "adminCabang" ? `
@@ -1594,6 +1650,8 @@ function renderAkunSheet(u) {
     overlay.classList.add("show");
     sheet.classList.add("show");
   });
+
+  loadAkunPasswordForSheet(u.id);
 
   let tempFotoBlob = null;
   let jenisLoyangEditList = JSON.parse(JSON.stringify(u.loyang || []));
@@ -1875,14 +1933,15 @@ function editAkunField(label, id, value, type = "input") {
 
 // ── CONFIRM TOGGLE STATUS ──
 function showConfirmToggleStatus(u, isAktif, onDone) {
-  const existing = document.getElementById("confirmOverlay");
+  const existing = document.getElementById("akunConfirmOverlay");
   if (existing) existing.remove();
 
   const overlay = document.createElement("div");
-  overlay.id = "confirmOverlay";
-  overlay.className = "confirm-overlay";
+  overlay.id = "akunConfirmOverlay";
+  overlay.className = "akun-confirm-overlay";
   overlay.innerHTML = `
-    <div class="confirm-box">
+    <div class="akun-confirm-box" id="akunConfirmBox">
+      <div class="akun-confirm-handle"></div>
       <div class="confirm-icon" style="background:${isAktif ? 'rgba(220,38,38,0.1)' : 'rgba(34,197,94,0.1)'};">
         <i class="fa-solid ${isAktif ? 'fa-user-slash' : 'fa-user-check'}" style="color:${isAktif ? '#dc2626' : 'var(--success)'}"></i>
       </div>
@@ -1894,8 +1953,8 @@ function showConfirmToggleStatus(u, isAktif, onDone) {
         }
       </div>
       <div class="confirm-actions">
-        <button class="btn-batal" id="confirmBatal">Batal</button>
-        <button class="btn-hapus" id="confirmOk" style="background:${isAktif ? '#dc2626' : 'var(--success)'}">
+        <button class="btn-batal" id="akunConfirmBatal">Batal</button>
+        <button class="btn-hapus" id="akunConfirmOk" style="background:${isAktif ? '#dc2626' : 'var(--success)'}">
           ${isAktif ? 'Nonaktifkan' : 'Aktifkan'}
         </button>
       </div>
@@ -1903,17 +1962,64 @@ function showConfirmToggleStatus(u, isAktif, onDone) {
   `;
 
   document.body.appendChild(overlay);
-  requestAnimationFrame(() => overlay.classList.add("show"));
+
+  const box = document.getElementById("akunConfirmBox");
+  const scrollY = window.scrollY;
+  document.body.classList.add("akun-confirm-sheet-open");
+  document.body.style.top = `-${scrollY}px`;
+
+  requestAnimationFrame(() => {
+    overlay.classList.add("show");
+    box.classList.add("show");
+  });
 
   const close = () => {
     overlay.classList.remove("show");
-    setTimeout(() => overlay.remove(), 200);
+    box.classList.remove("show");
+    document.body.classList.remove("akun-confirm-sheet-open");
+    document.body.style.top = "";
+    window.scrollTo(0, scrollY);
+    setTimeout(() => overlay.remove(), 300);
   };
 
-  document.getElementById("confirmBatal").onclick = close;
+  document.getElementById("akunConfirmBatal").onclick = close;
   overlay.onclick = e => { if (e.target === overlay) close(); };
 
-  document.getElementById("confirmOk").onclick = async () => {
+  // Swipe ke bawah buat nutup (mobile only)
+  let startY = 0, currentY = 0, dragging = false;
+  const onStart = (e) => {
+    if (window.innerWidth > 768) return;
+    startY = e.touches[0].clientY;
+    currentY = startY;
+    dragging = true;
+    box.style.transition = "none";
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const delta = currentY - startY;
+    if (delta > 0) {
+      e.preventDefault();
+      box.style.transform = `translateY(${delta}px)`;
+    }
+  };
+  const onEnd = () => {
+    if (!dragging) return;
+    dragging = false;
+    box.style.transition = "";
+    const delta = currentY - startY;
+    if (delta > 120) {
+      close();
+    } else {
+      box.style.transform = "";
+    }
+    startY = 0; currentY = 0;
+  };
+  box.addEventListener("touchstart", onStart, { passive: true });
+  box.addEventListener("touchmove", onMove, { passive: false });
+  box.addEventListener("touchend", onEnd);
+
+  document.getElementById("akunConfirmOk").onclick = async () => {
     try {
       await window.updateDoc(window.doc(window.db, "users", u.id), { status: !isAktif });
       close();
