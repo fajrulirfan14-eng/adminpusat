@@ -335,6 +335,18 @@ function renderTabContent(tab, c) {
         `).join("")}
       </div>
       <div class="tab-card">
+        <div class="tab-section-title">Estimasi Loyang (Kapasitas per Varian)</div>
+        ${Object.keys(c.estimasi || {}).length
+          ? Object.entries(c.estimasi || {}).map(([key, capMap]) => `
+              <div class="tab-row">
+                <span class="tab-row-label">${key.replace(/^loyang/i, "")}</span>
+                <span class="tab-row-value">${Object.entries(capMap).map(([kode, kap]) => `${kode}: ${kap}`).join(" · ") || "-"}</span>
+              </div>
+            `).join("")
+          : `<div class="tab-row"><span class="tab-row-label">Belum diatur</span><span class="tab-row-value">-</span></div>`
+        }
+      </div>
+      <div class="tab-card">
         <div class="tab-section-title">Pengeluaran Distribusi (Fix)</div>
         ${(pengeluaranDistribusi.fix||[]).map(item => `
           <div class="tab-row"><span class="tab-row-label">${item}</span><span class="tab-row-value">-</span></div>
@@ -742,6 +754,7 @@ function renderEditOperasional(cabang) {
   const penFix      = [...( cabang.pengeluaran?.fix      || [])];
   const penVariable = [...( cabang.pengeluaran?.variable || [])];
   const loyang         = JSON.parse(JSON.stringify(cabang.loyang || []));
+  const estimasi       = JSON.parse(JSON.stringify(cabang.estimasi || {}));
   const penDistFix     = [...(cabang.pengeluaranDistribusi?.fix || [])];
   const penDistVariable = JSON.parse(JSON.stringify(cabang.pengeluaranDistribusi?.variable || []));
   const potongan = JSON.parse(JSON.stringify(cabang.potongan || {
@@ -850,6 +863,36 @@ function renderEditOperasional(cabang) {
           </div>
           <button class="btn-tambah-row" id="btnTambahLoyang">
             <i class="fa-solid fa-plus"></i> Tambah Loyang
+          </button>
+        </div>
+
+        <!-- ESTIMASI LOYANG -->
+        <div class="tab-card">
+          <div class="tab-section-title">Estimasi Loyang (Kapasitas per Varian)</div>
+          <div id="editEstimasiList">
+            ${Object.keys(estimasi).map(groupKey => `
+              <div class="edit-estimasi-group" data-group-key="${groupKey}">
+                <div class="edit-estimasi-group-header">
+                  <input class="edit-field-input edit-estimasi-group-name" value="${groupKey}" placeholder="Nama Grup (misal loyangOriginal)" data-group-key="${groupKey}">
+                  <button class="btn-hapus-row btn-hapus-estimasi-group" data-group-key="${groupKey}"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <div class="edit-estimasi-varian-list">
+                  ${Object.entries(estimasi[groupKey] || {}).map(([kode, kap]) => `
+                    <div class="edit-estimasi-varian-row" data-group-key="${groupKey}" data-kode="${kode}">
+                      <input class="edit-field-input edit-estimasi-kode" value="${kode}" placeholder="Kode Varian" data-group-key="${groupKey}" data-original-kode="${kode}">
+                      <input type="number" min="0" class="edit-field-input edit-estimasi-kapasitas" value="${kap}" placeholder="Kapasitas" data-group-key="${groupKey}" data-kode="${kode}">
+                      <button class="btn-hapus-row btn-hapus-estimasi-varian" data-group-key="${groupKey}" data-kode="${kode}"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                  `).join("")}
+                </div>
+                <button class="btn-tambah-row btn-tambah-estimasi-varian" data-group-key="${groupKey}">
+                  <i class="fa-solid fa-plus"></i> Tambah Varian
+                </button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="btnTambahEstimasiGroup">
+            <i class="fa-solid fa-plus"></i> Tambah Grup Loyang
           </button>
         </div>
 
@@ -1016,6 +1059,64 @@ function renderEditOperasional(cabang) {
       el.onchange = () => { loyang[parseInt(el.dataset.index)].status = el.checked; };
     });
 
+    // ── ESTIMASI LOYANG events ──
+    document.getElementById("btnTambahEstimasiGroup").onclick = () => {
+      let newKey = "loyangBaru", i = 1;
+      while (newKey in estimasi) { newKey = `loyangBaru${i}`; i++; }
+      estimasi[newKey] = {};
+      render();
+    };
+    document.querySelectorAll(".btn-hapus-estimasi-group").forEach(btn => {
+      btn.onclick = () => { delete estimasi[btn.dataset.groupKey]; render(); };
+    });
+    document.querySelectorAll(".edit-estimasi-group-name").forEach(el => {
+      el.onchange = () => {
+        const oldKey = el.dataset.groupKey;
+        const newKey = el.value.trim();
+        if (!newKey || newKey === oldKey) { render(); return; }
+        estimasi[newKey] = estimasi[oldKey] || {};
+        delete estimasi[oldKey];
+        render();
+      };
+    });
+    document.querySelectorAll(".btn-tambah-estimasi-varian").forEach(btn => {
+      btn.onclick = () => {
+        const groupKey = btn.dataset.groupKey;
+        if (!estimasi[groupKey]) estimasi[groupKey] = {};
+        let newKode = "KODE", i = 1;
+        while (newKode in estimasi[groupKey]) { newKode = `KODE${i}`; i++; }
+        estimasi[groupKey][newKode] = 0;
+        render();
+      };
+    });
+    document.querySelectorAll(".btn-hapus-estimasi-varian").forEach(btn => {
+      btn.onclick = () => {
+        const groupKey = btn.dataset.groupKey;
+        if (estimasi[groupKey]) delete estimasi[groupKey][btn.dataset.kode];
+        render();
+      };
+    });
+    document.querySelectorAll(".edit-estimasi-kode").forEach(el => {
+      el.onchange = () => {
+        const groupKey = el.dataset.groupKey;
+        const oldKode  = el.dataset.originalKode;
+        const newKode  = el.value.trim().toUpperCase();
+        if (!newKode || !estimasi[groupKey]) { render(); return; }
+        const val = estimasi[groupKey][oldKode] || 0;
+        delete estimasi[groupKey][oldKode];
+        estimasi[groupKey][newKode] = val;
+        render();
+      };
+    });
+    document.querySelectorAll(".edit-estimasi-kapasitas").forEach(el => {
+      el.oninput = () => {
+        const groupKey = el.dataset.groupKey;
+        const kode = el.dataset.kode;
+        if (!estimasi[groupKey]) estimasi[groupKey] = {};
+        estimasi[groupKey][kode] = parseInt(el.value) || 0;
+      };
+    });
+
     // ── PENGELUARAN DISTRIBUSI FIX events ──
     document.getElementById("btnTambahPenDistFix").onclick = () => {
       penDistFix.push("");
@@ -1105,6 +1206,8 @@ function renderEditOperasional(cabang) {
           }
         });
 
+        const estimasiFinal = JSON.parse(JSON.stringify(estimasi));
+
         const updates = {
           varian: varianFinal,
           harga:  hargaFinal,
@@ -1113,6 +1216,7 @@ function renderEditOperasional(cabang) {
           pengeluaran: { fix: penFix, variable: penVariableFinal },
           pengeluaranDistribusi: { fix: penDistFix, variable: penDistVariableFinal },
           loyang: loyangFinal,
+          estimasi: estimasiFinal,
           potongan: {
             kelipatanUpah: {
               batas:       parseInt(document.getElementById("editPotKelipatanBatas").value) || 0,
@@ -1818,6 +1922,7 @@ function renderTambahCabang() {
       pengeluaran: { fix: [], variable: [] },
       pengeluaranDistribusi: { fix: [], variable: [] },
       loyang: [],
+      estimasi: {},
       potongan: {
         kelipatanUpah: { batas: 0, kelipatan: 0, potonganUpah: 0 },
         setengahUpah:  { batas: 0, potonganUpah: 0 }
@@ -2002,6 +2107,7 @@ function renderTambahCabang() {
       const penFix      = op.pengeluaran.fix;
       const penVariable = op.pengeluaran.variable;
       const loyang          = op.loyang;
+      const estimasi        = op.estimasi;
       const penDistFix      = op.pengeluaranDistribusi.fix;
       const penDistVariable = op.pengeluaranDistribusi.variable;
 
@@ -2086,6 +2192,35 @@ function renderTambahCabang() {
           </div>
           <button class="btn-tambah-row" id="addTambahLoyang">
             <i class="fa-solid fa-plus"></i> Tambah Loyang
+          </button>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Estimasi Loyang (Kapasitas per Varian)</div>
+          <div id="addEstimasiList">
+            ${Object.keys(estimasi).map(groupKey => `
+              <div class="edit-estimasi-group" data-group-key="${groupKey}">
+                <div class="edit-estimasi-group-header">
+                  <input class="edit-field-input add-estimasi-group-name" value="${groupKey}" placeholder="Nama Grup (misal loyangOriginal)" data-group-key="${groupKey}">
+                  <button class="btn-hapus-row btn-hapus-add-estimasi-group" data-group-key="${groupKey}"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <div class="edit-estimasi-varian-list">
+                  ${Object.entries(estimasi[groupKey] || {}).map(([kode, kap]) => `
+                    <div class="edit-estimasi-varian-row" data-group-key="${groupKey}" data-kode="${kode}">
+                      <input class="edit-field-input add-estimasi-kode" value="${kode}" placeholder="Kode Varian" data-group-key="${groupKey}" data-original-kode="${kode}">
+                      <input type="number" min="0" class="edit-field-input add-estimasi-kapasitas" value="${kap}" placeholder="Kapasitas" data-group-key="${groupKey}" data-kode="${kode}">
+                      <button class="btn-hapus-row btn-hapus-add-estimasi-varian" data-group-key="${groupKey}" data-kode="${kode}"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                  `).join("")}
+                </div>
+                <button class="btn-tambah-row btn-tambah-add-estimasi-varian" data-group-key="${groupKey}">
+                  <i class="fa-solid fa-plus"></i> Tambah Varian
+                </button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="addTambahEstimasiGroup">
+            <i class="fa-solid fa-plus"></i> Tambah Grup Loyang
           </button>
         </div>
 
@@ -2207,6 +2342,63 @@ function renderTambahCabang() {
       });
       document.querySelectorAll(".add-loyang-status").forEach(el => {
         el.onchange = () => { loyang[parseInt(el.dataset.index)].status = el.checked; };
+      });
+
+      document.getElementById("addTambahEstimasiGroup").onclick = () => {
+        let newKey = "loyangBaru", i = 1;
+        while (newKey in estimasi) { newKey = `loyangBaru${i}`; i++; }
+        estimasi[newKey] = {};
+        renderStepBody();
+      };
+      document.querySelectorAll(".btn-hapus-add-estimasi-group").forEach(btn => {
+        btn.onclick = () => { delete estimasi[btn.dataset.groupKey]; renderStepBody(); };
+      });
+      document.querySelectorAll(".add-estimasi-group-name").forEach(el => {
+        el.onchange = () => {
+          const oldKey = el.dataset.groupKey;
+          const newKey = el.value.trim();
+          if (!newKey || newKey === oldKey) { renderStepBody(); return; }
+          estimasi[newKey] = estimasi[oldKey] || {};
+          delete estimasi[oldKey];
+          renderStepBody();
+        };
+      });
+      document.querySelectorAll(".btn-tambah-add-estimasi-varian").forEach(btn => {
+        btn.onclick = () => {
+          const groupKey = btn.dataset.groupKey;
+          if (!estimasi[groupKey]) estimasi[groupKey] = {};
+          let newKode = "KODE", i = 1;
+          while (newKode in estimasi[groupKey]) { newKode = `KODE${i}`; i++; }
+          estimasi[groupKey][newKode] = 0;
+          renderStepBody();
+        };
+      });
+      document.querySelectorAll(".btn-hapus-add-estimasi-varian").forEach(btn => {
+        btn.onclick = () => {
+          const groupKey = btn.dataset.groupKey;
+          if (estimasi[groupKey]) delete estimasi[groupKey][btn.dataset.kode];
+          renderStepBody();
+        };
+      });
+      document.querySelectorAll(".add-estimasi-kode").forEach(el => {
+        el.onchange = () => {
+          const groupKey = el.dataset.groupKey;
+          const oldKode  = el.dataset.originalKode;
+          const newKode  = el.value.trim().toUpperCase();
+          if (!newKode || !estimasi[groupKey]) { renderStepBody(); return; }
+          const val = estimasi[groupKey][oldKode] || 0;
+          delete estimasi[groupKey][oldKode];
+          estimasi[groupKey][newKode] = val;
+          renderStepBody();
+        };
+      });
+      document.querySelectorAll(".add-estimasi-kapasitas").forEach(el => {
+        el.oninput = () => {
+          const groupKey = el.dataset.groupKey;
+          const kode = el.dataset.kode;
+          if (!estimasi[groupKey]) estimasi[groupKey] = {};
+          estimasi[groupKey][kode] = parseInt(el.value) || 0;
+        };
       });
 
       document.getElementById("addTambahPenDistFix").onclick = () => {

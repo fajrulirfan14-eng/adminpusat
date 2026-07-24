@@ -367,6 +367,60 @@
   height: 100% !important;
   flex: 1;
 }
+.edit-estimasi-group {
+  margin-bottom: 14px;
+  padding: 10px;
+  border: 1px solid #e5decf;
+  border-radius: 10px;
+  background: #faf8f3;
+}
+.edit-estimasi-group-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: #6b584b;
+}
+.edit-estimasi-varian-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+.edit-estimasi-varian-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.edit-estimasi-varian-kode {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a7a6a;
+  text-align: center;
+}
+.edit-empty-note {
+  font-size: 12px;
+  color: #8a7a6a;
+  font-style: italic;
+  padding: 8px 0;
+}
+.edit-estimasi-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.edit-estimasi-group-header .edit-field-input {
+  flex: 1;
+  font-weight: 700;
+}
+.edit-estimasi-varian-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.edit-estimasi-varian-row .edit-field-input {
+  flex: 1;
+}
 
 /* ── CUSTOM DROPDOWN ── */
 .custom-dropdown { position: relative; }
