@@ -8,17 +8,13 @@ window.initHomeView = async function () {
     if (icon) icon.classList.add("fa-spin");
     if (reloadBtn) reloadBtn.disabled = true;
     try {
-      await syncGlobalData();
+      await Promise.all([loadStatCards(), loadCabangList()]);
+      Object.keys(homeKpiCache).forEach(k => delete homeKpiCache[k]);
+      initHomeFinanceCards();
     } catch(e) { }
     if (icon) icon.classList.remove("fa-spin");
     if (reloadBtn) reloadBtn.disabled = false;
   };
-
-  try {
-    await syncGlobalData();
-  } catch (e) {
-    console.error("❌ auto syncGlobalData:", e);
-  }
 
   const greeting = now.getHours() < 11 ? "Selamat Pagi"
     : now.getHours() < 15 ? "Selamat Siang"
@@ -244,16 +240,4 @@ async function loadCabangList() {
   } catch(e) {
     grid.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:20px 0;">Gagal memuat data.</div>`;
   }
-}
-
-// ── SYNC GLOBAL DATA ──
-async function syncGlobalData() {
-  try {
-    const usersSnap = await window.getDocs(window.collection(window.db, "users"));
-    const usersData = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    await window.idbSetUsers(usersData);
-    const cabangSnap = await window.getDocs(window.collection(window.db, "kantorCabang"));
-    const cabangData = cabangSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    await window.idbSetCabang(cabangData);
-  } catch(e) {  }
 }

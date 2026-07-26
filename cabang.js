@@ -347,6 +347,30 @@ function renderTabContent(tab, c) {
         }
       </div>
       <div class="tab-card">
+        <div class="tab-section-title">Bonus Admin (Efisiensi Produksi)</div>
+        ${(c.bonusAdmin || []).length
+          ? c.bonusAdmin.map((item, i) => `
+              <div class="tab-row">
+                <span class="tab-row-label">Rule ${i + 1}</span>
+                <span class="tab-row-value">Target: &lt;${item.target ?? 0}% · Bonus: ${item.bonus ?? 0}%</span>
+              </div>
+            `).join("")
+          : `<div class="tab-row"><span class="tab-row-label">Belum diatur</span><span class="tab-row-value">-</span></div>`
+        }
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Bonus Produksi (Efisiensi Produksi)</div>
+        ${(c.bonusProduksi || []).length
+          ? c.bonusProduksi.map((item, i) => `
+              <div class="tab-row">
+                <span class="tab-row-label">Rule ${i + 1}</span>
+                <span class="tab-row-value">Patokan: ${item.patokan ?? 0} · Bonus: ${item.bonus ?? 0}%</span>
+              </div>
+            `).join("")
+          : `<div class="tab-row"><span class="tab-row-label">Belum diatur</span><span class="tab-row-value">-</span></div>`
+        }
+      </div>
+      <div class="tab-card">
         <div class="tab-section-title">Pengeluaran Distribusi (Fix)</div>
         ${(pengeluaranDistribusi.fix||[]).map(item => `
           <div class="tab-row"><span class="tab-row-label">${item}</span><span class="tab-row-value">-</span></div>
@@ -755,6 +779,8 @@ function renderEditOperasional(cabang) {
   const penVariable = [...( cabang.pengeluaran?.variable || [])];
   const loyang         = JSON.parse(JSON.stringify(cabang.loyang || []));
   const estimasi       = JSON.parse(JSON.stringify(cabang.estimasi || {}));
+  const bonusAdmin     = JSON.parse(JSON.stringify(cabang.bonusAdmin || []));
+  const bonusProduksi  = JSON.parse(JSON.stringify(cabang.bonusProduksi || []));
   const penDistFix     = [...(cabang.pengeluaranDistribusi?.fix || [])];
   const penDistVariable = JSON.parse(JSON.stringify(cabang.pengeluaranDistribusi?.variable || []));
   const potongan = JSON.parse(JSON.stringify(cabang.potongan || {
@@ -893,6 +919,52 @@ function renderEditOperasional(cabang) {
           </div>
           <button class="btn-tambah-row" id="btnTambahEstimasiGroup">
             <i class="fa-solid fa-plus"></i> Tambah Grup Loyang
+          </button>
+        </div>
+
+        <!-- BONUS ADMIN (Efisiensi Produksi - adminCabang) -->
+        <div class="tab-card">
+          <div class="tab-section-title">Bonus Admin (Efisiensi Produksi)</div>
+          <div id="editBonusAdminList">
+            ${bonusAdmin.map((item, i) => `
+              <div class="edit-bonus-row" data-index="${i}">
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Target (di bawah %)</label>
+                  <input type="number" min="0" class="edit-field-input edit-bonusadmin-target" value="${item.target ?? 0}" data-index="${i}">
+                </div>
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Bonus (%)</label>
+                  <input type="number" min="0" class="edit-field-input edit-bonusadmin-bonus" value="${item.bonus ?? 0}" data-index="${i}">
+                </div>
+                <button class="btn-hapus-row btn-hapus-bonusadmin" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="btnTambahBonusAdmin">
+            <i class="fa-solid fa-plus"></i> Tambah Rule
+          </button>
+        </div>
+
+        <!-- BONUS PRODUKSI (Efisiensi Produksi - koki) -->
+        <div class="tab-card">
+          <div class="tab-section-title">Bonus Produksi (Efisiensi Produksi)</div>
+          <div id="editBonusProduksiList">
+            ${bonusProduksi.map((item, i) => `
+              <div class="edit-bonus-row" data-index="${i}">
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Patokan / Loyang</label>
+                  <input type="number" min="0" class="edit-field-input edit-bonusprod-patokan" value="${item.patokan ?? 0}" data-index="${i}">
+                </div>
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Bonus (%)</label>
+                  <input type="number" min="0" class="edit-field-input edit-bonusprod-bonus" value="${item.bonus ?? 0}" data-index="${i}">
+                </div>
+                <button class="btn-hapus-row btn-hapus-bonusprod" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="btnTambahBonusProduksi">
+            <i class="fa-solid fa-plus"></i> Tambah Rule
           </button>
         </div>
 
@@ -1117,6 +1189,36 @@ function renderEditOperasional(cabang) {
       };
     });
 
+    // ── BONUS ADMIN events ──
+    document.getElementById("btnTambahBonusAdmin").onclick = () => {
+      bonusAdmin.push({ target: 0, bonus: 0 });
+      render();
+    };
+    document.querySelectorAll(".btn-hapus-bonusadmin").forEach(btn => {
+      btn.onclick = () => { bonusAdmin.splice(parseInt(btn.dataset.index), 1); render(); };
+    });
+    document.querySelectorAll(".edit-bonusadmin-target").forEach(el => {
+      el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].target = parseInt(el.value) || 0; };
+    });
+    document.querySelectorAll(".edit-bonusadmin-bonus").forEach(el => {
+      el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
+    });
+
+    // ── BONUS PRODUKSI events ──
+    document.getElementById("btnTambahBonusProduksi").onclick = () => {
+      bonusProduksi.push({ patokan: 0, bonus: 0 });
+      render();
+    };
+    document.querySelectorAll(".btn-hapus-bonusprod").forEach(btn => {
+      btn.onclick = () => { bonusProduksi.splice(parseInt(btn.dataset.index), 1); render(); };
+    });
+    document.querySelectorAll(".edit-bonusprod-patokan").forEach(el => {
+      el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].patokan = parseInt(el.value) || 0; };
+    });
+    document.querySelectorAll(".edit-bonusprod-bonus").forEach(el => {
+      el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
+    });
+
     // ── PENGELUARAN DISTRIBUSI FIX events ──
     document.getElementById("btnTambahPenDistFix").onclick = () => {
       penDistFix.push("");
@@ -1206,7 +1308,9 @@ function renderEditOperasional(cabang) {
           }
         });
 
-        const estimasiFinal = JSON.parse(JSON.stringify(estimasi));
+        const estimasiFinal      = JSON.parse(JSON.stringify(estimasi));
+        const bonusAdminFinal    = JSON.parse(JSON.stringify(bonusAdmin));
+        const bonusProduksiFinal = JSON.parse(JSON.stringify(bonusProduksi));
 
         const updates = {
           varian: varianFinal,
@@ -1217,6 +1321,8 @@ function renderEditOperasional(cabang) {
           pengeluaranDistribusi: { fix: penDistFix, variable: penDistVariableFinal },
           loyang: loyangFinal,
           estimasi: estimasiFinal,
+          bonusAdmin: bonusAdminFinal,
+          bonusProduksi: bonusProduksiFinal,
           potongan: {
             kelipatanUpah: {
               batas:       parseInt(document.getElementById("editPotKelipatanBatas").value) || 0,
@@ -1923,6 +2029,8 @@ function renderTambahCabang() {
       pengeluaranDistribusi: { fix: [], variable: [] },
       loyang: [],
       estimasi: {},
+      bonusAdmin: [],
+      bonusProduksi: [],
       potongan: {
         kelipatanUpah: { batas: 0, kelipatan: 0, potonganUpah: 0 },
         setengahUpah:  { batas: 0, potonganUpah: 0 }
@@ -2108,6 +2216,8 @@ function renderTambahCabang() {
       const penVariable = op.pengeluaran.variable;
       const loyang          = op.loyang;
       const estimasi        = op.estimasi;
+      const bonusAdmin      = op.bonusAdmin;
+      const bonusProduksi   = op.bonusProduksi;
       const penDistFix      = op.pengeluaranDistribusi.fix;
       const penDistVariable = op.pengeluaranDistribusi.variable;
 
@@ -2221,6 +2331,50 @@ function renderTambahCabang() {
           </div>
           <button class="btn-tambah-row" id="addTambahEstimasiGroup">
             <i class="fa-solid fa-plus"></i> Tambah Grup Loyang
+          </button>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Bonus Admin (Efisiensi Produksi)</div>
+          <div id="addBonusAdminList">
+            ${bonusAdmin.map((item, i) => `
+              <div class="edit-bonus-row" data-index="${i}">
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Target (di bawah %)</label>
+                  <input type="number" min="0" class="edit-field-input add-bonusadmin-target" value="${item.target ?? 0}" data-index="${i}">
+                </div>
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Bonus (%)</label>
+                  <input type="number" min="0" class="edit-field-input add-bonusadmin-bonus" value="${item.bonus ?? 0}" data-index="${i}">
+                </div>
+                <button class="btn-hapus-row btn-hapus-add-bonusadmin" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="addTambahBonusAdmin">
+            <i class="fa-solid fa-plus"></i> Tambah Rule
+          </button>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Bonus Produksi (Efisiensi Produksi)</div>
+          <div id="addBonusProduksiList">
+            ${bonusProduksi.map((item, i) => `
+              <div class="edit-bonus-row" data-index="${i}">
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Patokan / Loyang</label>
+                  <input type="number" min="0" class="edit-field-input add-bonusprod-patokan" value="${item.patokan ?? 0}" data-index="${i}">
+                </div>
+                <div class="edit-bonus-field">
+                  <label class="edit-bonus-field-label">Bonus (%)</label>
+                  <input type="number" min="0" class="edit-field-input add-bonusprod-bonus" value="${item.bonus ?? 0}" data-index="${i}">
+                </div>
+                <button class="btn-hapus-row btn-hapus-add-bonusprod" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            `).join("")}
+          </div>
+          <button class="btn-tambah-row" id="addTambahBonusProduksi">
+            <i class="fa-solid fa-plus"></i> Tambah Rule
           </button>
         </div>
 
@@ -2399,6 +2553,34 @@ function renderTambahCabang() {
           if (!estimasi[groupKey]) estimasi[groupKey] = {};
           estimasi[groupKey][kode] = parseInt(el.value) || 0;
         };
+      });
+
+      document.getElementById("addTambahBonusAdmin").onclick = () => {
+        bonusAdmin.push({ target: 0, bonus: 0 });
+        renderStepBody();
+      };
+      document.querySelectorAll(".btn-hapus-add-bonusadmin").forEach(btn => {
+        btn.onclick = () => { bonusAdmin.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+      });
+      document.querySelectorAll(".add-bonusadmin-target").forEach(el => {
+        el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].target = parseInt(el.value) || 0; };
+      });
+      document.querySelectorAll(".add-bonusadmin-bonus").forEach(el => {
+        el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
+      });
+
+      document.getElementById("addTambahBonusProduksi").onclick = () => {
+        bonusProduksi.push({ patokan: 0, bonus: 0 });
+        renderStepBody();
+      };
+      document.querySelectorAll(".btn-hapus-add-bonusprod").forEach(btn => {
+        btn.onclick = () => { bonusProduksi.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+      });
+      document.querySelectorAll(".add-bonusprod-patokan").forEach(el => {
+        el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].patokan = parseInt(el.value) || 0; };
+      });
+      document.querySelectorAll(".add-bonusprod-bonus").forEach(el => {
+        el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
       });
 
       document.getElementById("addTambahPenDistFix").onclick = () => {
