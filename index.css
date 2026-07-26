@@ -304,6 +304,12 @@ html, body {
   z-index: 400;
   padding: 0 8px;
   padding-bottom: env(safe-area-inset-bottom);
+  transition: transform .25s ease, opacity .25s ease;
+}
+.bottom-nav.bottomnav-auto-hide {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
 }
 .bottom-nav-item {
   display: flex; flex-direction: column;

@@ -140,6 +140,7 @@ function initApp() {
   initTopbar();
   initPullToRefresh();
   initBottomNavMore();
+  initBottomNavScrollHide();
 
   const sidebarOpen = localStorage.getItem("sidebarOpen") === "true";
   if (sidebarOpen && window.innerWidth >= 769) {
@@ -153,6 +154,25 @@ function initApp() {
   requestAnimationFrame(() => {
     document.getElementById("app").style.visibility = "visible";
   });
+}
+/* ── SEMBUNYIKAN BOTTOM NAV SAAT SCROLL KE BAWAH, MUNCUL LAGI SAAT SCROLL KE ATAS ── */
+function initBottomNavScrollHide() {
+  const bottomNav = document.querySelector(".bottom-nav");
+  if (!bottomNav) return;
+
+  let lastY = 0;
+  document.addEventListener("scroll", e => {
+    const el = e.target;
+    const y  = (el === document ? window.scrollY : el.scrollTop) || 0;
+    const delta = y - lastY;
+    if (Math.abs(delta) < 6) return; // threshold kecil biar gak flicker tiap 1px
+    if (delta > 0 && y > 40) {
+      bottomNav.classList.add("bottomnav-auto-hide");
+    } else if (delta < 0) {
+      bottomNav.classList.remove("bottomnav-auto-hide");
+    }
+    lastY = y;
+  }, true); // capture:true — biar kedeteksi scroll di elemen manapun (termasuk .view-scroll), bukan cuma window
 }
 // ── ANDROID BACK ──
 window._pusatOpenDetailKey = null;
