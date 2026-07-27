@@ -370,15 +370,15 @@
 .edit-estimasi-group {
   margin-bottom: 14px;
   padding: 10px;
-  border: 1px solid #e5decf;
+  border: 1px solid var(--border-card);
   border-radius: 10px;
-  background: #faf8f3;
+  background: var(--bg-card);
 }
 .edit-estimasi-group-title {
   font-weight: 700;
   font-size: 13px;
   margin-bottom: 8px;
-  color: #6b584b;
+  color: var(--brand-primary);
 }
 .edit-estimasi-varian-grid {
   display: grid;
@@ -393,12 +393,12 @@
 .edit-estimasi-varian-kode {
   font-size: 11px;
   font-weight: 700;
-  color: #8a7a6a;
+  color: var(--text-muted);
   text-align: center;
 }
 .edit-empty-note {
   font-size: 12px;
-  color: #8a7a6a;
+  color: var(--text-muted);
   font-style: italic;
   padding: 8px 0;
 }
@@ -429,9 +429,9 @@
   gap: 8px;
   margin-bottom: 10px;
   padding: 8px;
-  border: 1px solid #e5decf;
+  border: 1px solid var(--border-card);
   border-radius: 10px;
-  background: #faf8f3;
+  background: var(--bg-card);
 }
 .edit-bonus-field {
   flex: 1;
@@ -443,15 +443,15 @@
 .edit-bonus-field-label {
   font-size: 9.5px;
   font-weight: 700;
-  color: #8a7a6a;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: .03em;
 }
 .edit-bonus-row .edit-field-input {
   width: 100%;
   box-sizing: border-box;
-  background: #fff;
-  border: 1px solid #e5decf !important;
+  background: var(--bg-page);
+  border: 1px solid var(--border-card) !important;
   border-radius: 6px;
   padding: 6px 8px;
 }
