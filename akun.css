@@ -296,6 +296,43 @@
 }
 .btn-aktifkan:hover { background: rgba(34,197,94,0.2); }
 
+.btn-hapus {
+  flex: 1; padding: 12px;
+  background: #dc2626;
+  border: none;
+  border-radius: 12px; color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: opacity var(--transition-fast);
+}
+.btn-hapus:hover { opacity: 0.88; }
+.btn-hapus:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-simpan {
+  flex: 1; padding: 12px;
+  background: var(--brand-primary, #b3874f);
+  border: none;
+  border-radius: 12px; color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: opacity var(--transition-fast);
+}
+.btn-simpan:hover { opacity: 0.88; }
+.btn-simpan:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-batal {
+  flex: 1; padding: 12px;
+  background: var(--bg-hover, #f5ede3);
+  border: 1px solid var(--border-card);
+  border-radius: 12px; color: var(--text-muted);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: background var(--transition-fast);
+}
+.btn-batal:hover { background: var(--bg-card); }
+
 /* ── VARIAN EDIT ── */
 .akun-varian-row {
   padding: 10px 0;
@@ -432,9 +469,7 @@ body.akun-confirm-sheet-open {
 
 @media (max-width: 768px) {
   .akun-sheet-footer { padding-bottom: 10px; }
-}
-/* ── MEDIA QUERIES ── */
-@media (max-width: 768px) {
+  .akun-sheet-body { padding: 14px 0; }
   .akun-list-panel { width: 100%; border-right: none; }
   .akun-detail-wrapper {
     position: absolute; inset: 0; z-index: 10;

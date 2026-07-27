@@ -248,7 +248,7 @@ function initAkunBackBtn() {
 
 // ── SECONDARY FIREBASE APP ──
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 const secondaryApp = initializeApp({
   apiKey: "AIzaSyCp32H2WeN3A4ZwwWeUWe3Qcjqh0mz_vvQ",
   authDomain: "teh-tarik-nusantara-26371.firebaseapp.com",
@@ -648,6 +648,14 @@ function renderTambahAkun() {
         createdAt:    window.serverTimestamp(),
       });
 
+      await window.setDoc(window.doc(window.db, "akun", newUid), {
+        uid:      newUid,
+        role:     "adminCabang",
+        password,
+        email,
+        idCabang: activeAkunCabangId,
+      });
+
       // Logout secondary
       await secondaryAuth.signOut();
 
@@ -933,6 +941,14 @@ async function renderTambahInvestor() {
         status: true,
         createdBy: adminCheck.id,
         createdAt: window.serverTimestamp(),
+      });
+
+      await window.setDoc(window.doc(window.db, "akun", newUid), {
+        uid:      newUid,
+        role:     "investor",
+        password,
+        email,
+        idCabang: activeAkunCabangId,
       });
 
       await secondaryAuth.signOut();
@@ -1350,6 +1366,14 @@ async function renderTambahMarketing(role) {
 
       await window.setDoc(window.doc(window.db, "users", newUid), payloadUser);
 
+      await window.setDoc(window.doc(window.db, "akun", newUid), {
+        uid:      newUid,
+        role,
+        password,
+        email,
+        idCabang: activeAkunCabangId,
+      });
+
       await secondaryAuth.signOut();
 
       btn.innerHTML = `<i class="fa-solid fa-check"></i> Berhasil!`;
@@ -1371,7 +1395,263 @@ async function renderTambahMarketing(role) {
   };
 }
 
-// ── OPEN DETAIL AKUN ──
+function showAkunReauthPopup(title, message, actionLabel, actionClass) {
+  return new Promise(resolve => {
+    document.getElementById("akunReauthOverlay")?.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "akunReauthOverlay";
+    overlay.className = "confirm-overlay";
+    overlay.innerHTML = `
+      <div class="confirm-box">
+        <div class="confirm-icon"><i class="fa-solid fa-lock"></i></div>
+        <div class="confirm-title">${title}</div>
+        <div class="confirm-msg">${message}</div>
+        <div class="confirm-pass-wrap">
+          <input type="password" id="akunReauthPassInput" class="edit-field-input" placeholder="Password akun kamu...">
+          <div class="confirm-pass-error" id="akunReauthPassError"></div>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-batal" id="akunReauthBatal">Batal</button>
+          <button class="${actionClass}" id="akunReauthOk">${actionLabel}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("show"));
+    setTimeout(() => document.getElementById("akunReauthPassInput")?.focus(), 300);
+
+    const close = (result) => {
+      overlay.classList.remove("show");
+      setTimeout(() => overlay.remove(), 200);
+      resolve(result);
+    };
+
+    document.getElementById("akunReauthBatal").onclick = () => close(null);
+    overlay.onclick = e => { if (e.target === overlay) close(null); };
+    document.getElementById("akunReauthPassInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") document.getElementById("akunReauthOk").click();
+    });
+
+    document.getElementById("akunReauthOk").onclick = async () => {
+      const btn = document.getElementById("akunReauthOk");
+      const passInput = document.getElementById("akunReauthPassInput");
+      const errEl = document.getElementById("akunReauthPassError");
+      const password = passInput.value;
+      if (!password) { errEl.textContent = "Password tidak boleh kosong."; return; }
+
+      const originalLabel = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
+      errEl.textContent = "";
+
+      try {
+        const user = window.auth.currentUser;
+        const credential = window.EmailAuthProvider.credential(user.email, password);
+        await window.reauthenticateWithCredential(user, credential);
+        close(true);
+      } catch (err) {
+        console.error("❌ reauth:", err);
+        errEl.textContent = "Password salah.";
+        btn.disabled = false;
+        btn.innerHTML = originalLabel;
+      }
+    };
+  });
+}
+
+function showAkunGantiPasswordPopup(u) {
+  return new Promise(resolve => {
+    document.getElementById("akunGantiPassOverlay")?.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "akunGantiPassOverlay";
+    overlay.className = "confirm-overlay";
+    overlay.innerHTML = `
+      <div class="confirm-box">
+        <div class="confirm-icon"><i class="fa-solid fa-key"></i></div>
+        <div class="confirm-title">Ubah Password Akun</div>
+        <div class="confirm-msg">Masukkan password baru untuk <strong>${u.nama}</strong>, lalu password akun kamu sendiri untuk konfirmasi.</div>
+        <div class="confirm-pass-wrap">
+          <input type="password" id="akunGantiPassBaru" class="edit-field-input" placeholder="Password baru (min. 6 karakter)" style="margin-bottom:8px;">
+          <input type="password" id="akunGantiPassSendiri" class="edit-field-input" placeholder="Password akun kamu...">
+          <div class="confirm-pass-error" id="akunGantiPassError"></div>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-batal" id="akunGantiPassBatal">Batal</button>
+          <button class="btn-simpan" id="akunGantiPassOk">Simpan</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("show"));
+    setTimeout(() => document.getElementById("akunGantiPassBaru")?.focus(), 300);
+
+    const close = (result) => {
+      overlay.classList.remove("show");
+      setTimeout(() => overlay.remove(), 200);
+      resolve(result);
+    };
+
+    document.getElementById("akunGantiPassBatal").onclick = () => close(null);
+    overlay.onclick = e => { if (e.target === overlay) close(null); };
+
+    document.getElementById("akunGantiPassOk").onclick = async () => {
+      const btn = document.getElementById("akunGantiPassOk");
+      const passBaru = document.getElementById("akunGantiPassBaru").value.trim();
+      const passSendiri = document.getElementById("akunGantiPassSendiri").value;
+      const errEl = document.getElementById("akunGantiPassError");
+
+      if (passBaru.length < 6) { errEl.textContent = "Password baru minimal 6 karakter."; return; }
+      if (!passSendiri) { errEl.textContent = "Password akun kamu wajib diisi."; return; }
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
+      errEl.textContent = "";
+
+      try {
+        const user = window.auth.currentUser;
+        const credential = window.EmailAuthProvider.credential(user.email, passSendiri);
+        await window.reauthenticateWithCredential(user, credential);
+        close(passBaru);
+      } catch (err) {
+        console.error("❌ reauth (ganti password):", err);
+        errEl.textContent = "Password akun kamu salah.";
+        btn.disabled = false;
+        btn.innerHTML = "Simpan";
+      }
+    };
+  });
+}
+async function gantiAkunPasswordAdminPusat(u) {
+  const passwordBaru = await showAkunGantiPasswordPopup(u);
+  if (!passwordBaru) return;
+
+  try {
+    const akunSnap = await window.getDocs(
+      window.query(window.collection(window.db, "akun"), window.where("uid", "==", u.id))
+    );
+    if (akunSnap.empty) throw new Error("Data login akun tidak ditemukan");
+    const akunDoc = akunSnap.docs[0];
+    const { email, password: passwordLama, role, idCabang } = akunDoc.data();
+    if (!email || !passwordLama) throw new Error("Email/password akun tidak lengkap");
+
+    const cred = await signInWithEmailAndPassword(secondaryAuth, email, passwordLama);
+    await updatePassword(cred.user, passwordBaru);
+    await signOut(secondaryAuth);
+
+    await window.deleteDoc(window.doc(window.db, "akun", akunDoc.id));
+    await window.setDoc(window.doc(window.db, "akun", akunDoc.id), {
+      uid: u.id, role, password: passwordBaru, email, idCabang,
+    });
+
+    window.showAkunToast("Password berhasil diubah", "success");
+  } catch (err) {
+    console.error("❌ gantiAkunPasswordAdminPusat:", err);
+    const msg = err.code === "auth/wrong-password" || err.code === "auth/invalid-credential"
+      ? "Password tersimpan tidak valid — user mungkin pernah ganti password sendiri"
+      : err.code === "auth/weak-password"
+      ? "Password baru terlalu lemah"
+      : "Gagal mengubah password";
+    window.showAkunToast(msg, "error");
+  }
+}
+async function cekMasihPunyaCustomerAdminPusat(uid, role, idCabang) {
+  try {
+    let q;
+    if (role === "kurir") {
+      q = window.query(window.collection(window.db, "customer"), window.where("pemilik", "==", uid), window.where("idCabang", "==", idCabang), window.limit(1));
+    } else if (role === "sales") {
+      q = window.query(window.collection(window.db, "customerSales"), window.where("pemilik", "==", uid), window.where("idCabang", "==", idCabang), window.limit(1));
+    } else if (role === "hunter") {
+      q = window.query(window.collection(window.db, "users", uid, "customerBaruHunter"), window.where("idCabang", "==", idCabang), window.limit(1));
+    } else {
+      return false;
+    }
+    const snap = await window.getDocs(q);
+    return !snap.empty;
+  } catch (err) {
+    console.error("❌ cekMasihPunyaCustomerAdminPusat:", err);
+    window.showAkunToast("Gagal mengecek data customer, coba lagi", "error");
+    return true;
+  }
+}
+function showAkunMasihPunyaCustomerPopup(nama) {
+  document.getElementById("akunMasihCustomerOverlay")?.remove();
+  const overlay = document.createElement("div");
+  overlay.id = "akunMasihCustomerOverlay";
+  overlay.className = "confirm-overlay";
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-icon" style="background:rgba(220,38,38,0.1);"><i class="fa-solid fa-triangle-exclamation" style="color:#dc2626"></i></div>
+      <div class="confirm-title">Tidak Bisa Dihapus</div>
+      <div class="confirm-msg">Akun <strong>${nama}</strong> masih memiliki customer yang terdaftar. Pindahkan atau hapus customer tersebut terlebih dahulu.</div>
+      <div class="confirm-actions">
+        <button class="btn-simpan" id="akunMasihCustomerOke" style="flex:1;">Mengerti</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add("show"));
+  const close = () => { overlay.classList.remove("show"); setTimeout(() => overlay.remove(), 200); };
+  document.getElementById("akunMasihCustomerOke").onclick = close;
+  overlay.onclick = e => { if (e.target === overlay) close(); };
+}
+async function hapusAkunPermanenAdminPusat(u) {
+  if (["kurir", "sales", "hunter"].includes(u.role)) {
+    const masihAda = await cekMasihPunyaCustomerAdminPusat(u.id, u.role, u.idCabang);
+    if (masihAda) { showAkunMasihPunyaCustomerPopup(u.nama || "-"); return; }
+  }
+
+  const confirmed = await showAkunReauthPopup(
+    "Hapus Akun Permanen",
+    `Masukkan password akun kamu untuk menghapus <strong>${u.nama}</strong> secara permanen. Tindakan ini tidak bisa dibatalkan!`,
+    "Hapus",
+    "btn-hapus"
+  );
+  if (!confirmed) return;
+
+  try {
+    const akunSnap = await window.getDocs(
+      window.query(window.collection(window.db, "akun"), window.where("uid", "==", u.id))
+    );
+    if (akunSnap.empty) throw new Error("Data login akun tidak ditemukan");
+    const akunDoc = akunSnap.docs[0];
+    const { email, password } = akunDoc.data();
+    if (!email || !password) throw new Error("Email/password akun tidak lengkap");
+
+    const cred = await signInWithEmailAndPassword(secondaryAuth, email, password);
+    await cred.user.delete();
+    await signOut(secondaryAuth);
+
+    try {
+      await window.deleteObject(window.storageRef(window.storage, `fotoUsers/${u.id}`));
+    } catch (err) {
+      if (err.code !== "storage/object-not-found") console.error("❌ hapus foto storage:", err);
+    }
+
+    await window.deleteDoc(window.doc(window.db, "akun", akunDoc.id));
+    await window.deleteDoc(window.doc(window.db, "users", u.id));
+
+    window.showAkunToast("Akun berhasil dihapus permanen", "success");
+
+    document.getElementById("akunSheet")?.classList.remove("show");
+    document.getElementById("akunSheetOverlay")?.classList.remove("show");
+    setTimeout(() => {
+      document.getElementById("akunSheet")?.remove();
+      document.getElementById("akunSheetOverlay")?.remove();
+    }, 350);
+
+    const activeTab = document.querySelector(".akun-tab.active")?.dataset.tab;
+    if (activeTab === "adminCabang") loadAdminCabangTab();
+    else loadMarketingTab(activeTab);
+  } catch (err) {
+    console.error("❌ hapusAkunPermanenAdminPusat:", err);
+    const msg = err.code === "auth/wrong-password" || err.code === "auth/invalid-credential"
+      ? "Password tersimpan tidak valid — user mungkin pernah ganti password sendiri"
+      : "Gagal menghapus akun";
+    window.showAkunToast(msg, "error");
+  }
+}
+
 window.openAkunDetail = async function(uid) {
   const snap = await window.getDoc(window.doc(window.db, "users", uid));
   if (!snap.exists()) return;
@@ -1632,13 +1912,19 @@ function renderAkunSheet(u) {
       <div id="akunSheetError" style="color:#dc2626;font-size:12px;text-align:center;min-height:16px;margin-top:4px;"></div>
     </div>
 
-    <div class="akun-sheet-footer">
+    <div class="akun-sheet-footer" style="flex-wrap:wrap;">
       <button class="${isAktif ? 'btn-nonaktif' : 'btn-aktifkan'}" id="akunSheetToggleStatus">
         <i class="fa-solid ${isAktif ? 'fa-user-slash' : 'fa-user-check'}"></i>
         ${isAktif ? 'Nonaktifkan' : 'Aktifkan'}
       </button>
       <button class="btn-simpan" id="akunSheetSimpan" style="flex:2;">
         <i class="fa-solid fa-floppy-disk"></i> Simpan
+      </button>
+      <button class="btn-nonaktif" id="akunSheetGantiPassword" style="flex:1 1 100%; background:rgba(59,130,246,0.1); color:#3b82f6;">
+        <i class="fa-solid fa-key"></i> Ganti Password
+      </button>
+      <button class="btn-hapus" id="akunSheetHapusPermanen" style="flex:1 1 100%;">
+        <i class="fa-solid fa-trash"></i> Hapus Akun Permanen
       </button>
     </div>
   `;
@@ -1801,6 +2087,9 @@ function renderAkunSheet(u) {
     showConfirmToggleStatus(u, isAktif, closeSheet);
   };
 
+  document.getElementById("akunSheetGantiPassword")?.addEventListener("click", () => gantiAkunPasswordAdminPusat(u));
+  document.getElementById("akunSheetHapusPermanen")?.addEventListener("click", () => hapusAkunPermanenAdminPusat(u));
+
   // Simpan
   document.getElementById("akunSheetSimpan").onclick = async () => {
     const btn    = document.getElementById("akunSheetSimpan");
@@ -1921,8 +2210,8 @@ function editAkunField(label, id, value, type = "input") {
     </div>`;
   if (type === "password") return `
     <div class="edit-field">
-      <div class="edit-field-label">${label} (kosongkan jika tidak ingin diubah)</div>
-      <input id="${id}" type="password" class="edit-field-input" placeholder="••••••">
+      <div class="edit-field-label">${label} (wajib diisi)</div>
+      <input id="${id}" type="password" class="edit-field-input" placeholder="Minimal 6 karakter">
     </div>`;
   return `
     <div class="edit-field">
