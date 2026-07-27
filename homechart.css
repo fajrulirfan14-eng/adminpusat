@@ -91,9 +91,9 @@
 .home-chart-tooltip {
   position: fixed; pointer-events: none;
   transform: translate(-50%, calc(-100% - 12px));
-  background: #fff; border: 1px solid var(--border-card);
+  background: var(--tooltip-bg); border: 1px solid var(--tooltip-border);
   border-radius: 10px; padding: 10px 14px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  box-shadow: 0 8px 24px var(--tooltip-shadow);
   opacity: 0; transition: opacity 0.1s ease;
   z-index: 99999; white-space: nowrap;
   font-family: 'Poppins', sans-serif;

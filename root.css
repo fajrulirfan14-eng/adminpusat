@@ -53,6 +53,11 @@
   /* Layout */
   --sidebar-width:  260px;
   --topbar-height:  64px;
+
+  /* Tooltip */
+  --tooltip-bg:     #ffffff;
+  --tooltip-border: rgba(138,98,52,0.15);
+  --tooltip-shadow: rgba(61,44,30,0.18);
 }
 
 /* ── DARK MODE ── */
@@ -87,6 +92,11 @@ html.dark-mode {
   --warning-bg:     rgba(202,138,4,0.4);
   --danger-bg:      rgba(220,38,38,0.4);
   --info-bg:        rgba(37,99,235,0.4);
+
+  /* Tooltip */
+  --tooltip-bg:     #35373c;
+  --tooltip-border: rgba(255,255,255,0.12);
+  --tooltip-shadow: rgba(0,0,0,0.5);
 }
 
 /* ── UKURAN TEKS (skala seluruh UI) ── */

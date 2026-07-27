@@ -17,11 +17,22 @@ function homeChartCurrentPeriode() {
 }
 
 async function homeChartGetAdminCabangList() {
-  const allUsers = await window.idbGetUsers();
-  if (!allUsers) return [];
-  return allUsers
-    .filter(u => u.role === "adminCabang" && u.status === true)
-    .map(u => ({ uid: u.id, idCabang: u.idCabang, nama: u.kantorCabang || "Cabang" }));
+  try {
+    const snap = await window.getDocs(
+      window.query(
+        window.collection(window.db, "users"),
+        window.where("role", "==", "adminCabang"),
+        window.where("status", "==", true)
+      )
+    );
+    return snap.docs.map(d => {
+      const u = d.data();
+      return { uid: d.id, idCabang: u.idCabang, nama: u.kantorCabang || "Cabang" };
+    });
+  } catch (e) {
+    console.error("❌ homeChartGetAdminCabangList:", e);
+    return [];
+  }
 }
 
 async function homeChartLoadData(periode) {
