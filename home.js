@@ -1,6 +1,15 @@
 
 window.initHomeView = async function () {
   const user = window.currentUser;
+
+  // Guard: home cuma boleh diakses adminPusat, role lain paksa logout
+  if (!user || user.role !== "adminPusat") {
+    try { await window.auth?.signOut(); } catch (e) {}
+    try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}
+    window.location.href = "login.html";
+    return;
+  }
+
   const now  = new Date();
   window.onHomeReload = async () => {
     const reloadBtn = document.getElementById("topbarReload");
