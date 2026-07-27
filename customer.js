@@ -1,10 +1,17 @@
-// ── CUSTOMER VIEW ──
+// ── CUSTOMER VIEW (adminPusat) ──
+// Sekarang support 3 role: kurir, sales, hunter — bukan cuma kurir.
+const ROLE_LABEL      = { kurir: "Kurir", sales: "Sales", hunter: "Hunter" };
+const ROLE_COLLECTION = { kurir: "customer", sales: "customerSales" }; // hunter pakai subcollection, ditangani terpisah
+const HUNTER_IDB_BUCKET = "_HUNTER_ALL_"; // pseudo "hari" — biar tetap bisa reuse idbGetCust/idbSetCust yang sama
+
 let activeCustCabangId = null;
-let activeCustKurirId  = null;
-let activeCustKurir    = null;
+let activeCustStaffId  = null; // dulu: activeCustKurirId
+let activeCustStaff    = null; // dulu: activeCustKurir
+let activeCustRole     = "kurir"; // kurir | sales | hunter
 let activeHari         = "Senin";
 let lastHariTambah     = "Senin";
-let kurirCache         = {}; // cache kurir per cabang
+let staffCache         = {}; // staffCache[cabangId] = { kurir: [...], sales: [...], hunter: [...] }
+let activeRoleTabByCabang = {}; // ingat role tab terakhir yang dibuka per cabang
 
 window.initCustomerView = async function() {
   await renderCustomerCabangList();
@@ -49,6 +56,13 @@ async function renderCustomerCabangList() {
         </div>
         <i class="fa-solid fa-chevron-down customer-cabang-arrow" id="arrow_${c.id}"></i>
       </div>
+
+      <div class="customer-role-tabs" id="roleTabs_${c.id}">
+        <button class="customer-role-tab active" data-role="kurir"  onclick="setCustomerRole('${c.id}','kurir')">Kurir</button>
+        <button class="customer-role-tab" data-role="sales"  onclick="setCustomerRole('${c.id}','sales')">Sales</button>
+        <button class="customer-role-tab" data-role="hunter" onclick="setCustomerRole('${c.id}','hunter')">Hunter</button>
+      </div>
+
       <div class="customer-kurir-list" id="kurirList_${c.id}">
         <div class="customer-empty-msg"><i class="fa-solid fa-spinner fa-spin"></i></div>
       </div>
@@ -60,12 +74,14 @@ async function renderCustomerCabangList() {
 window.toggleCabangKurir = async function(cabangId) {
   const kurirList = document.getElementById(`kurirList_${cabangId}`);
   const arrow     = document.getElementById(`arrow_${cabangId}`);
+  const roleTabs  = document.getElementById(`roleTabs_${cabangId}`);
   if (!kurirList) return;
 
   const isOpen = kurirList.classList.contains("open");
 
   if (isOpen) {
     kurirList.classList.remove("open");
+    roleTabs?.classList.remove("open");
     arrow.style.transform = "";
     document.querySelector(`.customer-cabang-wrap[data-id="${cabangId}"] .customer-cabang-item`)
       ?.classList.remove("active");
@@ -74,40 +90,61 @@ window.toggleCabangKurir = async function(cabangId) {
 
   // Buka yang diklik
   kurirList.classList.add("open");
+  roleTabs?.classList.add("open");
   arrow.style.transform = "rotate(180deg)";
   document.querySelector(`.customer-cabang-wrap[data-id="${cabangId}"] .customer-cabang-item`)
     ?.classList.add("active");
 
   activeCustCabangId = cabangId;
 
-  // Load kurir kalau belum ada cache
-  if (!kurirCache[cabangId]) {
+  // Role tab terakhir yang dibuka di cabang ini (default: kurir)
+  const role = activeRoleTabByCabang[cabangId] || "kurir";
+  await setCustomerRole(cabangId, role);
+};
+
+// ── ROLE TAB (Kurir / Sales / Hunter) ──
+window.setCustomerRole = async function(cabangId, role) {
+  activeCustCabangId = cabangId;
+  activeRoleTabByCabang[cabangId] = role;
+
+  const roleTabs = document.getElementById(`roleTabs_${cabangId}`);
+  roleTabs?.querySelectorAll(".customer-role-tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.role === role);
+  });
+
+  const kurirList = document.getElementById(`kurirList_${cabangId}`);
+  if (!kurirList) return;
+  kurirList.innerHTML = `<div class="customer-empty-msg"><i class="fa-solid fa-spinner fa-spin"></i></div>`;
+
+  // Load staff kalau belum ada cache
+  if (!staffCache[cabangId]) staffCache[cabangId] = {};
+  if (!staffCache[cabangId][role]) {
     try {
       const snap = await window.getDocs(
         window.query(
           window.collection(window.db, "users"),
           window.where("idCabang", "==", cabangId),
-          window.where("role", "==", "kurir")
+          window.where("role", "==", role)
         )
       );
-      kurirCache[cabangId] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      staffCache[cabangId][role] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch(e) {
-      kurirList.innerHTML = `<div class="customer-empty-msg">Gagal memuat kurir.</div>`;
+      kurirList.innerHTML = `<div class="customer-empty-msg">Gagal memuat ${ROLE_LABEL[role]}.</div>`;
       return;
     }
   }
 
-  const kurirData = kurirCache[cabangId];
-  if (!kurirData.length) {
-    kurirList.innerHTML = `<div class="customer-empty-msg">Belum ada kurir.</div>`;
+  const staffData = staffCache[cabangId][role];
+  if (!staffData.length) {
+    kurirList.innerHTML = `<div class="customer-empty-msg">Belum ada ${ROLE_LABEL[role].toLowerCase()}.</div>`;
     return;
   }
 
-  kurirList.innerHTML = `<div>` + kurirData.map(k => {
+  kurirList.innerHTML = `<div>` + staffData.map(k => {
     const initial = (k.nama || "?")[0].toUpperCase();
     return `
-      <div class="customer-kurir-item ${activeCustKurirId === k.id ? 'active' : ''}"
-           onclick="selectKurir('${k.id}', '${cabangId}')">
+      <div class="customer-kurir-item ${activeCustStaffId === k.id ? 'active' : ''}"
+           onclick="selectKurir('${k.id}', '${cabangId}', '${role}')">
         ${k.foto
           ? `<img src="${k.foto}" class="customer-kurir-foto">`
           : `<div class="customer-kurir-foto-placeholder">${initial}</div>`
@@ -119,18 +156,19 @@ window.toggleCabangKurir = async function(cabangId) {
   }).join("") + `</div>`;
 };
 
-// ── SELECT KURIR ──
-window.selectKurir = function(kurirId, cabangId) {
-  activeCustKurirId  = kurirId;
+// ── SELECT STAFF (kurir/sales/hunter) ──
+window.selectKurir = function(staffId, cabangId, role) {
+  activeCustStaffId  = staffId;
   activeCustCabangId = cabangId;
+  activeCustRole      = role || "kurir";
 
-  const kurirData = kurirCache[cabangId] || [];
-  activeCustKurir  = kurirData.find(k => k.id === kurirId);
-  if (!activeCustKurir) return;
+  const staffData = staffCache[cabangId]?.[activeCustRole] || [];
+  activeCustStaff  = staffData.find(k => k.id === staffId);
+  if (!activeCustStaff) return;
 
-  // Update active state kurir
+  // Update active state di list kiri
   document.querySelectorAll(".customer-kurir-item").forEach(el => {
-    el.classList.toggle("active", el.getAttribute("onclick")?.includes(kurirId));
+    el.classList.toggle("active", el.getAttribute("onclick")?.includes(`'${staffId}'`));
   });
 
   // Buka aside kanan
@@ -149,64 +187,101 @@ window.selectKurir = function(kurirId, cabangId) {
     if (backBtn) backBtn.style.display = "flex";
   }
 
-  // Header kurir
-  const initial = (activeCustKurir.nama || "?")[0].toUpperCase();
-  document.getElementById("customerDetailNama").textContent = activeCustKurir.nama || "-";
+  // Header staff
+  const initial = (activeCustStaff.nama || "?")[0].toUpperCase();
+  document.getElementById("customerDetailNama").textContent = activeCustStaff.nama || "-";
   const fotoWrap = document.getElementById("customerKurirFotoWrap");
   if (fotoWrap) {
-    fotoWrap.innerHTML = activeCustKurir.foto
-      ? `<img src="${activeCustKurir.foto}" class="customer-detail-foto">`
+    fotoWrap.innerHTML = activeCustStaff.foto
+      ? `<img src="${activeCustStaff.foto}" class="customer-detail-foto">`
       : `<div class="customer-detail-foto-placeholder">${initial}</div>`;
   }
 
-  // Load tab Senin default
-  activeHari = "Senin";
-  document.querySelectorAll(".customer-tab").forEach(t => {
-    t.classList.toggle("active", t.dataset.hari === "Senin");
-  });
-  initCustomerTabs();
-  loadCustomerTab("Senin");
+  // Tampilkan/sembunyikan tab hari — hunter gak pakai tab hari (flat list)
+  const hariTabWrap = document.getElementById("customerHariTabWrap");
+  if (hariTabWrap) hariTabWrap.style.display = activeCustRole === "hunter" ? "none" : "";
 
   document.getElementById("customerAddBtn").onclick = () => renderTambahCustomer();
-  // Init search
   initCustomerSearch();
-  // Update total header
+
+  if (activeCustRole === "hunter") {
+    loadHunterTab();
+  } else {
+    activeHari = "Senin";
+    document.querySelectorAll(".customer-tab").forEach(t => {
+      t.classList.toggle("active", t.dataset.hari === "Senin");
+    });
+    initCustomerTabs();
+    loadCustomerTab("Senin");
+
+    // Preload semua hari di background
+    const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+    (async () => {
+      for (const h of HARI_LIST) {
+        let cached = await window.idbGetCust(activeCustStaffId, h);
+        if (!cached) {
+          try {
+            const snap = await window.getDocs(
+              window.query(
+                window.collection(window.db, ROLE_COLLECTION[activeCustRole]),
+                window.where("pemilik", "==", activeCustStaffId),
+                window.where("hari", "==", h)
+              )
+            );
+            cached = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            await window.idbSetCust(activeCustStaffId, h, cached);
+          } catch(e) { continue; }
+        }
+        updateTabBadge(h);
+      }
+      updateCustomerTotal();
+    })();
+  }
+
   updateCustomerTotal();
 
-  // Preload semua hari di background
-  const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
-  (async () => {
-    for (const h of HARI_LIST) {
-      let cached = await window.idbGetCust(activeCustKurirId, h);
-      if (!cached) {
-        try {
-          const snap = await window.getDocs(
-            window.query(
-              window.collection(window.db, "customer"),
-              window.where("pemilik", "==", activeCustKurirId),
-              window.where("hari", "==", h)
-            )
-          );
-          cached = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          await window.idbSetCust(activeCustKurirId, h, cached);
-        } catch(e) { continue; }
-      }
-      updateTabBadge(h);
-    }
-    updateCustomerTotal();
-  })();
-  // Tombol reload
+  // Tombol reload — refresh SEMUA data staff yang lagi kebuka
   window.onCustomerReload = async () => {
     const reloadBtn = document.getElementById("topbarReload");
     const icon = reloadBtn?.querySelector("i");
     if (icon) icon.classList.add("fa-spin");
-    await window.idbDeleteCust(activeCustKurirId, activeHari);
+
+    if (activeCustRole === "hunter") {
+      await window.idbDeleteCust(activeCustStaffId, HUNTER_IDB_BUCKET);
+      await loadHunterTab();
+      if (icon) icon.classList.remove("fa-spin");
+      return;
+    }
+
+    const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+
+    // tab yang lagi kebuka di-refresh duluan biar user langsung liat hasilnya
+    await window.idbDeleteCust(activeCustStaffId, activeHari);
     await loadCustomerTab(activeHari);
+
+    // sisa hari lain di-refresh di background, biar badge per hari ikut update
+    for (const h of HARI_LIST) {
+      if (h === activeHari) continue;
+      try {
+        const snap = await window.getDocs(
+          window.query(
+            window.collection(window.db, ROLE_COLLECTION[activeCustRole]),
+            window.where("pemilik", "==", activeCustStaffId),
+            window.where("hari", "==", h)
+          )
+        );
+        const cached = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        await window.idbSetCust(activeCustStaffId, h, cached);
+        updateTabBadge(h);
+      } catch(e) { continue; }
+    }
+    updateCustomerTotal();
+
     if (icon) icon.classList.remove("fa-spin");
   };
 };
 
-// ── TABS ──
+// ── TABS HARI (kurir & sales) ──
 function initCustomerTabs() {
   document.querySelectorAll(".customer-tab").forEach(tab => {
     tab.onclick = () => setCustomerTab(tab.dataset.hari);
@@ -220,7 +295,7 @@ function setCustomerTab(hari) {
   loadCustomerTab(hari);
 }
 
-// ── LOAD CUSTOMER ──
+// ── LOAD CUSTOMER (kurir & sales, per-hari) ──
 async function loadCustomerTab(hari) {
   const body = document.getElementById("customerTabBody");
   if (!body) return;
@@ -228,21 +303,20 @@ async function loadCustomerTab(hari) {
 
   try {
     // Cek IndexedDB dulu
-    let customers = await window.idbGetCust(activeCustKurirId, hari);
+    let customers = await window.idbGetCust(activeCustStaffId, hari);
 
     if (!customers) {
       const snap = await window.getDocs(
         window.query(
-          window.collection(window.db, "customer"),
-          window.where("pemilik", "==", activeCustKurirId),
+          window.collection(window.db, ROLE_COLLECTION[activeCustRole]),
+          window.where("pemilik", "==", activeCustStaffId),
           window.where("hari", "==", hari)
         )
       );
       customers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      await window.idbSetCust(activeCustKurirId, hari, customers);
+      await window.idbSetCust(activeCustStaffId, hari, customers);
     }
 
-    // Selalu update badge dan total setelah data tersedia
     updateTabBadge(hari);
     updateCustomerTotal();
 
@@ -251,23 +325,42 @@ async function loadCustomerTab(hari) {
       return;
     }
 
-    body.innerHTML = customers.map(c => {
-      const initial = (c.namaCustomer || "?")[0].toUpperCase();
-      return `
-        <div class="customer-card ${c.status === false ? 'nonaktif' : ''}"
-             onclick="openCustomerDetail('${c.id}')">
-          ${c.foto
-            ? `<img src="${c.foto}" class="customer-card-foto">`
-            : `<div class="customer-card-foto-placeholder">${initial}</div>`
-          }
-          <div class="customer-card-info">
-            <div class="customer-card-nama">${c.namaCustomer || "-"}</div>
-            <div class="customer-card-sub">${parseFloat(c.jarak || 0).toFixed(1)} km</div>
-          </div>
-          <i class="fa-solid fa-chevron-right customer-card-arrow"></i>
-        </div>
-      `;
-    }).join("");
+    renderCustomerList(customers);
+
+  } catch(e) {
+    console.error(e);
+    body.innerHTML = `<div class="customer-empty-msg">Gagal memuat data.</div>`;
+  }
+}
+
+// ── LOAD HUNTER (flat list, gak per-hari — tetap lewat IDB pakai bucket khusus) ──
+async function loadHunterTab() {
+  const body = document.getElementById("customerTabBody");
+  if (!body) return;
+  body.innerHTML = `<div class="customer-empty-msg"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>`;
+
+  try {
+    let customers = await window.idbGetCust(activeCustStaffId, HUNTER_IDB_BUCKET);
+
+    if (!customers) {
+      const snap = await window.getDocs(
+        window.collection(window.db, "users", activeCustStaffId, "customerBaruHunter")
+      );
+      // yang diserahkan:true udah pindah kepemilikan ke kurir/sales — jangan ikut ditampilin
+      customers = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(c => c.diserahkan !== true);
+      await window.idbSetCust(activeCustStaffId, HUNTER_IDB_BUCKET, customers);
+    }
+
+    updateCustomerTotal();
+
+    if (!customers.length) {
+      body.innerHTML = `<div class="customer-empty-msg">Belum ada customer baru dari hunter ini.</div>`;
+      return;
+    }
+
+    renderCustomerList(customers);
 
   } catch(e) {
     console.error(e);
@@ -279,13 +372,13 @@ async function loadCustomerTab(hari) {
 function initCustomerBackBtn() {
   document.getElementById("topbarBackBtn")?.addEventListener("click", () => {
     if (window.innerWidth <= 768 && history.state?.pusatDetail === "customer") {
-      history.back(); // biar popstate yang urus, state konsisten
+      history.back();
       return;
     }
     const wrapper = document.getElementById("customerDetailPanel")?.closest(".customer-detail-wrapper");
     if (wrapper) wrapper.classList.remove("show");
     document.getElementById("topbarBackBtn").style.display = "none";
-    activeCustKurirId = null;
+    activeCustStaffId = null;
     document.querySelectorAll(".customer-kurir-item").forEach(el => el.classList.remove("active"));
   });
 }
@@ -293,17 +386,18 @@ function initCustomerBackBtn() {
 // ── OPEN DETAIL CUSTOMER ──
 window.openCustomerDetail = async function(custId) {
   let c = null;
-  const cached = await window.idbGetCust(activeCustKurirId, activeHari);
+  const idbKey = activeCustRole === "hunter" ? HUNTER_IDB_BUCKET : activeHari;
+  const cached = await window.idbGetCust(activeCustStaffId, idbKey);
   if (cached) c = cached.find(x => x.id === custId);
 
   if (!c) {
-    const snap = await window.getDoc(window.doc(window.db, "customer", custId));
+    const docRef = activeCustRole === "hunter"
+      ? window.doc(window.db, "users", activeCustStaffId, "customerBaruHunter", custId)
+      : window.doc(window.db, ROLE_COLLECTION[activeCustRole], custId);
+    const snap = await window.getDoc(docRef);
     if (!snap.exists()) return;
     c = { id: snap.id, ...snap.data() };
   }
-
-  const kurirData = kurirCache[activeCustCabangId] || [];
-  const kurir     = kurirData.find(k => k.id === c.pemilik);
 
   document.getElementById("custSheetOverlay")?.remove();
   document.getElementById("custSheet")?.remove();
@@ -316,13 +410,15 @@ window.openCustomerDetail = async function(custId) {
   const isAktif     = c.status !== false;
   const initial     = (c.namaCustomer || "?")[0].toUpperCase();
   const jarak       = parseFloat(c.jarak || 0).toFixed(1);
-  const dataKemarin = c.dataKemarin || {};
+  const qtyField    = activeCustRole === "hunter" ? "konsinyasi" : "dataKemarin";
+  const qtyLabel    = activeCustRole === "hunter" ? "Konsinyasi" : "Data Kemarin";
+  const qtyData     = c[qtyField] || {};
 
-  const dkRows = Object.keys(dataKemarin).length
-    ? Object.keys(dataKemarin).map(k => `
+  const dkRows = Object.keys(qtyData).length
+    ? Object.keys(qtyData).map(k => `
         <div class="tab-row">
           <span class="tab-row-label">${k}</span>
-          <span class="tab-row-value">${dataKemarin[k]?.qty ?? 0} pcs</span>
+          <span class="tab-row-value">${qtyData[k]?.qty ?? 0} pcs</span>
         </div>
       `).join("")
     : `<div class="customer-empty-msg">Belum ada data</div>`;
@@ -341,9 +437,10 @@ window.openCustomerDetail = async function(custId) {
       <div class="akun-sheet-info">
         <div class="akun-sheet-nama">${c.namaCustomer || "-"}</div>
         <div class="cust-sheet-header-badges">
-          <span class="cust-badge cust-badge-hari">${c.hari || "-"}</span>
+          ${activeCustRole !== "hunter" ? `<span class="cust-badge cust-badge-hari">${c.hari || "-"}</span>` : ""}
           <span class="cust-badge ${isAktif ? 'cust-badge-aktif' : 'cust-badge-nonaktif'}">${isAktif ? 'Aktif' : 'Nonaktif'}</span>
           ${c.isNew ? `<span class="cust-badge cust-badge-baru">Baru</span>` : ""}
+          ${activeCustRole === "hunter" ? `<span class="cust-badge ${c.diserahkan ? 'cust-badge-aktif' : 'cust-badge-nonaktif'}">${c.diserahkan ? 'Sudah Diserahkan' : 'Belum Diserahkan'}</span>` : ""}
         </div>
       </div>
       <button class="akun-sheet-close" id="custSheetClose">
@@ -365,7 +462,7 @@ window.openCustomerDetail = async function(custId) {
         </div>
         <div class="tab-row">
           <span class="tab-row-label">Pemilik</span>
-          <span class="tab-row-value">${kurir?.nama || "-"}</span>
+          <span class="tab-row-value">${activeCustStaff?.nama || "-"}</span>
         </div>
         <div class="tab-row">
           <span class="tab-row-label">Lokasi</span>
@@ -388,7 +485,7 @@ window.openCustomerDetail = async function(custId) {
       </div>
 
       <div class="tab-card">
-        <div class="tab-section-title">Data Kemarin</div>
+        <div class="tab-section-title">${qtyLabel}</div>
         ${dkRows}
       </div>
 
@@ -454,6 +551,7 @@ window.openCustomerDetail = async function(custId) {
     }
   }, { passive: true });
 };
+
 // ── INIT SEARCH ──
 function initCustomerSearch() {
   const inputDesktop  = document.getElementById("customerSearchInput");
@@ -472,11 +570,16 @@ function initCustomerSearch() {
       return;
     }
 
-    const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
     let allCustomers = [];
-    for (const h of HARI_LIST) {
-      const cached = await window.idbGetCust(activeCustKurirId, h);
-      if (cached) allCustomers = allCustomers.concat(cached);
+    if (activeCustRole === "hunter") {
+      const cached = await window.idbGetCust(activeCustStaffId, HUNTER_IDB_BUCKET);
+      if (cached) allCustomers = cached;
+    } else {
+      const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+      for (const h of HARI_LIST) {
+        const cached = await window.idbGetCust(activeCustStaffId, h);
+        if (cached) allCustomers = allCustomers.concat(cached);
+      }
     }
 
     const hasil = allCustomers.filter(c =>
@@ -492,14 +595,14 @@ function initCustomerSearch() {
     const html = hasil.map(c => {
       const initial = (c.namaCustomer || "?")[0].toUpperCase();
       return `
-        <div class="customer-suggest-item" onclick="selectSuggest('${c.id}', '${c.hari}')">
+        <div class="customer-suggest-item" onclick="selectSuggest('${c.id}', '${c.hari || ""}')">
           ${c.foto
             ? `<img src="${c.foto}" class="customer-suggest-foto">`
             : `<div class="customer-suggest-foto-placeholder">${initial}</div>`
           }
           <div class="customer-suggest-info">
             <div class="customer-suggest-nama">${c.namaCustomer || "-"}</div>
-            <span class="customer-suggest-hari">${c.hari || "-"}</span>
+            ${activeCustRole !== "hunter" ? `<span class="customer-suggest-hari">${c.hari || "-"}</span>` : ""}
           </div>
         </div>
       `;
@@ -512,29 +615,27 @@ function initCustomerSearch() {
   inputDesktop?.addEventListener("input",  e => handleSearch(e.target.value));
   inputMobile?.addEventListener("input",   e => handleSearch(e.target.value));
 
-  // Tutup suggest kalau klik di luar
   document.addEventListener("click", e => {
     if (!e.target.closest("#customerSearchWrap") && !e.target.closest("#customerSearchMobile")) {
       hideSuggest();
     }
   });
 }
+
 // ── SELECT SUGGEST ──
 window.selectSuggest = async function(custId, hari) {
-  // Tutup suggest
   document.getElementById("customerSuggestDesktop")?.classList.remove("show");
   document.getElementById("customerSuggestMobile")?.classList.remove("show");
 
-  // Clear search input
   const inputDesktop = document.getElementById("customerSearchInput");
   const inputMobile  = document.getElementById("customerSearchInputMobile");
   if (inputDesktop) inputDesktop.value = "";
   if (inputMobile)  inputMobile.value  = "";
 
-  // Pindah ke tab hari
-  await setCustomerTab(hari);
+  if (activeCustRole !== "hunter" && hari) {
+    await setCustomerTab(hari);
+  }
 
-  // Tunggu render selesai lalu highlight
   setTimeout(() => {
     const card = document.querySelector(`.customer-card[onclick*="${custId}"]`);
     if (card) {
@@ -547,6 +648,7 @@ window.selectSuggest = async function(custId, hari) {
     }
   }, 400);
 };
+
 // ── RENDER CUSTOMER LIST ──
 function renderCustomerList(customers) {
   const body = document.getElementById("customerTabBody");
@@ -570,6 +672,10 @@ function renderCustomerList(customers) {
           <div class="customer-card-nama">${c.namaCustomer || "-"}</div>
           <div class="customer-card-sub">${parseFloat(c.jarak || 0).toFixed(1)} km</div>
         </div>
+        ${activeCustRole === "hunter"
+          ? `<span class="cust-badge customer-card-badge-sm ${c.diserahkan ? 'cust-badge-aktif' : 'cust-badge-nonaktif'}">${c.diserahkan ? 'Diserahkan' : 'Baru'}</span>`
+          : ""
+        }
         <i class="fa-solid fa-chevron-right customer-card-arrow"></i>
       </div>
     `;
@@ -578,19 +684,24 @@ function renderCustomerList(customers) {
 
 // ── UPDATE TOTAL HEADER ──
 async function updateCustomerTotal() {
-  const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
   let total = 0;
-  for (const h of HARI_LIST) {
-    const cached = await window.idbGetCust(activeCustKurirId, h);
-    if (cached) total += cached.length;
+  if (activeCustRole === "hunter") {
+    const cached = await window.idbGetCust(activeCustStaffId, HUNTER_IDB_BUCKET);
+    total = cached ? cached.length : 0;
+  } else {
+    const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+    for (const h of HARI_LIST) {
+      const cached = await window.idbGetCust(activeCustStaffId, h);
+      if (cached) total += cached.length;
+    }
   }
   const el = document.getElementById("customerDetailPt");
-  if (el) el.textContent = `Kurir • ${total} Customer`;
+  if (el) el.textContent = `${ROLE_LABEL[activeCustRole]} • ${total} Customer`;
 }
 
-// ── UPDATE TAB BADGE ──
+// ── UPDATE TAB BADGE (kurir & sales) ──
 async function updateTabBadge(hari) {
-  const cached = await window.idbGetCust(activeCustKurirId, hari);
+  const cached = await window.idbGetCust(activeCustStaffId, hari);
   if (!cached) return;
 
   const wrap = document.querySelector(`.customer-tab-wrap:has([data-hari="${hari}"])`);
@@ -604,7 +715,8 @@ async function updateTabBadge(hari) {
   }
   badge.textContent = cached.length;
 }
-// ── TAMBAH CUSTOMER ──
+
+// ── TAMBAH CUSTOMER (kurir / sales / hunter) ──
 async function renderTambahCustomer() {
   document.getElementById("custSheetOverlay")?.remove();
   document.getElementById("custSheet")?.remove();
@@ -612,21 +724,30 @@ async function renderTambahCustomer() {
   // Ambil createdBy dari adminCabang aktif
   let createdBy = window.auth.currentUser.uid;
   try {
-    const users = await window.idbGetUsers() || [];
-    const adminCabang = users.find(u =>
-      u.idCabang === activeCustCabangId && u.role === "adminCabang" && u.status === true
+    const snap = await window.getDocs(
+      window.query(
+        window.collection(window.db, "users"),
+        window.where("idCabang", "==", activeCustCabangId),
+        window.where("role", "==", "adminCabang"),
+        window.where("status", "==", true)
+      )
     );
-    if (adminCabang) createdBy = adminCabang.id;
-  } catch(e) {}
+    if (!snap.empty) createdBy = snap.docs[0].id;
+  } catch(e) {
+    console.error("❌ cari adminCabang aktif:", e);
+  }
 
-  // Ambil varian dari kantorCabang untuk dataKemarin
-  let dataKemarin = {};
+  // Ambil varian dari kantorCabang buat grid qty
+  let qtyData = {};
   try {
-    const cabangList = await window.idbGetCabang() || [];
-    const cabang = cabangList.find(c => c.id === activeCustCabangId);
+    const cabang = (window.cabangData || []).find(c => c.id === activeCustCabangId);
     const varianKantor = cabang?.varian || {};
-    Object.keys(varianKantor).forEach(kode => { dataKemarin[kode] = { qty: 0 }; });
-  } catch(e) { console.error("dataKemarin error:", e); }
+    Object.keys(varianKantor).forEach(kode => { qtyData[kode] = { qty: 0 }; });
+  } catch(e) { console.error("qtyData error:", e); }
+
+  const qtyField = activeCustRole === "hunter" ? "konsinyasi" : "dataKemarin";
+  const qtyLabel = activeCustRole === "hunter" ? "Konsinyasi" : "Data Kemarin";
+  const showHari = activeCustRole !== "hunter";
 
   const overlay = document.createElement("div");
   overlay.id = "custSheetOverlay";
@@ -644,7 +765,7 @@ async function renderTambahCustomer() {
       </div>
       <div class="akun-sheet-info">
         <div class="akun-sheet-nama">Tambah Customer</div>
-        <div class="akun-sheet-role">${activeCustKurir?.nama || "-"}</div>
+        <div class="akun-sheet-role">${activeCustStaff?.nama || "-"} • ${ROLE_LABEL[activeCustRole]}</div>
       </div>
       <button class="akun-sheet-close" id="custSheetClose">
         <i class="fa-solid fa-xmark"></i>
@@ -672,6 +793,7 @@ async function renderTambahCustomer() {
           <div class="edit-field-label">Alamat</div>
           <textarea id="custAddAlamat" class="edit-field-input" rows="2" placeholder="Alamat customer..."></textarea>
         </div>
+        ${showHari ? `
         <div class="edit-field">
           <div class="edit-field-label">Hari Kunjungan</div>
           <div class="cust-hari-dropdown-wrap" id="custHariWrap">
@@ -687,11 +809,12 @@ async function renderTambahCustomer() {
           </div>
           <input type="hidden" id="custAddHari" value="${lastHariTambah}">
         </div>
+        ` : ""}
       </div>
       <div class="tab-card">
-        <div class="tab-section-title">Data Kemarin</div>
+        <div class="tab-section-title">${qtyLabel}</div>
         <div class="cust-dk-grid">
-          ${Object.keys(dataKemarin).map(k => `
+          ${Object.keys(qtyData).map(k => `
             <div class="cust-dk-row">
               <span class="cust-dk-label">${k}</span>
               <input id="custDK_${k}" type="number" class="cust-dk-input" value="0" min="0">
@@ -699,6 +822,7 @@ async function renderTambahCustomer() {
           `).join("")}
         </div>
       </div>
+
       <div id="custAddError" style="color:#dc2626;font-size:12px;text-align:center;min-height:16px;margin-top:4px;"></div>
 
     </div>
@@ -782,37 +906,40 @@ async function renderTambahCustomer() {
     }});
   };
 
-  // Dropdown hari custom
-  const hariBtn      = document.getElementById("custHariBtn");
-  const hariDropdown = document.getElementById("custHariDropdown");
-  const hariBtnLabel = document.getElementById("custHariBtnLabel");
-  const hariInput    = document.getElementById("custAddHari");
+  // Dropdown hari custom (kurir/sales doang)
+  if (showHari) {
+    const hariBtn      = document.getElementById("custHariBtn");
+    const hariDropdown = document.getElementById("custHariDropdown");
+    const hariBtnLabel = document.getElementById("custHariBtnLabel");
+    const hariInput    = document.getElementById("custAddHari");
 
-  hariBtn.onclick = e => {
-    e.stopPropagation();
-    hariDropdown.classList.toggle("show");
-  };
-
-  hariDropdown.querySelectorAll(".cust-hari-option").forEach(opt => {
-    opt.onclick = e => {
+    hariBtn.onclick = e => {
       e.stopPropagation();
-      const val = opt.dataset.hari;
-      hariInput.value    = val;
-      hariBtnLabel.textContent = val;
-      lastHariTambah     = val;
-      hariDropdown.querySelectorAll(".cust-hari-option").forEach(o => o.classList.remove("selected"));
-      opt.classList.add("selected");
-      hariDropdown.classList.remove("show");
+      hariDropdown.classList.toggle("show");
     };
-  });
 
-  document.addEventListener("click", () => hariDropdown.classList.remove("show"));
+    hariDropdown.querySelectorAll(".cust-hari-option").forEach(opt => {
+      opt.onclick = e => {
+        e.stopPropagation();
+        const val = opt.dataset.hari;
+        hariInput.value    = val;
+        hariBtnLabel.textContent = val;
+        lastHariTambah     = val;
+        hariDropdown.querySelectorAll(".cust-hari-option").forEach(o => o.classList.remove("selected"));
+        opt.classList.add("selected");
+        hariDropdown.classList.remove("show");
+      };
+    });
+
+    document.addEventListener("click", () => hariDropdown.classList.remove("show"));
+  }
+
   // Enter pindah field
-  const dkKeys = Object.keys(dataKemarin);
+  const dkKeys = Object.keys(qtyData);
   const fields = [
     "custAddNama",
     "custAddAlamat",
-    "custAddHari",
+    ...(showHari ? ["custAddHari"] : []),
     ...dkKeys.map(k => `custDK_${k}`)
   ];
   fields.forEach((id, i) => {
@@ -826,6 +953,7 @@ async function renderTambahCustomer() {
       else document.getElementById("custAddSimpan")?.click();
     });
   });
+
   // Simpan
   document.getElementById("custAddSimpan").onclick = async () => {
     const btn    = document.getElementById("custAddSimpan");
@@ -834,7 +962,7 @@ async function renderTambahCustomer() {
 
     const nama   = document.getElementById("custAddNama").value.trim();
     const alamat = document.getElementById("custAddAlamat").value.trim();
-    const hari   = document.getElementById("custAddHari").value;
+    const hari   = showHari ? document.getElementById("custAddHari").value : "";
 
     if (!nama) return errEl.textContent = "Nama customer wajib diisi";
 
@@ -843,10 +971,11 @@ async function renderTambahCustomer() {
 
     try {
       let fotoUrl = "";
+      const fotoFolder = activeCustRole === "hunter" ? "fotoCustomer" : "fotoCustomer"; // sama folder buat semua role
       if (tempFotoBlob) {
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Kompres foto...`;
         const compressed = await window.compressImage(tempFotoBlob, 800, 0.78);
-        const tmpRef = window.storageRef(window.storage, `fotoCustomer/tmp_${Date.now()}.jpg`);
+        const tmpRef = window.storageRef(window.storage, `${fotoFolder}/tmp_${Date.now()}.jpg`);
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload foto 0%...`;
         fotoUrl = await window.uploadWithProgress(tmpRef, compressed, "image/jpeg", pct => {
           btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload foto ${pct}%...`;
@@ -854,49 +983,61 @@ async function renderTambahCustomer() {
       }
 
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
-      // Baca dataKemarin dari input
-      Object.keys(dataKemarin).forEach(k => {
-        dataKemarin[k] = { qty: parseInt(document.getElementById(`custDK_${k}`)?.value) || 0 };
+      Object.keys(qtyData).forEach(k => {
+        qtyData[k] = { qty: parseInt(document.getElementById(`custDK_${k}`)?.value) || 0 };
       });
       const now = new Date().toISOString();
-      const payload = {
-        namaCustomer:  nama,
-        alamatCustomer: alamat,
-        foto:          fotoUrl,
-        hari,
-        pemilik:       activeCustKurirId,
-        idCabang:      activeCustCabangId,
-        createdBy,
-        createdAt:     now,
-        updatedAt:     now,
-        isNew:         true,
-        status:        true,
-        dataKemarin,
-        lokasiCustomer: { _lat: 0, _long: 0 },
-        jarak:         0,
-      };
 
-      const docRef = await window.addDoc(
-        window.collection(window.db, "customer"), payload
-      );
+      const payload = {
+        namaCustomer:   nama,
+        alamatCustomer: alamat,
+        foto:           fotoUrl,
+        pemilik:        activeCustStaffId,
+        idCabang:       activeCustCabangId,
+        createdBy,
+        createdAt:      now,
+        updatedAt:      now,
+        isNew:          true,
+        status:         true,
+        [qtyField]:     qtyData,
+        lokasiCustomer: { _lat: 0, _long: 0 },
+        jarak:          0,
+      };
+      if (showHari) payload.hari = hari;
+      if (activeCustRole === "hunter") payload.diserahkan = false;
+
+      let docRef;
+      if (activeCustRole === "hunter") {
+        docRef = await window.addDoc(
+          window.collection(window.db, "users", activeCustStaffId, "customerBaruHunter"), payload
+        );
+      } else {
+        docRef = await window.addDoc(
+          window.collection(window.db, ROLE_COLLECTION[activeCustRole]), payload
+        );
+      }
 
       // Rename foto ke docId
       if (tempFotoBlob) {
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Finalisasi foto...`;
         const compressed = await window.compressImage(tempFotoBlob, 800, 0.78);
-        const finalRef = window.storageRef(window.storage, `fotoCustomer/${docRef.id}_${Date.now()}.jpg`);
+        const finalRef = window.storageRef(window.storage, `${fotoFolder}/${docRef.id}_${Date.now()}.jpg`);
         fotoUrl = await window.uploadWithProgress(finalRef, compressed, "image/jpeg");
-        await window.updateDoc(window.doc(window.db, "customer", docRef.id), { foto: fotoUrl });
+        if (activeCustRole === "hunter") {
+          await window.updateDoc(window.doc(window.db, "users", activeCustStaffId, "customerBaruHunter", docRef.id), { foto: fotoUrl });
+        } else {
+          await window.updateDoc(window.doc(window.db, ROLE_COLLECTION[activeCustRole], docRef.id), { foto: fotoUrl });
+        }
         payload.foto = fotoUrl;
       }
 
-      // Simpan ke IndexedDB — tambah ke array yang sudah ada
-      const existing = await window.idbGetCust(activeCustKurirId, hari) || [];
+      // Simpan ke IndexedDB
+      const idbKey = showHari ? hari : HUNTER_IDB_BUCKET;
+      const existing = await window.idbGetCust(activeCustStaffId, idbKey) || [];
       existing.push({ id: docRef.id, ...payload });
-      await window.idbSetCust(activeCustKurirId, hari, existing);
+      await window.idbSetCust(activeCustStaffId, idbKey, existing);
 
-      // Update badge dan total
-      updateTabBadge(hari);
+      if (showHari) updateTabBadge(hari);
       updateCustomerTotal();
 
       btn.innerHTML = `<i class="fa-solid fa-check"></i> Tersimpan!`;
@@ -904,8 +1045,11 @@ async function renderTambahCustomer() {
 
       setTimeout(() => {
         closeSheet();
-        // Kalau tab aktif sama dengan hari yang baru ditambah, reload tab
-        if (activeHari === hari) loadCustomerTab(hari);
+        if (activeCustRole === "hunter") {
+          loadHunterTab();
+        } else if (activeHari === hari) {
+          loadCustomerTab(hari);
+        }
       }, 1000);
 
     } catch(e) {
