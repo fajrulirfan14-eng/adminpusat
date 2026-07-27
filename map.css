@@ -322,11 +322,8 @@
   .peta-filter-bar {
     padding: 6px 10px;
     gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
-  .peta-filter-bar::-webkit-scrollbar { display: none; }
 
   .peta-filter-btn {
     padding: 5px 10px;
@@ -372,19 +369,21 @@
 }
 .peta-filter-btn i { font-size: 10px; }
 .peta-filter-dropdown {
+  display: none;
   position: absolute;
   top: calc(100% + 4px); left: 0;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: 12px;
   box-shadow: 0 8px 24px var(--shadow-md);
-  z-index: 999;
+  z-index: 9999;
   min-width: 160px;
   max-height: 220px;
   overflow-y: auto;
   scrollbar-width: none;
   padding: 4px;
 }
+.peta-filter-dropdown.show { display: block; }
 .peta-filter-dropdown::-webkit-scrollbar { display: none; }
 .peta-filter-wrap { position: relative; }
 .peta-filter-option {

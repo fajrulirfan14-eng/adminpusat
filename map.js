@@ -48,6 +48,10 @@ const hariColors = {
   "Minggu":  "#1abc9c",
 };
 
+const ROLE_LABEL = { kurir: "Kurir", sales: "Sales", hunter: "Hunter" };
+const HUNTER_IDB_BUCKET = "_HUNTER_ALL_"; // harus sama persis kayak di customer.js
+const HUNTER_COLOR = "#8e44ad";
+
 // ── LOAD LEAFLET ──
 function loadLeaflet() {
   return new Promise(resolve => {
@@ -269,10 +273,18 @@ window.openPetaGlobal = async function(focusCustomer = null) {
     link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
     document.head.appendChild(link);
   }
-  // Load users dari IndexedDB ke cache
-  if (!window._idbUsersCache) {
-    window._idbUsersCache = await window.idbGetUsers() || [];
-  }
+  // Ambil kurir/sales/hunter langsung dari Firestore — jangan andalin IDB, sering stale/kosong
+  let staffMapPeta = {};
+  try {
+    const staffSnap = await window.getDocs(
+      window.query(
+        window.collection(window.db, "users"),
+        window.where("role", "in", ["kurir", "sales", "hunter"])
+      )
+    );
+    staffSnap.docs.forEach(d => { staffMapPeta[d.id] = { id: d.id, ...d.data() }; });
+  } catch(e) { console.error("❌ fetch staff peta:", e); }
+
   await loadLeaflet();
   const renderer = L.canvas({ padding: 0.5 });
   if (leafletMap) { leafletMap.remove(); leafletMap = null; }
@@ -361,21 +373,12 @@ window.openPetaGlobal = async function(focusCustomer = null) {
 
           allBounds.push([lat, lng]);
 
-          // Cari nama kurir dari kurirCache
+          // Cari nama & role pemilik langsung dari Firestore (staffMapPeta), bukan IDB
           let kurirNama = "-";
-          // Cari dari kurirCache dulu
-          if (window.kurirCache) {
-            for (const cabId in window.kurirCache) {
-              const found = window.kurirCache[cabId]?.find(k => k.id === c.pemilik);
-              if (found) { kurirNama = found.nama; break; }
-            }
-          }
-          // Fallback dari IndexedDB users
-          if (kurirNama === "-" && window._idbUsersCache) {
-            const found = window._idbUsersCache.find(u => u.id === c.pemilik);
-            if (found) kurirNama = found.nama;
-          }
-          const kurirInitial = kurirNama !== "-" ? kurirNama[0].toUpperCase() : "?";
+          let pemilikRole = "kurir";
+          const foundStaff = staffMapPeta[c.pemilik];
+          if (foundStaff) { kurirNama = foundStaff.nama || "-"; pemilikRole = foundStaff.role || "kurir"; }
+          const roleLabel = ROLE_LABEL[pemilikRole] || "Kurir";
 
           const marker = L.circleMarker([lat, lng], {
             renderer,
@@ -389,13 +392,14 @@ window.openPetaGlobal = async function(focusCustomer = null) {
           marker._petaHari      = h;
           marker._petaPemilikId = c.pemilik || "";
           marker._petaPemilikNama = kurirNama;
+          marker._petaPemilikRole = pemilikRole;
           marker._petaId = c.id || "";
           marker.bindPopup(`
             <div class="cust-popup">
               ${c.foto ? `<img src="${c.foto}" class="cust-popup-foto">` : ""}
               <div class="cust-popup-info">
                 <strong>${c.namaCustomer || "-"}</strong>
-                <span>Kurir: ${kurirNama}</span>
+                <span>${roleLabel}: ${kurirNama}</span>
                 <span style="color:${hariColors[h]};font-weight:600;">${h}</span>
                 <span>${parseFloat(c.jarak || 0).toFixed(1)} km</span>
               </div>
@@ -409,6 +413,78 @@ window.openPetaGlobal = async function(focusCustomer = null) {
 
     layerGroups[h] = layerGroup;
     layerGroup.addTo(leafletMap);
+  }
+
+  // ── HUNTER: flat list, bukan per-hari — baca dari bucket IDB terpisah ──
+  {
+    const hunterLayerGroup = L.layerGroup();
+    try {
+      const db = await new Promise((res, rej) => {
+        const req = indexedDB.open("pusatDB");
+        req.onsuccess = e => res(e.target.result);
+        req.onerror   = e => rej(e);
+      });
+      const keys = await new Promise((res, rej) => {
+        const tx  = db.transaction("cust", "readonly");
+        const req = tx.objectStore("cust").getAllKeys();
+        req.onsuccess = e => res(e.target.result);
+        req.onerror   = e => rej(e);
+      });
+
+      const hunterKeys = keys.filter(k => k.endsWith(`_${HUNTER_IDB_BUCKET}`));
+      for (const key of hunterKeys) {
+        const cached = await new Promise((res, rej) => {
+          const tx  = db.transaction("cust", "readonly");
+          const req = tx.objectStore("cust").get(key);
+          req.onsuccess = e => res(e.target.result?.data || []);
+          req.onerror   = e => rej(e);
+        });
+
+        cached.forEach(c => {
+          if (c.diserahkan === true) return; // udah pindah kepemilikan, jangan ikut ditampilin
+          const lat = c.lokasiCustomer?._lat || c.lokasiCustomer?.latitude;
+          const lng = c.lokasiCustomer?._long || c.lokasiCustomer?.longitude;
+          if (!lat || !lng) return;
+
+          allBounds.push([lat, lng]);
+
+          let kurirNama = "-";
+          const foundStaff = staffMapPeta[c.pemilik];
+          if (foundStaff) kurirNama = foundStaff.nama || "-";
+
+          const marker = L.circleMarker([lat, lng], {
+            renderer,
+            radius: 7,
+            fillColor: HUNTER_COLOR,
+            fillOpacity: 1,
+            color: "#fff",
+            weight: 2,
+          });
+          marker._petaNama        = c.namaCustomer || "";
+          marker._petaHari        = "Hunter";
+          marker._petaPemilikId   = c.pemilik || "";
+          marker._petaPemilikNama = kurirNama;
+          marker._petaPemilikRole = "hunter";
+          marker._petaId          = c.id || "";
+          marker.bindPopup(`
+            <div class="cust-popup">
+              ${c.foto ? `<img src="${c.foto}" class="cust-popup-foto">` : ""}
+              <div class="cust-popup-info">
+                <strong>${c.namaCustomer || "-"}</strong>
+                <span>Hunter: ${kurirNama}</span>
+                <span style="color:${HUNTER_COLOR};font-weight:600;">Baru (belum diserahkan)</span>
+                <span>${parseFloat(c.jarak || 0).toFixed(1)} km</span>
+              </div>
+            </div>
+          `, { maxWidth: 220 });
+
+          hunterLayerGroup.addLayer(marker);
+        });
+      }
+    } catch(e) { console.error("hunter map load:", e); }
+
+    layerGroups["Hunter"] = hunterLayerGroup;
+    hunterLayerGroup.addTo(leafletMap);
   }
 
   if (focusCustomer?.lat && focusCustomer?.lng) {
@@ -440,12 +516,10 @@ window.openPetaGlobal = async function(focusCustomer = null) {
   Object.values(layerGroups).forEach(lg => {
     lg.eachLayer(m => allMarkers.push(m));
   });
-  // Kumpulkan nama kurir unik
+  // Kumpulkan nama kurir unik langsung dari Firestore (staffMapPeta), bukan dari marker customer
   const kurirMap = {};
-  allMarkers.forEach(m => {
-    if (m._petaPemilikId && m._petaPemilikNama) {
-      kurirMap[m._petaPemilikId] = m._petaPemilikNama;
-    }
+  Object.values(staffMapPeta).forEach(s => {
+    if (s.id && s.nama) kurirMap[s.id] = s.nama;
   });
 
   let filterPemilik = null;
@@ -486,9 +560,8 @@ window.openPetaGlobal = async function(focusCustomer = null) {
 
   pemilikBtn.onclick = e => {
     e.stopPropagation();
-    const isOpen = pemilikDropdown.style.display !== "none";
-    document.getElementById("petaFilterHariDropdown").style.display = "none";
-    pemilikDropdown.style.display = isOpen ? "none" : "block";
+    hariDropdown.classList.remove("show");
+    pemilikDropdown.classList.toggle("show");
   };
 
   pemilikDropdown.querySelectorAll(".peta-filter-option").forEach(opt => {
@@ -500,7 +573,7 @@ window.openPetaGlobal = async function(focusCustomer = null) {
       document.getElementById("petaFilterPemilikClear").style.display = filterPemilik ? "flex" : "none";
       pemilikDropdown.querySelectorAll(".peta-filter-option").forEach(o => o.classList.remove("selected"));
       opt.classList.add("selected");
-      pemilikDropdown.style.display = "none";
+      pemilikDropdown.classList.remove("show");
       applyFilter();
     };
   });
@@ -520,9 +593,8 @@ window.openPetaGlobal = async function(focusCustomer = null) {
 
   hariBtn.onclick = e => {
     e.stopPropagation();
-    const isOpen = hariDropdown.style.display !== "none";
-    document.getElementById("petaFilterPemilikDropdown").style.display = "none";
-    hariDropdown.style.display = isOpen ? "none" : "block";
+    pemilikDropdown.classList.remove("show");
+    hariDropdown.classList.toggle("show");
   };
 
   hariDropdown.querySelectorAll(".peta-filter-option").forEach(opt => {
@@ -534,7 +606,7 @@ window.openPetaGlobal = async function(focusCustomer = null) {
       document.getElementById("petaFilterHariClear").style.display = filterHari ? "flex" : "none";
       hariDropdown.querySelectorAll(".peta-filter-option").forEach(o => o.classList.remove("selected"));
       opt.classList.add("selected");
-      hariDropdown.style.display = "none";
+      hariDropdown.classList.remove("show");
       applyFilter();
     };
   });
@@ -547,6 +619,7 @@ window.openPetaGlobal = async function(focusCustomer = null) {
     document.getElementById("petaFilterPemilikClear").style.display = "none";
     pemilikDropdown.querySelectorAll(".peta-filter-option").forEach(o => o.classList.remove("selected"));
     pemilikDropdown.querySelector("[data-id='']")?.classList.add("selected");
+    pemilikDropdown.classList.remove("show");
     applyFilter();
   };
 
@@ -606,8 +679,8 @@ window.openPetaGlobal = async function(focusCustomer = null) {
   };
   // Tutup dropdown klik luar
   document.addEventListener("click", () => {
-    pemilikDropdown.style.display = "none";
-    hariDropdown.style.display    = "none";
+    pemilikDropdown.classList.remove("show");
+    hariDropdown.classList.remove("show");
   });
   document.getElementById("petaSearchInput")?.addEventListener("input", () => applyFilter());
 };
