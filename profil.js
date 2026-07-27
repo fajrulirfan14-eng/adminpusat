@@ -46,12 +46,122 @@ function profilShowModal({ title = "Perhatian", message = "", icon = "fa-triangl
   });
 }
 
+// ── MODAL DENGAN INPUT FIELD (buat Ubah Email/Password) ──
+function profilShowSecureModal({ title, fields, confirmText = "Simpan", onConfirm }) {
+  document.getElementById("profilModalContainer")?.remove();
+  const container = document.createElement("div");
+  container.id = "profilModalContainer";
+  document.body.appendChild(container);
+
+  const fieldsHtml = fields.map(f => `
+    <div class="profil-secure-field">
+      <label class="profil-secure-field-label">${f.label}</label>
+      <input type="${f.type || 'text'}" id="${f.id}" class="profil-field-input" placeholder="${f.placeholder || ''}" autocomplete="${f.autocomplete || 'off'}">
+    </div>
+  `).join("");
+
+  container.innerHTML = `
+    <div class="profil-modal-overlay" id="profilModalOverlay">
+      <div class="profil-modal-box">
+        <div class="profil-modal-icon"><i class="fa-solid fa-lock"></i></div>
+        <div class="profil-modal-title">${title}</div>
+        ${fieldsHtml}
+        <div class="profil-secure-error" id="profilSecureError"></div>
+        <div class="profil-modal-actions">
+          <button class="profil-modal-btn-cancel" id="profilModalCancel">Batal</button>
+          <button class="profil-modal-btn-ok" id="profilModalOk">${confirmText}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  requestAnimationFrame(() => document.getElementById("profilModalOverlay").classList.add("show"));
+  setTimeout(() => document.getElementById(fields[0]?.id)?.focus(), 250);
+
+  const closeModal = () => {
+    document.getElementById("profilModalOverlay")?.classList.remove("show");
+    setTimeout(() => container.remove(), 200);
+  };
+
+  document.getElementById("profilModalCancel").addEventListener("click", closeModal);
+  document.getElementById("profilModalOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "profilModalOverlay") closeModal();
+  });
+
+  document.getElementById("profilModalOk").addEventListener("click", async () => {
+    const btn = document.getElementById("profilModalOk");
+    const errEl = document.getElementById("profilSecureError");
+    errEl.textContent = "";
+    const values = {};
+    for (const f of fields) {
+      const val = document.getElementById(f.id)?.value?.trim() || "";
+      if (f.required !== false && !val) {
+        errEl.textContent = `${f.label} wajib diisi.`;
+        return;
+      }
+      values[f.id] = val;
+    }
+    const originalLabel = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
+    try {
+      await onConfirm(values);
+      closeModal();
+    } catch (err) {
+      errEl.textContent = err.message || "Terjadi kesalahan, coba lagi.";
+      btn.disabled = false;
+      btn.innerHTML = originalLabel;
+    }
+  });
+}
+
+// ── UBAH PASSWORD ──
+function initProfilPasswordEdit() {
+  const btn = document.getElementById("profilPasswordEditBtn");
+  if (!btn) return;
+
+  btn.onclick = () => {
+    profilShowSecureModal({
+      title: "Ubah Password",
+      confirmText: "Simpan",
+      fields: [
+        { id: "profilCurrentPass", label: "Password Saat Ini", type: "password", placeholder: "Masukkan password lama" },
+        { id: "profilNewPass", label: "Password Baru", type: "password", placeholder: "Minimal 6 karakter" },
+        { id: "profilNewPassConfirm", label: "Ulangi Password Baru", type: "password", placeholder: "Ulangi password baru" },
+      ],
+      onConfirm: async (values) => {
+        const { profilCurrentPass, profilNewPass, profilNewPassConfirm } = values;
+
+        if (profilNewPass.length < 6) throw new Error("Password baru minimal 6 karakter.");
+        if (profilNewPass !== profilNewPassConfirm) throw new Error("Konfirmasi password tidak cocok.");
+
+        const user = window.auth.currentUser;
+        try {
+          const credential = window.EmailAuthProvider.credential(user.email, profilCurrentPass);
+          await window.reauthenticateWithCredential(user, credential);
+        } catch (err) {
+          throw new Error("Password saat ini salah.");
+        }
+
+        try {
+          await window.updatePassword(user, profilNewPass);
+        } catch (err) {
+          if (err.code === "auth/weak-password") throw new Error("Password baru terlalu lemah.");
+          throw new Error("Gagal mengubah password.");
+        }
+
+        profilShowToast("Password berhasil diubah.", "success");
+      }
+    });
+  };
+}
+
 // ── INIT VIEW ──
 window.initProfilView = function () {
   renderProfilData();
   initProfilFotoUpload();
   initProfilFotoPreview();
   initProfilNamaEdit();
+  initProfilPasswordEdit();
   initProfilMenuNavigasi();
   initProfilAksesibilitas();
   initProfilLogout();

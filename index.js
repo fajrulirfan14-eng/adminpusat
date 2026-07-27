@@ -4,7 +4,8 @@ import {
   onAuthStateChanged,
   signOut,
   reauthenticateWithCredential,
-  EmailAuthProvider
+  EmailAuthProvider,
+  updatePassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getStorage,
@@ -74,6 +75,7 @@ window.deleteObject    = deleteObject;
 window.currentUser     = null;
 window.reauthenticateWithCredential = reauthenticateWithCredential;
 window.EmailAuthProvider = EmailAuthProvider;
+window.updatePassword = updatePassword;
 window.uploadBytesResumable = uploadBytesResumable;
 // ── COMPRESS IMAGE ──
 window.compressImage = function(blob, maxWidth = 1280, quality = 0.78) {
