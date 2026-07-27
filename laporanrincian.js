@@ -98,10 +98,7 @@ function renderLaprSkeleton() {
           </button>
           <div class="lapr-dropdown" id="laprTahunDropdown" style="display:none;"></div>
 
-          <button class="lapr-filter-btn" id="laprReloadBtn" title="Reload">
-            <i class="fa-solid fa-rotate-right"></i>
-          </button>
-        </div>
+          </div>
       </div>
 
       <div class="lapr-empty-admin" id="laprEmptyAdmin" style="display:none;">
@@ -166,7 +163,6 @@ function initLaprFilterUI() {
   const tahunBtn = document.getElementById("laprTahunBtn");
   const bulanDD  = document.getElementById("laprBulanDropdown");
   const tahunDD  = document.getElementById("laprTahunDropdown");
-  const reloadBtn = document.getElementById("laprReloadBtn");
   if (!bulanBtn || !tahunBtn) return;
 
   document.body.appendChild(bulanDD);
@@ -227,12 +223,6 @@ function initLaprFilterUI() {
   };
 
   document.addEventListener("click", closeAll);
-
-  reloadBtn.onclick = async () => {
-    reloadBtn.classList.add("spinning");
-    await refreshLaprData(true);
-    reloadBtn.classList.remove("spinning");
-  };
 }
 
 // ── LOAD DATA ──
@@ -273,17 +263,17 @@ async function loadLaprMarketingList(cabangId) {
 async function loadLaprLaporanAgg(adminUid, bulan, tahun) {
   const result = {};
   try {
-    const prefix = `${tahun}-${String(bulan + 1).padStart(2, "0")}`;
+    const mm    = String(bulan + 1).padStart(2, "0");
+    const start = `${tahun}-${mm}-01`;
+    const end   = `${tahun}-${mm}-31`;
 
-    // Path: users/{adminUid}/laporanAdmin/{tanggal} -> tanggal adalah ID dokumen,
-    // BUKAN field di dalam data. Jadi filter berdasarkan awalan ID dokumen, bukan where("tanggal", ...).
-    const snap = await window.getDocs(
-      window.collection(window.db, "users", adminUid, "laporanAdmin")
-    );
+    const snap = await window.getDocs(window.query(
+      window.collection(window.db, "users", adminUid, "laporanAdmin"),
+      window.where("tanggal", ">=", start),
+      window.where("tanggal", "<=", end)
+    ));
 
     snap.forEach(docSnap => {
-      if (!docSnap.id.startsWith(prefix)) return; // skip dokumen di luar bulan/tahun yang dipilih
-
       const dataPerUid = docSnap.data() || {};
       Object.entries(dataPerUid).forEach(([uid, uidData]) => {
         if (!result[uid]) result[uid] = { order: {}, pembayaran: 0, keterangan: 0 };

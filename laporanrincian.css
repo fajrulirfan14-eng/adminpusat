@@ -139,7 +139,6 @@
   .lapr-toolbar { justify-content: stretch; }
   .lapr-filter-wrap { width: 100%; flex-wrap: wrap; }
   .lapr-filter-btn { flex: 1; justify-content: center; }
-  #laprReloadBtn { flex: 0 0 auto; width: 40px; padding: 0; }
 
   .lapr-summary-row { grid-template-columns: 1fr; gap: 10px; }
   .lapr-summary-card { padding: 12px 14px; }
@@ -151,5 +150,9 @@
   .lapr-table { font-size: 11.5px; }
   .lapr-table thead th { padding: 7px 10px; }
   .lapr-table tbody td { padding: 7px 10px; }
-  .lapr-th-nama, .lapr-td-nama { min-width: 120px; }
+  .lapr-th-nama, .lapr-td-nama {
+    min-width: 120px;
+    position: static;
+    left: auto;
+  }
 }

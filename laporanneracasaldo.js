@@ -94,9 +94,6 @@ function renderLapnSkeleton() {
           </button>
           <div class="lapn-dropdown" id="lapnTahunDropdown" style="display:none;"></div>
 
-          <button class="lapn-filter-btn" id="lapnReloadBtn" title="Reload">
-            <i class="fa-solid fa-rotate-right"></i>
-          </button>
         </div>
       </div>
 
@@ -160,7 +157,6 @@ function initLapnFilterUI() {
   const tahunBtn = document.getElementById("lapnTahunBtn");
   const bulanDD  = document.getElementById("lapnBulanDropdown");
   const tahunDD  = document.getElementById("lapnTahunDropdown");
-  const reloadBtn = document.getElementById("lapnReloadBtn");
   if (!bulanBtn || !tahunBtn) return;
 
   document.body.appendChild(bulanDD);
@@ -221,12 +217,6 @@ function initLapnFilterUI() {
   };
 
   document.addEventListener("click", closeAll);
-
-  reloadBtn.onclick = async () => {
-    reloadBtn.classList.add("spinning");
-    await refreshLapnData(true);
-    reloadBtn.classList.remove("spinning");
-  };
 }
 
 // ── LOAD DATA ──

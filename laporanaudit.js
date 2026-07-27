@@ -101,9 +101,6 @@ function renderLapaSkeleton() {
           </button>
           <div class="lapa-dropdown" id="lapaTahunDropdown" style="display:none;"></div>
 
-          <button class="lapa-filter-btn" id="lapaReloadBtn" title="Reload">
-            <i class="fa-solid fa-rotate-right"></i>
-          </button>
         </div>
       </div>
 
@@ -166,7 +163,6 @@ function initLapaFilterUI() {
   const tahunBtn = document.getElementById("lapaTahunBtn");
   const bulanDD  = document.getElementById("lapaBulanDropdown");
   const tahunDD  = document.getElementById("lapaTahunDropdown");
-  const reloadBtn = document.getElementById("lapaReloadBtn");
   if (!bulanBtn || !tahunBtn) return;
 
   document.body.appendChild(bulanDD);
@@ -227,12 +223,6 @@ function initLapaFilterUI() {
   };
 
   document.addEventListener("click", closeAll);
-
-  reloadBtn.onclick = async () => {
-    reloadBtn.classList.add("spinning");
-    await refreshLapaData(true);
-    reloadBtn.classList.remove("spinning");
-  };
 }
 
 // ── LOAD DATA AUDIT ──
