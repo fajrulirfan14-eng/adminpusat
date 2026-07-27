@@ -91,6 +91,7 @@ async function pbbSelectCabang(cabangId) {
   document.getElementById("pbbDetailSub").textContent = `Admin: ${adminCabang.nama || "-"}`;
   document.getElementById("pbbDetailContent").style.display = "flex";
 
+  await pbbLoadSaldoPembayaran();
   pbbLoadTransaksi();
 }
 
@@ -101,6 +102,50 @@ let pbbActiveBulan = new Date().getMonth() + 1;
 let pbbActiveTahun = new Date().getFullYear();
 let pbbViewMode = "card";
 let pbbActiveFilter = null;
+let pbbActiveTglFrom = null;
+let pbbActiveTglTo = null;
+let pbbActiveSaldo = 0;
+
+// ── SALDO PEMBAYARAN (subcollection, 1 dokumen singleton "current") ──
+async function pbbLoadSaldoPembayaran() {
+  pbbActiveSaldo = 0;
+  if (!pbbActiveAdminUid) return;
+  try {
+    const snap = await window.getDoc(
+      window.doc(window.db, "users", pbbActiveAdminUid, "saldoPembayaran", "current")
+    );
+    pbbActiveSaldo = snap.exists() ? (Number(snap.data()?.jumlah) || 0) : 0;
+  } catch (e) {
+    console.error("❌ pbbLoadSaldoPembayaran:", e);
+    pbbActiveSaldo = 0;
+  }
+}
+
+async function pbbUpdateSaldoPembayaran(delta) {
+  if (!pbbActiveAdminUid || !delta) return;
+  const newJumlah = Math.max(0, pbbActiveSaldo + delta);
+  try {
+    await window.setDoc(
+      window.doc(window.db, "users", pbbActiveAdminUid, "saldoPembayaran", "current"),
+      { jumlah: newJumlah, updatedAt: new Date().toISOString() },
+      { merge: true }
+    );
+    pbbActiveSaldo = newJumlah;
+  } catch (e) {
+    console.error("❌ pbbUpdateSaldoPembayaran:", e);
+  }
+}
+
+// rumus gabungan: manual + saldo (kalau dicentang), kelebihan otomatis balik ke saldo
+function pbbHitungPembayaran(manualInput, totalHarga, gunakanSaldo, saldoTersedia) {
+  const saldoDipakai = gunakanSaldo ? Math.min(saldoTersedia, Math.max(0, totalHarga - manualInput)) : 0;
+  const totalDibayarGabungan = manualInput + saldoDipakai;
+  const dibayarFinal = Math.min(totalHarga, totalDibayarGabungan);
+  const kelebihan = Math.max(0, totalDibayarGabungan - totalHarga);
+  const status = totalHarga > 0 && dibayarFinal >= totalHarga ? "lunas" : "kurang";
+  const sisa = dibayarFinal - totalHarga; // 0 atau negatif, gak akan pernah positif lagi
+  return { saldoDipakai, dibayarFinal, kelebihan, status, sisa };
+}
 
 const PBB_FILTER_OPTIONS = [
   { key: "belumTerima", label: "Belum Diterima" },
@@ -121,8 +166,11 @@ function pbbFilterMatch(t, filterKey) {
 }
 
 function pbbGetFilteredTrxData() {
-  if (!pbbActiveFilter) return pbbTrxData;
-  return pbbTrxData.filter(t => pbbFilterMatch(t, pbbActiveFilter));
+  let data = pbbTrxData;
+  if (pbbActiveFilter) data = data.filter(t => pbbFilterMatch(t, pbbActiveFilter));
+  if (pbbActiveTglFrom) data = data.filter(t => t.tanggal >= pbbActiveTglFrom);
+  if (pbbActiveTglTo)   data = data.filter(t => t.tanggal <= pbbActiveTglTo);
+  return data;
 }
 
 function fmtRupiah(n) { return "Rp" + Number(n || 0).toLocaleString("id-ID"); }
@@ -272,22 +320,21 @@ function pbbRenderBody() {
   const belumLunas  = filteredData.filter(t => t.status === "kurang").length;
 
   bodyEl.innerHTML = `
+    <div class="pbb-kpi-card pbb-kpi-card-full">
+      <div class="pbb-kpi-label">Total Pembelian</div>
+      <div class="pbb-kpi-value">${fmtRupiah(totalBeli)}</div>
+      ${jenisBreakdown.length ? `
+        <div class="pbb-kpi-breakdown">
+          ${jenisBreakdown.map(j => `
+            <div class="pbb-kpi-breakdown-row">
+              <span class="pbb-kpi-breakdown-jenis">${j.jenis} <span class="pbb-kpi-breakdown-qty">${j.qty}</span></span>
+              <span class="pbb-kpi-breakdown-total">${fmtRupiah(j.total)}</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+    </div>
     <div class="pbb-kpi-grid">
-      <div class="pbb-kpi-card">
-        <div class="pbb-kpi-icon total"><i class="fa-solid fa-basket-shopping"></i></div>
-        <div class="pbb-kpi-label">Total Pembelian</div>
-        <div class="pbb-kpi-value">${fmtRupiah(totalBeli)}</div>
-        ${jenisBreakdown.length ? `
-          <div class="pbb-kpi-breakdown">
-            ${jenisBreakdown.map(j => `
-              <div class="pbb-kpi-breakdown-row">
-                <span class="pbb-kpi-breakdown-jenis">${j.jenis} <span class="pbb-kpi-breakdown-qty">${j.qty}</span></span>
-                <span class="pbb-kpi-breakdown-total">${fmtRupiah(j.total)}</span>
-              </div>
-            `).join("")}
-          </div>
-        ` : ""}
-      </div>
       <div class="pbb-kpi-card">
         <div class="pbb-kpi-icon success"><i class="fa-solid fa-circle-check"></i></div>
         <div class="pbb-kpi-label">Sudah Dibayar</div>
@@ -303,23 +350,52 @@ function pbbRenderBody() {
         <div class="pbb-kpi-label">Belum Lunas</div>
         <div class="pbb-kpi-value">${belumLunas} Transaksi</div>
       </div>
+      <div class="pbb-kpi-card">
+        <div class="pbb-kpi-icon saldo"><i class="fa-solid fa-wallet"></i></div>
+        <div class="pbb-kpi-label">Saldo Pembayaran</div>
+        <div class="pbb-kpi-value">${fmtRupiah(pbbActiveSaldo)}</div>
+      </div>
     </div>
     <div class="pbb-toolbar">
-      <div class="pbb-filter-status-wrap">
-        <button class="pbb-filter-status-btn ${pbbActiveFilter ? 'active' : ''}" id="pbbFilterStatusBtn">
-          <i class="fa-solid fa-filter"></i>
-          <span>${pbbActiveFilter ? PBB_FILTER_OPTIONS.find(o => o.key === pbbActiveFilter)?.label : "Filter Status"}</span>
-          <i class="fa-solid fa-chevron-down"></i>
-        </button>
-        <div class="pbb-filter-status-menu" id="pbbFilterStatusMenu" style="display:none;">
-          <div class="pbb-filter-status-option ${!pbbActiveFilter ? 'selected' : ''}" data-key="">
-            <i class="fa-solid fa-list"></i> Semua
-          </div>
-          ${PBB_FILTER_OPTIONS.map(o => `
-            <div class="pbb-filter-status-option ${pbbActiveFilter === o.key ? 'selected' : ''}" data-key="${o.key}">
-              <i class="fa-solid fa-circle-check"></i> ${o.label}
+      <div class="pbb-toolbar-filters">
+        <div class="pbb-filter-status-wrap">
+          <button class="pbb-filter-status-btn ${pbbActiveFilter ? 'active' : ''}" id="pbbFilterStatusBtn">
+            <i class="fa-solid fa-filter"></i>
+            <span>${pbbActiveFilter ? PBB_FILTER_OPTIONS.find(o => o.key === pbbActiveFilter)?.label : "Filter Status"}</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <div class="pbb-filter-status-menu" id="pbbFilterStatusMenu" style="display:none;">
+            <div class="pbb-filter-status-option ${!pbbActiveFilter ? 'selected' : ''}" data-key="">
+              <i class="fa-solid fa-list"></i> Semua
             </div>
-          `).join("")}
+            ${PBB_FILTER_OPTIONS.map(o => `
+              <div class="pbb-filter-status-option ${pbbActiveFilter === o.key ? 'selected' : ''}" data-key="${o.key}">
+                <i class="fa-solid fa-circle-check"></i> ${o.label}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="pbb-filter-tanggal-wrap" id="pbbFilterTanggalWrap">
+          <button class="pbb-filter-status-btn ${(pbbActiveTglFrom || pbbActiveTglTo) ? 'active' : ''}" id="pbbFilterTanggalBtn">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>${(pbbActiveTglFrom || pbbActiveTglTo) ? `${pbbActiveTglFrom || '…'} s/d ${pbbActiveTglTo || '…'}` : "Rentang Tanggal"}</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <div class="pbb-filter-tanggal-menu" id="pbbFilterTanggalMenu" style="display:none;">
+            <div class="pbb-filter-tanggal-row">
+              <label>Dari</label>
+              <input type="date" id="pbbTglFrom" value="${pbbActiveTglFrom || ''}">
+            </div>
+            <div class="pbb-filter-tanggal-row">
+              <label>Sampai</label>
+              <input type="date" id="pbbTglTo" value="${pbbActiveTglTo || ''}">
+            </div>
+            <div class="pbb-filter-tanggal-actions">
+              <button type="button" class="pbb-filter-tanggal-reset" id="pbbTglReset">Reset</button>
+              <button type="button" class="pbb-filter-tanggal-terapkan" id="pbbTglTerapkan"><i class="fa-solid fa-check"></i></button>
+            </div>
+          </div>
         </div>
       </div>
       <button class="pbb-add-btn" id="pbbAddTrxBtn"><i class="fa-solid fa-plus"></i> Tambah Pembelian</button>
@@ -348,6 +424,7 @@ function pbbRenderBody() {
 
   document.getElementById("pbbAddTrxBtn")?.addEventListener("click", () => pbbOpenTrxSheet(null));
   pbbInitFilterStatusDropdown();
+  pbbInitFilterTanggalDropdown();
   bodyEl.querySelectorAll(".pbb-trx-card").forEach(card => {
     const id = card.dataset.id;
     card.querySelector(".pbb-trx-toggle")?.addEventListener("click", () => card.classList.toggle("expanded"));
@@ -382,6 +459,39 @@ function pbbInitFilterStatusDropdown() {
   });
 
   document.addEventListener("click", () => { menu.style.display = "none"; }, { once: true });
+}
+
+// ── DROPDOWN FILTER RENTANG TANGGAL ──
+function pbbInitFilterTanggalDropdown() {
+  const wrap = document.getElementById("pbbFilterTanggalWrap");
+  const btn  = document.getElementById("pbbFilterTanggalBtn");
+  const menu = document.getElementById("pbbFilterTanggalMenu");
+  if (!btn || !menu) return;
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.style.display = menu.style.display === "none" ? "block" : "none";
+  });
+
+  menu.addEventListener("click", (e) => e.stopPropagation());
+
+  document.getElementById("pbbTglTerapkan").addEventListener("click", () => {
+    pbbActiveTglFrom = document.getElementById("pbbTglFrom").value || null;
+    pbbActiveTglTo   = document.getElementById("pbbTglTo").value || null;
+    menu.style.display = "none";
+    pbbRenderBody();
+  });
+
+  document.getElementById("pbbTglReset").addEventListener("click", () => {
+    pbbActiveTglFrom = null;
+    pbbActiveTglTo = null;
+    menu.style.display = "none";
+    pbbRenderBody();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!wrap.contains(e.target)) menu.style.display = "none";
+  }, { once: true });
 }
 
 // ── TOGGLE VIEW MODE ──
@@ -579,6 +689,17 @@ async function pbbToggleCicilanDiterima(trxId, cicilanId) {
 function pbbInitSheetSwipe(sheetEl, overlayEl, closeFn) {
   const bodyEl = sheetEl.querySelector('.pbb-sheet-body');
   let startY = 0, currentY = 0, dragging = false;
+  let rafPending = false;
+
+  function applyDragFrame() {
+    rafPending = false;
+    if (!dragging) return;
+    const delta = currentY - startY;
+    if (delta > 0) {
+      sheetEl.style.transform = `translateY(${delta}px)`;
+      overlayEl.style.opacity = Math.max(0, 1 - delta / 300);
+    }
+  }
 
   const onStart = (e) => {
     if (window.innerWidth > 768) return; // swipe close cuma di mobile
@@ -586,6 +707,7 @@ function pbbInitSheetSwipe(sheetEl, overlayEl, closeFn) {
     currentY = startY;
     dragging = true;
     sheetEl.style.transition = 'none';
+    overlayEl.style.transition = 'none';
   };
 
   const onMove = (e) => {
@@ -602,22 +724,41 @@ function pbbInitSheetSwipe(sheetEl, overlayEl, closeFn) {
 
     if (delta > 0) {
       e.preventDefault(); // cegah pull-to-refresh browser
-      sheetEl.style.transform = `translateY(${delta}px)`;
-      overlayEl.style.opacity = Math.max(0, 1 - delta / 300);
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(applyDragFrame);
+      }
     }
   };
 
   const onEnd = () => {
     if (!dragging) return;
     dragging = false;
-    sheetEl.style.transition = '';
     const delta = currentY - startY;
-    if (delta > 120) {
-      closeFn();
+    const closing = delta > 120;
+
+    sheetEl.style.transition = 'transform .25s cubic-bezier(.4,0,.2,1)';
+    overlayEl.style.transition = 'opacity .25s ease';
+
+    requestAnimationFrame(() => {
+      if (closing) {
+        sheetEl.style.transform = 'translateY(100%)';
+        overlayEl.style.opacity = '0';
+      } else {
+        sheetEl.style.transform = '';
+        overlayEl.style.opacity = '';
+      }
+    });
+
+    if (closing) {
+      setTimeout(() => closeFn(), 250);
     } else {
-      sheetEl.style.transform = '';
-      overlayEl.style.opacity = '';
+      setTimeout(() => {
+        sheetEl.style.transition = '';
+        overlayEl.style.transition = '';
+      }, 250);
     }
+
     startY = 0; currentY = 0;
   };
 
@@ -637,8 +778,14 @@ function pbbInitTrxForm(trx) {
   const totalDisplay = document.getElementById("fTotalDisplay");
   const bayarAwalEl = document.getElementById("fBayarAwal");
   const keteranganEl = document.getElementById("fKeteranganDisplay");
-  const warningEl = document.getElementById("fWarningLebih");
+  const infoEl = document.getElementById("fInfoSaldoMasuk");
+  const infoTextEl = document.getElementById("fInfoSaldoMasukText");
+  const saldoLabelEl = document.getElementById("fSaldoTersediaLabel");
+  const gunakanSaldoEl = document.getElementById("fGunakanSaldo");
+  const saldoDipakaiBadgeEl = document.getElementById("fSaldoDipakaiBadge");
   const saveBtn = document.getElementById("pbbBtnSave");
+
+  saldoLabelEl.textContent = fmtRupiah(pbbActiveSaldo);
 
   dropdownEl.innerHTML = loyangList.length
     ? loyangList.map(l => `
@@ -657,35 +804,37 @@ function pbbInitTrxForm(trx) {
     const total = qty * harga;
     totalDisplay.value = fmtRupiah(total);
 
-    const bayarAwal = parseAngka(bayarAwalEl.value);
-    const selisih = bayarAwal - total;
+    const manualInput = parseAngka(bayarAwalEl.value);
+    const gunakanSaldo = gunakanSaldoEl.checked;
+    const { saldoDipakai, kelebihan, sisa } = pbbHitungPembayaran(manualInput, total, gunakanSaldo, pbbActiveSaldo);
 
     keteranganEl.classList.remove("minus", "zero");
+    saldoDipakaiBadgeEl.style.display = saldoDipakai > 0 ? "inline-flex" : "none";
+    if (saldoDipakai > 0) saldoDipakaiBadgeEl.textContent = `-${fmtRupiah(saldoDipakai)}`;
 
     if (total === 0) {
       keteranganEl.value = "";
       keteranganEl.placeholder = "-";
-      warningEl.style.display = "none";
+      infoEl.style.display = "none";
       saveBtn.disabled = false;
       return;
     }
 
-    if (selisih > 0) {
-      keteranganEl.value = `Lebih Rp${formatRibuan(selisih)}`;
-      keteranganEl.classList.add("minus");
-      warningEl.style.display = "flex";
-      saveBtn.disabled = true;
-    } else if (selisih === 0) {
+    if (kelebihan > 0) {
       keteranganEl.value = "Lunas";
       keteranganEl.classList.add("zero");
-      warningEl.style.display = "none";
-      saveBtn.disabled = false;
+      infoTextEl.textContent = `Kelebihan Rp${formatRibuan(kelebihan)} akan masuk ke Saldo Pembayaran.`;
+      infoEl.style.display = "flex";
+    } else if (sisa === 0) {
+      keteranganEl.value = "Lunas";
+      keteranganEl.classList.add("zero");
+      infoEl.style.display = "none";
     } else {
-      keteranganEl.value = `-Rp${formatRibuan(Math.abs(selisih))}`;
+      keteranganEl.value = `-Rp${formatRibuan(Math.abs(sisa))}`;
       keteranganEl.classList.add("minus");
-      warningEl.style.display = "none";
-      saveBtn.disabled = false;
+      infoEl.style.display = "none";
     }
+    saveBtn.disabled = false;
   };
 
   btnEl.addEventListener("click", (e) => {
@@ -716,6 +865,7 @@ function pbbInitTrxForm(trx) {
     bayarAwalEl.value = raw ? formatRibuan(raw) : "";
     recalc();
   });
+  gunakanSaldoEl.addEventListener("change", recalc);
 
   recalc();
 }
@@ -753,6 +903,16 @@ function pbbAddFormHTML() {
       <input type="text" class="pbb-form-input" id="fTotalDisplay" value="Rp0" readonly>
     </div>
 
+    <div class="pbb-saldo-banner">
+      <i class="fa-solid fa-wallet"></i>
+      <span>Saldo Tersedia: <b id="fSaldoTersediaLabel">Rp0</b></span>
+    </div>
+    <label class="pbb-saldo-check-wrap">
+      <input type="checkbox" id="fGunakanSaldo">
+      <span>Gunakan Saldo Pembayaran</span>
+      <span class="pbb-saldo-dipakai-badge" id="fSaldoDipakaiBadge" style="display:none">-Rp0</span>
+    </label>
+
     <div class="pbb-form-group">
       <label class="pbb-form-label">Pembayaran Awal</label>
       <input type="text" class="pbb-form-input" id="fBayarAwal" inputmode="numeric" placeholder="0" value="">
@@ -763,9 +923,9 @@ function pbbAddFormHTML() {
       <input type="text" class="pbb-form-input" id="fKeteranganDisplay" readonly value="" placeholder="-">
     </div>
 
-    <div class="pbb-form-warning" id="fWarningLebih" style="display:none;">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      <span>Pembayaran awal melebihi total harga.</span>
+    <div class="pbb-form-info" id="fInfoSaldoMasuk" style="display:none;">
+      <i class="fa-solid fa-circle-info"></i>
+      <span id="fInfoSaldoMasukText">Kelebihan pembayaran akan masuk ke saldo.</span>
     </div>
   `;
 }
@@ -808,6 +968,16 @@ function pbbEditFormHTML(trx) {
       </div>
     </div>
 
+    <div class="pbb-saldo-banner">
+      <i class="fa-solid fa-wallet"></i>
+      <span>Saldo Tersedia: <b id="fSaldoTersediaLabel">Rp0</b></span>
+    </div>
+    <label class="pbb-saldo-check-wrap">
+      <input type="checkbox" id="fGunakanSaldo">
+      <span>Gunakan Saldo Pembayaran</span>
+      <span class="pbb-saldo-dipakai-badge" id="fSaldoDipakaiBadge" style="display:none">-Rp0</span>
+    </label>
+
     <div class="pbb-riwayat-edit-title">Riwayat Pembayaran</div>
     <div id="riwayatEditList">
       ${riwayat.map(r => pbbRiwayatEditRowHTML(r)).join("")}
@@ -816,41 +986,55 @@ function pbbEditFormHTML(trx) {
       <i class="fa-solid fa-plus"></i> Tambah Cicilan
     </button>
 
-    <div class="pbb-form-warning" id="fWarningLebih" style="display:none; margin-top:14px;">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      <span>Total pembayaran melebihi total harga.</span>
+    <div class="pbb-form-info" id="fInfoSaldoMasuk" style="display:none; margin-top:14px;">
+      <i class="fa-solid fa-circle-info"></i>
+      <span id="fInfoSaldoMasukText">Kelebihan pembayaran akan masuk ke saldo.</span>
     </div>
   `;
 }
 function pbbInitEditForm(trx) {
   const listEl = document.getElementById("riwayatEditList");
   const addBtn = document.getElementById("btnTambahCicilan");
-  const warningEl = document.getElementById("fWarningLebih");
+  const infoEl = document.getElementById("fInfoSaldoMasuk");
+  const infoTextEl = document.getElementById("fInfoSaldoMasukText");
   const statusEl = document.getElementById("editStatusLabel");
   const saveBtn = document.getElementById("pbbBtnSave");
+  const saldoLabelEl = document.getElementById("fSaldoTersediaLabel");
+  const gunakanSaldoEl = document.getElementById("fGunakanSaldo");
+  const saldoDipakaiBadgeEl = document.getElementById("fSaldoDipakaiBadge");
+
+  // saldo "efektif" khusus buat sesi edit ini — kembalikan dulu efek lama transaksi
+  // ini ke pool (kalau sebelumnya udah pernah pakai/nyumbang saldo), baru dihitung ulang
+  const oldSaldoDigunakan = Number(trx.saldoDigunakan) || 0;
+  const oldSaldoMasuk     = Number(trx.saldoMasuk) || 0;
+  const saldoEfektif = pbbActiveSaldo + oldSaldoDigunakan - oldSaldoMasuk;
+  saldoLabelEl.textContent = fmtRupiah(saldoEfektif);
 
   const parseAngka = (str) => Number((str || "").replace(/\D/g, "")) || 0;
   const formatRibuan = (n) => Number(n || 0).toLocaleString("id-ID");
 
   const recalc = () => {
-    let totalDibayar = 0;
+    let manualInput = 0;
     listEl.querySelectorAll(".pbb-riwayat-edit-row").forEach(row => {
-      totalDibayar += parseAngka(row.querySelector(".r-nominal").value);
+      manualInput += parseAngka(row.querySelector(".r-nominal").value);
     });
 
-    const sisa = totalDibayar - trx.totalHarga;
-    const status = sisa === 0 ? "lunas" : (sisa < 0 ? "kurang" : "lebih");
+    const gunakanSaldo = gunakanSaldoEl.checked;
+    const { saldoDipakai, kelebihan, status } = pbbHitungPembayaran(manualInput, trx.totalHarga, gunakanSaldo, saldoEfektif);
+
+    saldoDipakaiBadgeEl.style.display = saldoDipakai > 0 ? "inline-flex" : "none";
+    if (saldoDipakai > 0) saldoDipakaiBadgeEl.textContent = `-${fmtRupiah(saldoDipakai)}`;
 
     statusEl.className = `pbb-receipt-value status-${status}`;
-    statusEl.textContent = status === "lunas" ? "Lunas" : (status === "lebih" ? "Lebih Bayar" : "Kurang Bayar");
+    statusEl.textContent = status === "lunas" ? "Lunas" : "Kurang Bayar";
 
-    if (status === "lebih") {
-      warningEl.style.display = "flex";
-      saveBtn.disabled = true;
+    if (kelebihan > 0) {
+      infoTextEl.textContent = `Kelebihan Rp${formatRibuan(kelebihan)} akan masuk ke Saldo Pembayaran.`;
+      infoEl.style.display = "flex";
     } else {
-      warningEl.style.display = "none";
-      saveBtn.disabled = false;
+      infoEl.style.display = "none";
     }
+    saveBtn.disabled = false;
   };
 
   const bindRow = (row) => {
@@ -878,6 +1062,8 @@ function pbbInitEditForm(trx) {
     recalc();
   });
 
+  gunakanSaldoEl.addEventListener("change", recalc);
+
   recalc();
 }
 async function pbbSaveRiwayat(closeSheet) {
@@ -886,7 +1072,7 @@ async function pbbSaveRiwayat(closeSheet) {
 
   const rows = document.querySelectorAll("#riwayatEditList .pbb-riwayat-edit-row");
   const riwayatBayar = [];
-  let dibayar = 0;
+  let manualInput = 0;
 
   rows.forEach(row => {
     const id = row.dataset.id;
@@ -898,22 +1084,27 @@ async function pbbSaveRiwayat(closeSheet) {
         id, nominal, tanggal,
         diterima: existing?.diterima !== undefined ? existing.diterima : true
       });
-      dibayar += nominal;
+      manualInput += nominal;
     }
   });
 
-  const sisa = dibayar - trx.totalHarga;
-  if (sisa > 0) {
-    pbbShowModal({ title: "Tidak Bisa Disimpan", message: "Total pembayaran melebihi total harga.", icon: "fa-triangle-exclamation" });
-    return;
-  }
-  const status = sisa === 0 ? "lunas" : "kurang";
+  const gunakanSaldo = document.getElementById("fGunakanSaldo")?.checked || false;
+  const oldSaldoDigunakan = Number(trx.saldoDigunakan) || 0;
+  const oldSaldoMasuk     = Number(trx.saldoMasuk) || 0;
+  const saldoEfektif = pbbActiveSaldo + oldSaldoDigunakan - oldSaldoMasuk;
+
+  const { saldoDipakai, dibayarFinal, kelebihan, status, sisa } = pbbHitungPembayaran(manualInput, trx.totalHarga, gunakanSaldo, saldoEfektif);
 
   try {
     await window.updateDoc(
       window.doc(window.db, "users", pbbActiveAdminUid, "pembelianBahanBaku", pbbEditingTrxId),
-      { riwayatBayar, dibayar, sisa, status, updatedAt: new Date().toISOString() }
+      { riwayatBayar, dibayar: dibayarFinal, sisa, status, saldoDigunakan: saldoDipakai, saldoMasuk: kelebihan, updatedAt: new Date().toISOString() }
     );
+
+    // net delta ke saldo: kembalikan efek lama, terapkan efek baru
+    const saldoDelta = (oldSaldoDigunakan - saldoDipakai) + (kelebihan - oldSaldoMasuk);
+    if (saldoDelta) await pbbUpdateSaldoPembayaran(saldoDelta);
+
     closeSheet();
     pbbLoadTransaksi();
     pbbShowToast("Riwayat pembayaran berhasil disimpan.", "success");
@@ -995,7 +1186,8 @@ async function pbbSaveTrx(closeSheet) {
   const qty = Number(document.getElementById("fQty").value) || 0;
   const hargaPerPaket = Number(document.getElementById("fHarga").value) || 0;
   const tanggal = document.getElementById("fTanggal").value;
-  const dibayar = Number(document.getElementById("fBayarAwal").value.replace(/\D/g, "")) || 0;
+  const manualInput = Number(document.getElementById("fBayarAwal").value.replace(/\D/g, "")) || 0;
+  const gunakanSaldo = document.getElementById("fGunakanSaldo")?.checked || false;
 
   if (!jenisPaket || !qty || !hargaPerPaket || !tanggal) {
     pbbShowModal({ title: "Lengkapi Data", message: "Lengkapi semua field dulu.", icon: "fa-triangle-exclamation" });
@@ -1003,36 +1195,35 @@ async function pbbSaveTrx(closeSheet) {
   }
 
   const totalHarga = qty * hargaPerPaket;
-  if (dibayar > totalHarga) {
-    pbbShowModal({ title: "Tidak Bisa Disimpan", message: "Pembayaran awal tidak boleh melebihi total harga.", icon: "fa-triangle-exclamation" });
-    return;
-  }
-
+  const { saldoDipakai, dibayarFinal, kelebihan, status, sisa } = pbbHitungPembayaran(manualInput, totalHarga, gunakanSaldo, pbbActiveSaldo);
   const periode = tanggal.slice(0, 7);
-  const sisa = dibayar - totalHarga; // negatif = kurang, 0 = lunas, positif = lebih
-  const status = sisa === 0 ? "lunas" : (sisa < 0 ? "kurang" : "lebih");
 
   try {
     if (pbbEditingTrxId) {
       await window.updateDoc(
         window.doc(window.db, "users", pbbActiveAdminUid, "pembelianBahanBaku", pbbEditingTrxId),
-        { jenisPaket, qty, hargaPerPaket, totalHarga, tanggal, periode, dibayar, sisa, status, keterangan: 0, updatedAt: new Date().toISOString() }
+        { jenisPaket, qty, hargaPerPaket, totalHarga, tanggal, periode, dibayar: dibayarFinal, sisa, status, keterangan: 0, saldoDigunakan: saldoDipakai, saldoMasuk: kelebihan, updatedAt: new Date().toISOString() }
       );
     } else {
-      const riwayatBayar = dibayar > 0
-        ? [{ id: Date.now().toString(), nominal: dibayar, tanggal, diterima: true }]
+      const riwayatBayar = dibayarFinal > 0
+        ? [{ id: Date.now().toString(), nominal: dibayarFinal, tanggal, diterima: true }]
         : [];
 
       await window.addDoc(
         window.collection(window.db, "users", pbbActiveAdminUid, "pembelianBahanBaku"),
         {
           jenisPaket, qty, hargaPerPaket, totalHarga, tanggal, periode,
-          dibayar, sisa, status, keterangan: 0,
+          dibayar: dibayarFinal, sisa, status, keterangan: 0,
+          saldoDigunakan: saldoDipakai, saldoMasuk: kelebihan,
           riwayatBayar, createdBy: window.auth?.currentUser?.uid || "",
           updatedAt: new Date().toISOString()
         }
       );
     }
+
+    const saldoDelta = kelebihan - saldoDipakai;
+    if (saldoDelta) await pbbUpdateSaldoPembayaran(saldoDelta);
+
     closeSheet();
     pbbLoadTransaksi();
     pbbShowToast("Data pembelian berhasil disimpan.", "success");

@@ -174,6 +174,28 @@
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 12px; margin-bottom: 18px;
 }
+.pbb-kpi-card.pbb-kpi-card-full {
+  width: 100%;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--brand-pale);
+  border-color: var(--brand-mid);
+}
+.pbb-kpi-card-full .pbb-kpi-label {
+  font-size: 15px;
+}
+.pbb-kpi-card-full .pbb-kpi-value {
+  font-size: 22px;
+}
+.pbb-kpi-card-full .pbb-kpi-breakdown {
+  width: 100%;
+}
+.pbb-kpi-card-full .pbb-kpi-breakdown-row {
+  text-align: left;
+}
 .pbb-kpi-card {
   background: var(--bg-card); border: 1px solid var(--border-card);
   border-radius: 14px; padding: 14px 16px;
@@ -187,6 +209,7 @@
 .pbb-kpi-icon.success { background: var(--success-bg); color: var(--success); }
 .pbb-kpi-icon.danger  { background: var(--danger-bg);  color: var(--danger); }
 .pbb-kpi-icon.warning { background: var(--warning-bg); color: var(--warning); }
+.pbb-kpi-icon.saldo   { background: var(--brand-pale); color: var(--brand-primary); }
 .pbb-kpi-label { font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
 .pbb-kpi-value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
 
@@ -197,7 +220,7 @@
 }
 .pbb-kpi-breakdown-row {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; font-size: 10.5px;
+  gap: 8px; font-size: 12px;
 }
 .pbb-kpi-breakdown-jenis {
   color: var(--text-secondary); font-weight: 600;
@@ -206,7 +229,7 @@
 }
 .pbb-kpi-breakdown-qty {
   background: var(--brand-pale); color: var(--brand-primary);
-  font-size: 9.5px; font-weight: 700;
+  font-size: 10px; font-weight: 700;
   padding: 1px 6px; border-radius: 20px; flex-shrink: 0;
 }
 .pbb-kpi-breakdown-total {
@@ -245,8 +268,8 @@
 .pbb-trx-date-sublabel i { color: var(--text-muted); }
 
 .pbb-trx-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  display: flex; /*display: grid;*/
+  flex-direction: column; /*grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));*/
   gap: 14px;
 }
 
@@ -552,6 +575,54 @@
 .pbb-filter-status-option.selected { background: var(--brand-pale); color: var(--brand-primary); font-weight: 700; }
 .pbb-filter-status-option.selected i { color: var(--brand-primary); }
 
+.pbb-toolbar-filters {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+
+.pbb-filter-tanggal-wrap { position: relative; }
+.pbb-filter-tanggal-menu {
+  position: absolute; top: calc(100% + 8px); left: 0;
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 12px; box-shadow: 0 8px 24px var(--shadow-md);
+  padding: 14px; z-index: 50; width: 190px; box-sizing: border-box;
+}
+.pbb-filter-tanggal-row {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;
+}
+.pbb-filter-tanggal-row label {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+}
+.pbb-filter-tanggal-row input[type="date"] {
+  width: 100%; box-sizing: border-box;
+  height: 36px; padding: 0 10px;
+  border: 1px solid var(--border-card); border-radius: 8px;
+  font-family: 'Poppins', sans-serif; font-size: 12.5px;
+  color: var(--text-primary); background: var(--bg-page);
+  outline: none;
+}
+.pbb-filter-tanggal-actions {
+  display: flex; align-items: center; gap: 8px; margin-top: 4px;
+}
+.pbb-filter-tanggal-reset {
+  flex: 1; height: 34px; border: 1px solid var(--border-card);
+  background: var(--bg-page); border-radius: 8px;
+  font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer;
+}
+.pbb-filter-tanggal-terapkan {
+  flex: 0 0 34px; width: 34px; height: 34px; border: none;
+  background: var(--brand-primary); border-radius: 50%;
+  font-size: 13px; color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .pbb-toolbar-filters { width: 100%; }
+  .pbb-filter-status-wrap, .pbb-filter-tanggal-wrap { flex: 1; }
+  .pbb-filter-status-wrap .pbb-filter-status-btn,
+  .pbb-filter-tanggal-wrap .pbb-filter-status-btn { width: 100%; }
+}
+
 /* ── VIEW TOGGLE BUTTON ── */
 .pbb-view-toggle-btn.active {
   background: var(--brand-primary);
@@ -628,6 +699,40 @@
 .pbb-modal-btn-cancel { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-card); }
 .pbb-modal-btn-ok { background: var(--brand-primary); color: var(--text-white); }
 .pbb-modal-btn-ok:hover { background: var(--brand-dark); }
+
+.pbb-saldo-banner {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--brand-pale); color: var(--brand-primary);
+  font-size: 12px; font-weight: 600;
+  padding: 10px 12px; border-radius: 10px;
+  margin-bottom: 10px;
+}
+.pbb-saldo-banner i { font-size: 13px; }
+
+.pbb-saldo-check-wrap {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+  cursor: pointer; user-select: none;
+  margin-bottom: 14px;
+}
+.pbb-saldo-check-wrap input[type="checkbox"] {
+  width: 17px; height: 17px; accent-color: var(--brand-primary); cursor: pointer;
+}
+.pbb-saldo-dipakai-badge {
+  margin-left: auto;
+  background: var(--success-bg); color: var(--success);
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+  display: inline-flex; align-items: center;
+}
+
+.pbb-form-info {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11.5px; color: var(--info); background: var(--info-bg);
+  padding: 9px 12px; border-radius: 10px;
+  margin-top: -6px; margin-bottom: 14px;
+}
+.pbb-form-info i { font-size: 12px; flex-shrink: 0; }
 
 /* ── MEDIA QUERIES ── */
 @media (max-width: 768px) {
