@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="perjanjiankaryawan.css">
 <link rel="stylesheet" href="perjanjianmitra.css">
 <link rel="stylesheet" href="perjanjianekuitas.css">
+<link rel="stylesheet" href="billing.css">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -777,7 +778,13 @@
                       <span class="profil-menu-label">SOP</span>
                       <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
                     </button>
-        
+
+                    <button class="profil-menu-item" data-view="billing">
+                      <div class="profil-menu-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                      <span class="profil-menu-label">Usage & Billing</span>
+                      <i class="fa-solid fa-chevron-right profil-menu-arrow"></i>
+                    </button>
+
                     <button class="profil-menu-item profil-menu-item-danger" id="profilBtnLogout">
                       <div class="profil-menu-icon danger"><i class="fa-solid fa-right-from-bracket"></i></div>
                       <span class="profil-menu-label">Keluar Akun</span>
@@ -1128,6 +1135,71 @@
           </div>
         </div>
         
+        <!-- BILLING VIEW -->
+        <div class="view" id="view-billing">
+          <div class="view-scroll">
+            <div class="billing-page">
+        
+              <div class="billing-header">
+                <div class="billing-header-title">Usage & Billing</div>
+                <div class="billing-header-sub">Ringkasan pemakaian dan estimasi biaya Firebase</div>
+              </div>
+
+              <div class="billing-note-bubble">
+                <i class="fa-solid fa-circle-info billing-note-icon"></i>
+                <div class="billing-note-content">
+                  Data diambil langsung dari Firebase dan dapat mengalami keterlambatan hingga ±24 jam. Angka yang ditampilkan merupakan estimasi dan belum termasuk pajak (PPN), sehingga tidak dapat dijadikan acuan tagihan final.
+                </div>
+              </div>
+        
+              <div id="billingContent">
+                <div class="billing-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>
+              </div>
+
+              <div class="billing-last-updated" id="billingLastUpdated"></div>
+
+              <div class="billing-section">
+                <div class="billing-section-title"><i class="fa-solid fa-book"></i> Penjelasan Istilah</div>
+                <div class="billing-glossary-list">
+                  <div class="billing-glossary-row">
+                    <div class="billing-glossary-term">Firestore Reads</div>
+                    <div class="billing-glossary-desc">Jumlah operasi baca dokumen dari database. Setiap kali data ditampilkan atau dimuat, terhitung sebagai satu read.</div>
+                    <div class="billing-glossary-price">Setelah kuota gratis: $0,03 per 100.000 reads</div>
+                  </div>
+                  <div class="billing-glossary-row">
+                    <div class="billing-glossary-term">Firestore Writes</div>
+                    <div class="billing-glossary-desc">Jumlah operasi tulis/perbarui dokumen, misalnya saat menyimpan data baru atau mengubah data yang sudah ada.</div>
+                    <div class="billing-glossary-price">Setelah kuota gratis: $0,09 per 100.000 writes</div>
+                  </div>
+                  <div class="billing-glossary-row">
+                    <div class="billing-glossary-term">Firestore Deletes</div>
+                    <div class="billing-glossary-desc">Jumlah operasi hapus dokumen dari database.</div>
+                    <div class="billing-glossary-price">Setelah kuota gratis: $0,01 per 100.000 deletes</div>
+                  </div>
+                  <div class="billing-glossary-row">
+                    <div class="billing-glossary-term">Storage Terpakai</div>
+                    <div class="billing-glossary-desc">Total kapasitas penyimpanan berkas (foto, dokumen, dll) yang tersimpan di Firebase Storage, dihitung dalam GB.</div>
+                    <div class="billing-glossary-price">Setelah kuota gratis: $0,026 per GB / bulan</div>
+                  </div>
+                  <div class="billing-glossary-row">
+                    <div class="billing-glossary-term">Functions Invocations</div>
+                    <div class="billing-glossary-desc">Jumlah eksekusi Cloud Functions, yaitu proses otomatis di server yang berjalan merespons suatu kejadian (misalnya membuat akun atau mengirim notifikasi).</div>
+                    <div class="billing-glossary-price">Setelah kuota gratis: $0,40 per 1.000.000 invocation</div>
+                  </div>
+                </div>
+                <div class="billing-quota-footnote">
+                  Harga per unit merujuk region us-central1, dapat berbeda di region lain dan sewaktu-waktu berubah — cek harga resmi di firebase.google.com/pricing.
+                </div>
+              </div>
+        
+              <button class="billing-refresh-btn" id="billingRefreshBtn">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+              </button>
+        
+            </div>
+          </div>
+        </div>
+        
         <!-- SHEET AKSESIBILITAS -->
         <div class="profil-aksesibilitas-overlay" id="profilAksesibilitasOverlay">
           <div class="profil-aksesibilitas-sheet" id="profilAksesibilitasSheet">
@@ -1255,6 +1327,7 @@
 <script type="module" src="perjanjiankaryawan.js"></script>
 <script type="module" src="perjanjianmitra.js"></script>
 <script type="module" src="perjanjianekuitas.js"></script>
+<script type="module" src="billing.js"></script>
 <script src="indexdb.js"></script>
 <script src="map.js"></script>
 <script src="crop.js"></script>

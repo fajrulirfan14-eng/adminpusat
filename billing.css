@@ -1,0 +1,186 @@
+/* ── BILLING PAGE ── */
+.billing-page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.billing-header-title { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+.billing-header-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── STATES ── */
+.billing-loading, .billing-empty {
+  text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;
+}
+.billing-error {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--danger-bg, rgba(220,38,38,0.08)); color: var(--danger, #dc2626);
+  padding: 12px 14px; border-radius: 10px; font-size: 12.5px;
+}
+
+/* ── KETERANGAN UX ── */
+.billing-note-bubble {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 13px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-card);
+  border-radius: 10px;
+}
+.billing-note-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.billing-note-content {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary, var(--text-primary));
+}
+
+.billing-last-updated {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -6px;
+}
+
+/* ── SECTION (container umum) ── */
+.billing-section {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: 16px; padding: 16px;
+}
+.billing-section-title {
+  font-size: 14px; font-weight: 700; color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+}
+
+/* ── BILLING TOTAL & PER-SERVICE ── */
+.billing-total-card {
+  text-align: center; background: var(--brand-pale);
+  border-radius: 12px; padding: 16px; margin-bottom: 14px;
+}
+.billing-total-label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.billing-total-value { font-size: 24px; font-weight: 800; color: var(--brand-primary); margin-top: 4px; }
+.billing-total-periode { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+.billing-service-list { display: flex; flex-direction: column; gap: 8px; }
+.billing-service-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px; background: var(--bg-hover); border-radius: 10px; font-size: 12.5px;
+}
+.billing-service-name { color: var(--text-primary); font-weight: 600; }
+.billing-service-cost { color: var(--text-secondary); font-weight: 700; }
+
+/* ── USAGE GRID ── */
+/* Mobile: 2 kolom, card ke-5 (terakhir) full-width biar gak nganggur sendirian */
+.billing-usage-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.billing-usage-card:last-child { grid-column: 1 / -1; }
+
+.billing-usage-card { background: var(--bg-hover); border-radius: 12px; padding: 14px; text-align: center; }
+.billing-usage-icon { font-size: 16px; color: var(--brand-primary); margin-bottom: 6px; }
+.billing-usage-value { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+.billing-usage-label { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+.billing-usage-periode { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+
+/* ── GLOSSARY (Penjelasan Istilah) ── */
+.billing-glossary-list { display: flex; flex-direction: column; gap: 12px; }
+.billing-glossary-row {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-card);
+}
+.billing-glossary-row:last-child { border-bottom: none; padding-bottom: 0; }
+.billing-glossary-term {
+  font-size: 12.5px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 3px;
+}
+.billing-glossary-desc {
+  font-size: 11.5px; line-height: 1.5; color: var(--text-muted);
+}
+.billing-glossary-price {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--brand-primary);
+  background: var(--brand-pale);
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+/* ── QUOTA (Estimasi Kuota Gratis) ── */
+.billing-quota-list { display: flex; flex-direction: column; gap: 16px; }
+.billing-quota-row { display: flex; flex-direction: column; gap: 5px; }
+.billing-quota-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.billing-quota-label { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.billing-quota-value { font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.billing-quota-value.safe { color: #16a34a; }
+.billing-quota-value.warn { color: #d97706; }
+.billing-quota-value.over { color: var(--danger, #dc2626); }
+
+.billing-quota-bar-track {
+  width: 100%; height: 6px;
+  background: var(--bg-hover);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.billing-quota-bar-fill { height: 100%; border-radius: 20px; transition: width 0.4s ease; }
+.billing-quota-bar-fill.safe { background: #16a34a; }
+.billing-quota-bar-fill.warn { background: #d97706; }
+.billing-quota-bar-fill.over { background: var(--danger, #dc2626); }
+
+.billing-quota-sub { font-size: 12px; color: var(--text-muted); }
+
+.billing-quota-footnote {
+  font-size: 12px; color: var(--text-muted);
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px dashed var(--border-card);
+  line-height: 1.5;
+}
+
+/* ── REFRESH BUTTON ── */
+.billing-refresh-btn {
+  width: 100%; padding: 12px; border: 1px solid var(--border-card);
+  background: var(--bg-card); border-radius: 12px; color: var(--text-primary);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.billing-refresh-btn:hover { background: var(--bg-hover); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 420px) {
+  .billing-page { padding: 12px; gap: 12px; }
+  .billing-header-title { font-size: 20px; }
+}
+
+@media (min-width: 900px) {
+  .billing-page { padding: 24px 20px; gap: 20px; }
+  .billing-note-content { font-size: 13px; }
+
+  /* Usage grid: 3 kolom rapi (baris 1) + 2 kolom lebar (baris 2), gak ada slot nganggur */
+  .billing-usage-grid { grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .billing-usage-card:nth-child(1),
+  .billing-usage-card:nth-child(2),
+  .billing-usage-card:nth-child(3) { grid-column: span 2; }
+  .billing-usage-card:nth-child(4),
+  .billing-usage-card:nth-child(5) { grid-column: span 3; }
+  .billing-usage-card { padding: 18px; }
+  .billing-usage-value { font-size: 20px; }
+}
+
+@media (min-width: 1200px) {
+  /* Billing full-width di atas, Usage & Kuota sejajar 2 kolom di bawahnya */
+  #billingContent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  #billingContent > .billing-section:first-child { grid-column: 1 / -1; }
+
+  .billing-glossary-list { grid-template-columns: repeat(2, 1fr); display: grid; gap: 14px 20px; }
+  .billing-glossary-row { border-bottom: none; padding-bottom: 0; }
+
+  .billing-quota-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
+}

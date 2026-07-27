@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 import {
   getAuth,
   onAuthStateChanged,
@@ -48,6 +49,7 @@ const app     = initializeApp(firebaseConfig);
 const auth    = getAuth(app);
 const db      = getFirestore(app);
 const storage = getStorage(app);
+const functionsInstance = getFunctions(app, "asia-southeast2");
 
 // ── GLOBALS ──
 window.auth            = auth;
@@ -77,6 +79,7 @@ window.reauthenticateWithCredential = reauthenticateWithCredential;
 window.EmailAuthProvider = EmailAuthProvider;
 window.updatePassword = updatePassword;
 window.uploadBytesResumable = uploadBytesResumable;
+window.callFunction = (name, data = {}) => httpsCallable(functionsInstance, name)(data);
 // ── COMPRESS IMAGE ──
 window.compressImage = function(blob, maxWidth = 1280, quality = 0.78) {
   return new Promise(resolve => {
@@ -414,6 +417,9 @@ window.showView = function(viewName, fromPopState = false, forcePush = false) {
   if (viewName === "laporan" && typeof window.initLaporanView === "function") {
     window.initLaporanView();
   }
+  if (viewName === "billing" && typeof window.initBillingView === "function") {
+    window.initBillingView();
+  }
   // Sembunyikan reload btn sesuai view
   const reloadBtn = document.getElementById("topbarReload");
   if (reloadBtn) reloadBtn.style.display = (viewName === "customer" || viewName === "home") ? "flex" : "none";
@@ -433,7 +439,8 @@ window.showView = function(viewName, fromPopState = false, forcePush = false) {
     sop: "SOP",
     perjanjiankaryawan: "Surat Perjanjian Karyawan",
     perjanjianmitra: "Surat Perjanjian Mitra",
-    perjanjianekuitas: "Surat Perjanjian Ekuitas"
+    perjanjianekuitas: "Surat Perjanjian Ekuitas",
+    billing: "Usage & Billing"
   };
   const topbarTitle = document.getElementById("topbarTitle");
   if (topbarTitle) topbarTitle.textContent = titles[viewName] || viewName;
