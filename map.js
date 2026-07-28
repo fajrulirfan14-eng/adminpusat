@@ -317,10 +317,14 @@ window.openPetaGlobal = async function(focusCustomer = null) {
       tileDropdown.classList.remove("show");
     });
   });
-  // Pin kantor cabang
-  const cabangData = await window.idbGetCabang() || [];
+  // Pin kantor cabang — ambil langsung dari Firestore, jangan andalin IDB
+  let cabangDataPeta = [];
+  try {
+    const cabangSnap = await window.getDocs(window.collection(window.db, "kantorCabang"));
+    cabangDataPeta = cabangSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { console.error("fetch cabang peta:", e); }
   const pinIcon = L.icon({ iconUrl: "pin.png", iconSize: [28,28], iconAnchor: [14,28], popupAnchor: [0,-32] });
-  cabangData.forEach(c => {
+  cabangDataPeta.forEach(c => {
     const lat = c.lokasiCabang?.latitude;
     const lng = c.lokasiCabang?.longitude;
     if (!lat || !lng) return;

@@ -649,6 +649,11 @@ function showConfirmHapus(cabang) {
         }
       } catch(e) { console.error("hapus owner:", e); }
 
+      // Hapus akun (password page)
+      try {
+        await window.deleteDoc(window.doc(window.db, "akun", cabang.id));
+      } catch(e) {}
+
       // Hapus kantorCabang
       await window.deleteDoc(window.doc(window.db, "kantorCabang", cabang.id));
 
@@ -1842,9 +1847,19 @@ async function renderEditOwner(cabang) {
   };
 }
 // ── EDIT INFO ──
-function renderEditInfo(cabang) {
+async function renderEditInfo(cabang) {
   const body = document.getElementById("cabangTabBody");
   if (!body) return;
+
+  body.innerHTML = `<div class="cabang-loading-msg">Memuat data...</div>`;
+
+  let passwordAsli = "";
+  try {
+    const akunSnap = await window.getDoc(window.doc(window.db, "akun", cabang.id));
+    if (akunSnap.exists()) passwordAsli = akunSnap.data()?.password || "";
+  } catch(e) {
+    console.error("❌ fetch akun password:", e);
+  }
 
   body.innerHTML = `
     <div class="edit-form">
@@ -1866,7 +1881,7 @@ function renderEditInfo(cabang) {
         ${editField("Nama Cabang",  "editNamaCabang", cabang.namaCabang)}
         ${editField("Nama PT",      "editNamaPt",     cabang.namaPt)}
         ${editField("Alamat",       "editAlamat",     cabang.alamatCabang, "textarea")}
-        ${editField("Password Page","editPassword",   cabang.pagePassword)}
+        ${editField("Password Page","editPassword",   passwordAsli)}
       </div>
 
       <div class="tab-card">
