@@ -309,6 +309,7 @@ function renderTabContent(tab, c) {
         <div class="tab-section-title">Upah</div>
         <div class="tab-row"><span class="tab-row-label">Upah Harian</span><span class="tab-row-value">${(c.upahHarian||0).toLocaleString("id-ID")}</span></div>
         <div class="tab-row"><span class="tab-row-label">Upah Hunter</span><span class="tab-row-value">${(c.upahHunter||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Upah Admin</span><span class="tab-row-value">${(c.upahAdmin||0).toLocaleString("id-ID")}</span></div>
       </div>
       <div class="tab-card">
         <div class="tab-section-title">Pengeluaran Fix</div>
@@ -390,8 +391,8 @@ function renderTabContent(tab, c) {
         <div class="tab-row"><span class="tab-row-label">Kelipatan Upah - Batas</span><span class="tab-row-value">${potongan.kelipatanUpah?.batas ?? "-"}</span></div>
         <div class="tab-row"><span class="tab-row-label">Kelipatan Upah - Kelipatan</span><span class="tab-row-value">${potongan.kelipatanUpah?.kelipatan ?? "-"}</span></div>
         <div class="tab-row"><span class="tab-row-label">Kelipatan Upah - Potongan</span><span class="tab-row-value">${(potongan.kelipatanUpah?.potonganUpah||0).toLocaleString("id-ID")}</span></div>
-        <div class="tab-row"><span class="tab-row-label">Setengah Upah - Batas</span><span class="tab-row-value">${potongan.setengahUpah?.batas ?? "-"}</span></div>
-        <div class="tab-row"><span class="tab-row-label">Setengah Upah - Potongan</span><span class="tab-row-value">${(potongan.setengahUpah?.potonganUpah||0).toLocaleString("id-ID")}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Setengah Upah - Batas</span><span class="tab-row-value">${potongan.setengahUpah?.batas ?? "-"}%</span></div>
+        <div class="tab-row"><span class="tab-row-label">Setengah Upah - Potongan</span><span class="tab-row-value">${potongan.setengahUpah?.potonganUpah ?? "-"}%</span></div>
       </div>
     `;
   }
@@ -437,7 +438,7 @@ function renderTabContent(tab, c) {
       `).join("")}
       <div class="tab-card">
         <div class="tab-section-title">Target</div>
-        <div class="tab-row"><span class="tab-row-label">Expired</span><span class="tab-row-value">${c.target?.expired||"-"}%</span></div>
+        <div class="tab-row"><span class="tab-row-label">Masa Kadaluarsa Produk</span><span class="tab-row-value">${c.target?.expired||"-"} Hari</span></div>
       </div>
     `;
   }
@@ -487,10 +488,30 @@ async function loadOwnerData(cabangId) {
       </div>
       <div class="tab-card">
         <div class="tab-section-title">Data Owner Mitra</div>
+        <div class="tab-row"><span class="tab-row-label">NIK</span><span class="tab-row-value">${o.nik||"-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Email</span><span class="tab-row-value">${o.email||"-"}</span></div>
         <div class="tab-row"><span class="tab-row-label">No HP</span><span class="tab-row-value">${o.noHp||"-"}</span></div>
         <div class="tab-row"><span class="tab-row-label">Alamat</span><span class="tab-row-value tab-row-value--wrap">${o.alamat||"-"}</span></div>
         <div class="tab-row"><span class="tab-row-label">Tempat Lahir</span><span class="tab-row-value">${o.tempatLahir||"-"}</span></div>
         <div class="tab-row"><span class="tab-row-label">Tanggal Lahir</span><span class="tab-row-value">${tgl}</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Identitas & Legal</div>
+        <div class="tab-row"><span class="tab-row-label">Jenis Kelamin</span><span class="tab-row-value">${o.jenisKelamin||"-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Status Pernikahan</span><span class="tab-row-value">${o.statusPernikahan||"-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Nama Pasangan</span><span class="tab-row-value">${o.namaPasangan||"-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">NPWP</span><span class="tab-row-value">${o.npwp||"-"}</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Kontak & Domisili</div>
+        <div class="tab-row"><span class="tab-row-label">Alamat sesuai KTP</span><span class="tab-row-value tab-row-value--wrap">${o.alamatKtp||"-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Kode Pos</span><span class="tab-row-value">${o.kodePos||"-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Kontak Darurat</span><span class="tab-row-value">${o.kontakDarurat?.nama||"-"} · ${o.kontakDarurat?.noHp||"-"}</span></div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Kemitraan</div>
+        <div class="tab-row"><span class="tab-row-label">Tanggal Mulai Kemitraan</span><span class="tab-row-value">${o.tanggalMulaiKemitraan?.toDate ? o.tanggalMulaiKemitraan.toDate().toLocaleDateString("id-ID", { day:"2-digit", month:"long", year:"numeric" }) : "-"}</span></div>
+        <div class="tab-row"><span class="tab-row-label">Referensi No. Perjanjian</span><span class="tab-row-value">${o.noPerjanjian||"-"}</span></div>
       </div>
     `;
   } catch(e) {
@@ -823,6 +844,10 @@ function renderEditOperasional(cabang) {
             <div class="edit-field-label">Upah Hunter</div>
             <input id="editUpahHunter" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(cabang.upahHunter || 0)}">
           </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Upah Admin</div>
+            <input id="editUpahAdmin" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(cabang.upahAdmin || 0)}">
+          </div>
         </div>
 
         <!-- PENGELUARAN FIX -->
@@ -1026,12 +1051,12 @@ function renderEditOperasional(cabang) {
             <input id="editPotKelipatanPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(potongan.kelipatanUpah?.potonganUpah||0)}">
           </div>
           <div class="edit-field">
-            <div class="edit-field-label">Setengah Upah - Batas</div>
+            <div class="edit-field-label">Setengah Upah - Batas (%)</div>
             <input id="editPotSetengahBatas" type="number" class="edit-field-input" value="${potongan.setengahUpah?.batas||0}">
           </div>
           <div class="edit-field">
-            <div class="edit-field-label">Setengah Upah - Potongan (Rp)</div>
-            <input id="editPotSetengahPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(potongan.setengahUpah?.potonganUpah||0)}">
+            <div class="edit-field-label">Setengah Upah - Potongan (%)</div>
+            <input id="editPotSetengahPotongan" type="number" class="edit-field-input" value="${potongan.setengahUpah?.potonganUpah||0}">
           </div>
         </div>
 
@@ -1317,6 +1342,7 @@ function renderEditOperasional(cabang) {
           harga:  hargaFinal,
           upahHarian: rpNum(document.getElementById("editUpahHarian").value),
           upahHunter: rpNum(document.getElementById("editUpahHunter").value),
+          upahAdmin:  rpNum(document.getElementById("editUpahAdmin").value),
           pengeluaran: { fix: penFix, variable: penVariableFinal },
           pengeluaranDistribusi: { fix: penDistFix, variable: penDistVariableFinal },
           loyang: loyangFinal,
@@ -1331,7 +1357,7 @@ function renderEditOperasional(cabang) {
             },
             setengahUpah: {
               batas:       parseInt(document.getElementById("editPotSetengahBatas").value) || 0,
-              potonganUpah: rpNum(document.getElementById("editPotSetengahPotongan").value),
+              potonganUpah: parseInt(document.getElementById("editPotSetengahPotongan").value) || 0,
             }
           }
         };
@@ -1554,7 +1580,7 @@ function renderEditTrikotomi(cabang) {
       <div class="tab-card">
         <div class="tab-section-title">Target</div>
         <div class="edit-field">
-          <div class="edit-field-label">Expired (%)</div>
+          <div class="edit-field-label">Masa Kadaluarsa Produk</div>
           <input id="editTargetExpired" type="number" class="edit-field-input" value="${cabang.target?.expired || 0}">
         </div>
       </div>
@@ -1671,6 +1697,7 @@ async function renderEditOwner(cabang) {
       <div class="tab-card">
         <div class="tab-section-title">Data Owner Mitra</div>
         ${editField("Nama Owner",    "editOwnerNama",    o.namaOwner  || "")}
+        ${editField("NIK",           "editOwnerNik",     o.nik        || "")}
         ${editField("No HP",         "editOwnerNoHp",    o.noHp       || "")}
         ${editField("Email",         "editOwnerEmail",   o.email      || "")}
         ${editField("Alamat",        "editOwnerAlamat",  o.alamat     || "", "textarea")}
@@ -1679,6 +1706,46 @@ async function renderEditOwner(cabang) {
           <div class="edit-field-label">Tanggal Lahir</div>
           <input id="editOwnerTanggal" type="date" class="edit-field-input" value="${tglValue}">
         </div>
+      </div>
+
+      <!-- IDENTITAS & LEGAL -->
+      <div class="tab-card">
+        <div class="tab-section-title">Identitas & Legal</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Jenis Kelamin</div>
+          <select id="editOwnerJenisKelamin" class="edit-field-input">
+            <option value="Laki-laki" ${o.jenisKelamin === "Laki-laki" || !o.jenisKelamin ? "selected" : ""}>Laki-laki</option>
+            <option value="Perempuan" ${o.jenisKelamin === "Perempuan" ? "selected" : ""}>Perempuan</option>
+          </select>
+        </div>
+        <div class="edit-field">
+          <div class="edit-field-label">Status Pernikahan</div>
+          <select id="editOwnerStatusPernikahan" class="edit-field-input">
+            <option value="Belum Menikah" ${o.statusPernikahan === "Belum Menikah" || !o.statusPernikahan ? "selected" : ""}>Belum Menikah</option>
+            <option value="Menikah" ${o.statusPernikahan === "Menikah" ? "selected" : ""}>Menikah</option>
+          </select>
+        </div>
+        ${editField("Nama Pasangan", "editOwnerNamaPasangan", o.namaPasangan || "")}
+        ${editField("NPWP", "editOwnerNpwp", o.npwp || "")}
+      </div>
+
+      <!-- KONTAK & DOMISILI -->
+      <div class="tab-card">
+        <div class="tab-section-title">Kontak & Domisili</div>
+        ${editField("Alamat sesuai KTP", "editOwnerAlamatKtp", o.alamatKtp || "", "textarea")}
+        ${editField("Kode Pos", "editOwnerKodePos", o.kodePos || "")}
+        ${editField("Kontak Darurat - Nama", "editOwnerKontakDaruratNama", o.kontakDarurat?.nama || "")}
+        ${editField("Kontak Darurat - No HP", "editOwnerKontakDaruratNoHp", o.kontakDarurat?.noHp || "")}
+      </div>
+
+      <!-- KEMITRAAN -->
+      <div class="tab-card">
+        <div class="tab-section-title">Kemitraan</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Tanggal Mulai Kemitraan</div>
+          <input id="editOwnerTanggalMulai" type="date" class="edit-field-input" value="${o.tanggalMulaiKemitraan?.toDate ? o.tanggalMulaiKemitraan.toDate().toISOString().split("T")[0] : ""}">
+        </div>
+        ${editField("Referensi No. Perjanjian", "editOwnerNoPerjanjian", o.noPerjanjian || "")}
       </div>
 
       <div class="edit-actions">
@@ -1717,13 +1784,27 @@ async function renderEditOwner(cabang) {
 
     try {
       const tglRaw = document.getElementById("editOwnerTanggal").value;
+      const tglMulaiRaw = document.getElementById("editOwnerTanggalMulai").value;
       const updates = {
         namaOwner:    document.getElementById("editOwnerNama").value.trim(),
+        nik:          document.getElementById("editOwnerNik").value.trim(),
         noHp:         document.getElementById("editOwnerNoHp").value.trim(),
         email:        document.getElementById("editOwnerEmail").value.trim(),
         alamat:       document.getElementById("editOwnerAlamat").value.trim(),
         tempatLahir:  document.getElementById("editOwnerTempat").value.trim(),
         tanggalLahir: tglRaw ? new Date(tglRaw) : null,
+        jenisKelamin:     document.getElementById("editOwnerJenisKelamin").value,
+        statusPernikahan: document.getElementById("editOwnerStatusPernikahan").value,
+        namaPasangan:     document.getElementById("editOwnerNamaPasangan").value.trim(),
+        npwp:             document.getElementById("editOwnerNpwp").value.trim(),
+        alamatKtp:        document.getElementById("editOwnerAlamatKtp").value.trim(),
+        kodePos:          document.getElementById("editOwnerKodePos").value.trim(),
+        kontakDarurat: {
+          nama: document.getElementById("editOwnerKontakDaruratNama").value.trim(),
+          noHp: document.getElementById("editOwnerKontakDaruratNoHp").value.trim(),
+        },
+        tanggalMulaiKemitraan: tglMulaiRaw ? new Date(tglMulaiRaw) : null,
+        noPerjanjian: document.getElementById("editOwnerNoPerjanjian").value.trim(),
         idCabang:     cabang.id,
         createdAt:    ownerDoc ? (o.createdAt || window.serverTimestamp()) : window.serverTimestamp(),
       };
@@ -1912,16 +1993,17 @@ function renderEditInfo(cabang) {
 }
 // ── EDIT FIELD ──
 function editField(label, id, value, type = "input") {
+  const val = (value === undefined || value === null) ? "" : value;
   if (type === "textarea") return `
     <div class="edit-field">
       <div class="edit-field-label">${label}</div>
-      <textarea id="${id}" class="edit-field-input edit-field-textarea" rows="3">${value||""}</textarea>
+      <textarea id="${id}" class="edit-field-input edit-field-textarea" rows="3">${val}</textarea>
     </div>
   `;
   return `
     <div class="edit-field">
       <div class="edit-field-label">${label}</div>
-      <input id="${id}" type="text" class="edit-field-input" value="${value||""}">
+      <input id="${id}" type="text" class="edit-field-input" value="${val}">
     </div>
   `;
 }
@@ -2023,31 +2105,44 @@ function renderTambahCabang() {
   const newData = {
     info: {},
     operasional: {
-      varian: {}, harga: {},
-      upahHarian: 0, upahHunter: 0,
-      pengeluaran: { fix: [], variable: [] },
-      pengeluaranDistribusi: { fix: [], variable: [] },
-      loyang: [],
-      estimasi: {},
+      varian: { CB: "Cup Besar", BB: "Botol Besar", BK: "Botol Kecil", MC: "Matcha" },
+      harga:  { CB: 5000, BB: 5000, BK: 4000, MC: 5000 },
+      upahHarian: 100000, upahHunter: 10000, upahAdmin: 1000000,
+      pengeluaran: {
+        fix: ["Token", "WiFi", "Kontrakan", "PDAM"],
+        variable: [
+          { jenis: "Gas", harga: 20000 },
+          { jenis: "Galon", harga: 5000 }
+        ]
+      },
+      pengeluaranDistribusi: { fix: ["Box", "Tali"], variable: [] },
+      loyang: [
+        { jenisLoyang: "Original", status: true, upah: 60000, hargaPaket: 750000 },
+        { jenisLoyang: "Matcha", status: true, upah: 65000, hargaPaket: 800000 }
+      ],
+      estimasi: {
+        loyangOriginal: { CB: 240, BB: 240, BK: 330 },
+        loyangMatcha: { MC: 330 }
+      },
       bonusAdmin: [],
       bonusProduksi: [],
       potongan: {
-        kelipatanUpah: { batas: 0, kelipatan: 0, potonganUpah: 0 },
-        setengahUpah:  { batas: 0, potonganUpah: 0 }
+        kelipatanUpah: { batas: 60, kelipatan: 10, potonganUpah: 5000 },
+        setengahUpah:  { batas: 50, potonganUpah: 50 }
       }
     },
     bonus: {
-      data: { targetCustomer: 0, insentif: 0 },
-      customer: { target: 0, kelipatan: 0, uang: 0 },
-      margin: { silver: { minimal: 0, maksimal: 0, uang: 0 }, gold: { minimal: 0, maksimal: 0, uang: 0 }, premium: { minimal: 0, maksimal: 0, uang: 0 } },
-      kehadiran: 0, ketentuan: 0
+      data: { targetCustomer: 60, insentif: 20000 },
+      customer: { target: 65, kelipatan: 10, uang: 5000 },
+      margin: { silver: { minimal: 180, maksimal: 189, uang: 5000 }, gold: { minimal: 190, maksimal: 199, uang: 10000 }, premium: { minimal: 200, maksimal: 300, uang: 20000 } },
+      kehadiran: 100000, ketentuan: 6
     },
     trikotomi: {
-      produktif:    { expired: { min: 0, max: 0 }, return: { min: 0, max: 0 } },
-      stabil:       { expired: { min: 0, max: 0 }, return: { min: 0, max: 0 } },
-      nonProduktif: { expired: { min: 0, max: 0 }, return: { min: 0, max: 0 } },
+      produktif:    { expired: { min: 0, max: 0 }, return: { min: 0, max: 1 } },
+      stabil:       { expired: { min: 0, max: 1 }, return: { min: 2, max: 2 } },
+      nonProduktif: { expired: { min: 2, max: 20 }, return: { min: 3, max: 20 } },
     },
-    target: { expired: 0 },
+    target: { expired: 18 },
     owner: {},
   };
 
@@ -2150,7 +2245,7 @@ function renderTambahCabang() {
         <div class="tab-card">
           <div class="tab-section-title">Informasi Umum</div>
           ${editField("Nama Cabang",   "addNamaCabang", d.namaCabang  || "")}
-          ${editField("Nama PT",       "addNamaPt",     d.namaPt      || "")}
+          ${editField("Nama PT",       "addNamaPt",     d.namaPt      || "PT RIZQUNA JAYA MANDIRI")}
           ${editField("Alamat",        "addAlamat",     d.alamatCabang|| "", "textarea")}
           ${editField("Password Page", "addPassword",   d.pagePassword|| "")}
         </div>
@@ -2259,6 +2354,10 @@ function renderTambahCabang() {
         <div class="edit-field">
           <div class="edit-field-label">Upah Hunter</div>
           <input id="addUpahHunter" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahHunter || 0)}">
+        </div>
+        <div class="edit-field">
+          <div class="edit-field-label">Upah Admin</div>
+          <input id="addUpahAdmin" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahAdmin || 0)}">
         </div>
       </div>
       <div class="tab-card">
@@ -2439,12 +2538,12 @@ function renderTambahCabang() {
           <input id="addPotKelipatanPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.kelipatanUpah.potonganUpah||0)}">
         </div>
         <div class="edit-field">
-          <div class="edit-field-label">Setengah Upah - Batas</div>
+          <div class="edit-field-label">Setengah Upah - Batas (%)</div>
           <input id="addPotSetengahBatas" type="number" class="edit-field-input" value="${op.potongan.setengahUpah.batas||0}">
         </div>
         <div class="edit-field">
-          <div class="edit-field-label">Setengah Upah - Potongan (Rp)</div>
-          <input id="addPotSetengahPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.setengahUpah.potonganUpah||0)}">
+          <div class="edit-field-label">Setengah Upah - Potongan (%)</div>
+          <input id="addPotSetengahPotongan" type="number" class="edit-field-input" value="${op.potongan.setengahUpah.potonganUpah||0}">
         </div>
       </div>
     `;
@@ -2635,7 +2734,7 @@ function renderTambahCabang() {
             <div class="edit-field-label">Kehadiran (Rp)</div>
             <input id="addBonusKehadiran" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(b.kehadiran || 0)}">
           </div>
-          ${editField("Ketentuan (hari)","addBonusKetentuan",      b.ketentuan)}
+          ${editField("Minimal Expired","addBonusKetentuan",      b.ketentuan)}
         </div>
         <div class="tab-card">
           <div class="tab-section-title">Bonus Customer</div>
@@ -2687,7 +2786,7 @@ function renderTambahCabang() {
           `).join("")}
           <div class="tab-card">
             <div class="tab-section-title">Target</div>
-            ${editField("Expired (%)", "addTargetExpired", newData.target.expired)}
+            ${editField("Kadaluarsa Produk", "addTargetExpired", newData.target.expired)}
           </div>
         </div>
       `;
@@ -2711,6 +2810,7 @@ function renderTambahCabang() {
         <div class="tab-card">
           <div class="tab-section-title">Data Owner</div>
           ${editField("Nama Owner",   "addOwnerNama",   o.namaOwner   || "")}
+          ${editField("NIK",          "addOwnerNik",    o.nik         || "")}
           ${editField("No HP",        "addOwnerNoHp",   o.noHp        || "")}
           ${editField("Email",        "addOwnerEmail",  o.email       || "")}
           ${editField("Alamat",       "addOwnerAlamat", o.alamat      || "", "textarea")}
@@ -2719,6 +2819,43 @@ function renderTambahCabang() {
             <div class="edit-field-label">Tanggal Lahir</div>
             <input id="addOwnerTanggal" type="date" class="edit-field-input" value="${o.tanggalLahir instanceof Date ? o.tanggalLahir.toISOString().split('T')[0] : (o.tanggalLahir || "")}">
           </div>
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Identitas & Legal</div>
+          <div class="edit-field">
+            <div class="edit-field-label">Jenis Kelamin</div>
+            <select id="addOwnerJenisKelamin" class="edit-field-input">
+              <option value="Laki-laki" ${o.jenisKelamin === "Laki-laki" || !o.jenisKelamin ? "selected" : ""}>Laki-laki</option>
+              <option value="Perempuan" ${o.jenisKelamin === "Perempuan" ? "selected" : ""}>Perempuan</option>
+            </select>
+          </div>
+          <div class="edit-field">
+            <div class="edit-field-label">Status Pernikahan</div>
+            <select id="addOwnerStatusPernikahan" class="edit-field-input">
+              <option value="Belum Menikah" ${o.statusPernikahan === "Belum Menikah" || !o.statusPernikahan ? "selected" : ""}>Belum Menikah</option>
+              <option value="Menikah" ${o.statusPernikahan === "Menikah" ? "selected" : ""}>Menikah</option>
+            </select>
+          </div>
+          ${editField("Nama Pasangan", "addOwnerNamaPasangan", o.namaPasangan || "")}
+          ${editField("NPWP", "addOwnerNpwp", o.npwp || "")}
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Kontak & Domisili</div>
+          ${editField("Alamat sesuai KTP", "addOwnerAlamatKtp", o.alamatKtp || "", "textarea")}
+          ${editField("Kode Pos", "addOwnerKodePos", o.kodePos || "")}
+          ${editField("Kontak Darurat - Nama", "addOwnerKontakDaruratNama", o.kontakDarurat?.nama || "")}
+          ${editField("Kontak Darurat - No HP", "addOwnerKontakDaruratNoHp", o.kontakDarurat?.noHp || "")}
+        </div>
+
+        <div class="tab-card">
+          <div class="tab-section-title">Kemitraan</div>
+          <div class="edit-field">
+            <div class="edit-field-label">Tanggal Mulai Kemitraan</div>
+            <input id="addOwnerTanggalMulai" type="date" class="edit-field-input" value="${o.tanggalMulaiKemitraan instanceof Date ? o.tanggalMulaiKemitraan.toISOString().split('T')[0] : (o.tanggalMulaiKemitraan || "")}">
+          </div>
+          ${editField("Referensi No. Perjanjian", "addOwnerNoPerjanjian", o.noPerjanjian || "")}
         </div>
       `;
 
@@ -2758,11 +2895,12 @@ function renderTambahCabang() {
       const rp = id => rpNum(document.getElementById(id)?.value);
       newData.operasional.upahHarian = rp("addUpahHarian");
       newData.operasional.upahHunter = rp("addUpahHunter");
+      newData.operasional.upahAdmin  = rp("addUpahAdmin");
       newData.operasional.potongan.kelipatanUpah.batas        = n("addPotKelipatanBatas");
       newData.operasional.potongan.kelipatanUpah.kelipatan    = n("addPotKelipatanKelipatan");
       newData.operasional.potongan.kelipatanUpah.potonganUpah = rp("addPotKelipatanPotongan");
       newData.operasional.potongan.setengahUpah.batas         = n("addPotSetengahBatas");
-      newData.operasional.potongan.setengahUpah.potonganUpah  = rp("addPotSetengahPotongan");
+      newData.operasional.potongan.setengahUpah.potonganUpah  = n("addPotSetengahPotongan");
     }
     else if (currentStep === 3) {
       const rp = id => rpNum(document.getElementById(id)?.value);
@@ -2791,6 +2929,7 @@ function renderTambahCabang() {
     else if (currentStep === 5) {
       newData.owner = {
         namaOwner:   g("addOwnerNama"),
+        nik:         g("addOwnerNik"),
         noHp:        g("addOwnerNoHp"),
         email:       g("addOwnerEmail"),
         alamat:      g("addOwnerAlamat"),
@@ -2798,6 +2937,20 @@ function renderTambahCabang() {
         tanggalLahir: document.getElementById("addOwnerTanggal")?.value
           ? new Date(document.getElementById("addOwnerTanggal").value)
           : null,
+        jenisKelamin:     g("addOwnerJenisKelamin"),
+        statusPernikahan: g("addOwnerStatusPernikahan"),
+        namaPasangan:     g("addOwnerNamaPasangan"),
+        npwp:             g("addOwnerNpwp"),
+        alamatKtp:        g("addOwnerAlamatKtp"),
+        kodePos:          g("addOwnerKodePos"),
+        kontakDarurat: {
+          nama: g("addOwnerKontakDaruratNama"),
+          noHp: g("addOwnerKontakDaruratNoHp"),
+        },
+        tanggalMulaiKemitraan: document.getElementById("addOwnerTanggalMulai")?.value
+          ? new Date(document.getElementById("addOwnerTanggalMulai").value)
+          : null,
+        noPerjanjian: g("addOwnerNoPerjanjian"),
       };
     }
   }
