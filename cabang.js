@@ -622,7 +622,7 @@ function showConfirmHapus(cabang) {
         );
         for (const ownerDoc of ownerSnap.docs) {
           try {
-            await window.deleteObject(window.storageRef(window.storage, `fotoOwner/${cabang.id}.jpg`));
+            await window.deleteObject(window.storageRef(window.storage, `fotoOwner/${ownerDoc.id}.jpg`));
           } catch(e) {}
           await window.deleteDoc(window.doc(window.db, "ownerMitra", ownerDoc.id));
         }
@@ -2120,11 +2120,20 @@ function renderTambahCabang() {
     renderStepBody();
   }
 
+  // ── DISPATCHER ──
   function renderStepBody() {
     const body = document.getElementById("addBody");
     if (!body) return;
 
-    if (currentStep === 1) {
+    if      (currentStep === 1) renderStepInfo(body);
+    else if (currentStep === 2) renderStepOperasional(body);
+    else if (currentStep === 3) renderStepBonus(body);
+    else if (currentStep === 4) renderStepTrikotomi(body);
+    else if (currentStep === 5) renderStepOwner(body);
+  }
+
+  // ── STEP 1: INFO ──
+  function renderStepInfo(body) {
       const d = newData.info;
       body.innerHTML = `
         <div class="tab-card edit-foto-card">
@@ -2206,410 +2215,413 @@ function renderTambahCabang() {
         }
       };
       initCustomDropdowns();
-    }
+  }
 
-    else if (currentStep === 2) {
-      const op = newData.operasional;
-      const varian      = op.varian;
-      const harga       = op.harga;
-      const penFix      = op.pengeluaran.fix;
-      const penVariable = op.pengeluaran.variable;
-      const loyang          = op.loyang;
-      const estimasi        = op.estimasi;
-      const bonusAdmin      = op.bonusAdmin;
-      const bonusProduksi   = op.bonusProduksi;
-      const penDistFix      = op.pengeluaranDistribusi.fix;
-      const penDistVariable = op.pengeluaranDistribusi.variable;
-
-      body.innerHTML = `
-        <div class="tab-card">
-          <div class="tab-section-title">Varian & Harga</div>
-          <div id="addVarianList">
-            ${Object.keys(varian).map(k => `
-              <div class="edit-varian-row" data-key="${k}">
-                <div class="edit-varian-fields">
-                  <input class="edit-field-input edit-varian-kode" value="${k}" placeholder="Kode" data-original="${k}">
-                  <input class="edit-field-input edit-varian-nama" value="${varian[k]}" placeholder="Nama">
-                  <input class="edit-field-input edit-varian-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(harga[k]||0)}" placeholder="Harga">
-                </div>
-                <button class="btn-hapus-row" data-key="${k}"><i class="fa-solid fa-trash"></i></button>
+  // ── STEP 2: OPERASIONAL ──
+  function renderStepOperasional(body) {
+    const op = newData.operasional;
+    const varian      = op.varian;
+    const harga       = op.harga;
+    const penFix      = op.pengeluaran.fix;
+    const penVariable = op.pengeluaran.variable;
+    const loyang          = op.loyang;
+    const estimasi        = op.estimasi;
+    const bonusAdmin      = op.bonusAdmin;
+    const bonusProduksi   = op.bonusProduksi;
+    const penDistFix      = op.pengeluaranDistribusi.fix;
+    const penDistVariable = op.pengeluaranDistribusi.variable;
+  
+    body.innerHTML = `
+      <div class="tab-card">
+        <div class="tab-section-title">Varian & Harga</div>
+        <div id="addVarianList">
+          ${Object.keys(varian).map(k => `
+            <div class="edit-varian-row" data-key="${k}">
+              <div class="edit-varian-fields">
+                <input class="edit-field-input edit-varian-kode" value="${k}" placeholder="Kode" data-original="${k}">
+                <input class="edit-field-input edit-varian-nama" value="${varian[k]}" placeholder="Nama">
+                <input class="edit-field-input edit-varian-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(harga[k]||0)}" placeholder="Harga">
               </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="addTambahVarian">
-            <i class="fa-solid fa-plus"></i> Tambah Varian
+              <button class="btn-hapus-row" data-key="${k}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="addTambahVarian">
+          <i class="fa-solid fa-plus"></i> Tambah Varian
+        </button>
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Upah</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Upah Harian</div>
+          <input id="addUpahHarian" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahHarian || 0)}">
+        </div>
+        <div class="edit-field">
+          <div class="edit-field-label">Upah Hunter</div>
+          <input id="addUpahHunter" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahHunter || 0)}">
+        </div>
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Pengeluaran Fix</div>
+        <div id="addPenFixList">
+          ${penFix.map((item, i) => `
+            <div class="edit-pen-fix-row" data-index="${i}">
+              <input class="edit-field-input add-pen-fix-input" value="${item}" placeholder="Nama pengeluaran..." data-index="${i}">
+              <button class="btn-hapus-row btn-hapus-fix" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="btnTambahFix">
+          <i class="fa-solid fa-plus"></i> Tambah Fix
+        </button>
+      </div>
+      <div class="tab-card">
+        <div class="tab-section-title">Pengeluaran Variable</div>
+        <div id="addPenVarList">
+          ${penVariable.map((item, i) => `
+            <div class="edit-varian-row">
+              <div class="edit-varian-fields">
+                <input class="edit-field-input edit-pen-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
+                <input class="edit-field-input edit-pen-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga||0)}" placeholder="Harga" data-index="${i}">
+              </div>
+              <button class="btn-hapus-row btn-hapus-var" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="addTambahVar">
+          <i class="fa-solid fa-plus"></i> Tambah Variable
+        </button>
+      </div>
+  
+      <div class="tab-card">
+        <div class="tab-section-title">Loyang</div>
+        <div id="addLoyangList">
+          ${loyang.map((item, i) => `
+            <div class="edit-varian-row" data-index="${i}">
+              <div class="edit-varian-fields">
+                <input class="edit-field-input add-loyang-jenis" value="${item.jenisLoyang||""}" placeholder="Jenis Loyang" data-index="${i}">
+                <input class="edit-field-input add-loyang-upah rp-input" type="text" inputmode="numeric" value="${rpFormat(item.upah||0)}" placeholder="Upah" data-index="${i}">
+                <input class="edit-field-input add-loyang-hargapaket rp-input" type="text" inputmode="numeric" value="${rpFormat(item.hargaPaket||0)}" placeholder="Harga Paket" data-index="${i}">
+                <label class="add-loyang-status-label">
+                  <input type="checkbox" class="add-loyang-status" data-index="${i}" ${item.status !== false ? "checked" : ""}> Aktif
+                </label>
+              </div>
+              <button class="btn-hapus-row btn-hapus-loyang" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="addTambahLoyang">
+          <i class="fa-solid fa-plus"></i> Tambah Loyang
+        </button>
+      </div>
+  
+      <div class="tab-card">
+        <div class="tab-section-title">Estimasi Loyang (Kapasitas per Varian)</div>
+        <div id="addEstimasiList">
+          ${Object.keys(estimasi).map(groupKey => `
+            <div class="edit-estimasi-group" data-group-key="${groupKey}">
+              <div class="edit-estimasi-group-header">
+                <input class="edit-field-input add-estimasi-group-name" value="${groupKey}" placeholder="Nama Grup (misal loyangOriginal)" data-group-key="${groupKey}">
+                <button class="btn-hapus-row btn-hapus-add-estimasi-group" data-group-key="${groupKey}"><i class="fa-solid fa-trash"></i></button>
+              </div>
+              <div class="edit-estimasi-varian-list">
+                ${Object.entries(estimasi[groupKey] || {}).map(([kode, kap]) => `
+                  <div class="edit-estimasi-varian-row" data-group-key="${groupKey}" data-kode="${kode}">
+                    <input class="edit-field-input add-estimasi-kode" value="${kode}" placeholder="Kode Varian" data-group-key="${groupKey}" data-original-kode="${kode}">
+                    <input type="number" min="0" class="edit-field-input add-estimasi-kapasitas" value="${kap}" placeholder="Kapasitas" data-group-key="${groupKey}" data-kode="${kode}">
+                    <button class="btn-hapus-row btn-hapus-add-estimasi-varian" data-group-key="${groupKey}" data-kode="${kode}"><i class="fa-solid fa-trash"></i></button>
+                  </div>
+                `).join("")}
+              </div>
+              <button class="btn-tambah-row btn-tambah-add-estimasi-varian" data-group-key="${groupKey}">
+                <i class="fa-solid fa-plus"></i> Tambah Varian
+              </button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="addTambahEstimasiGroup">
+          <i class="fa-solid fa-plus"></i> Tambah Grup Loyang
+        </button>
+      </div>
+  
+      <div class="tab-card">
+        <div class="tab-section-title">Bonus Admin (Efisiensi Produksi)</div>
+        <div id="addBonusAdminList">
+          ${bonusAdmin.map((item, i) => `
+            <div class="edit-bonus-row" data-index="${i}">
+              <div class="edit-bonus-field">
+                <label class="edit-bonus-field-label">Target (di bawah %)</label>
+                <input type="number" min="0" class="edit-field-input add-bonusadmin-target" value="${item.target ?? 0}" data-index="${i}">
+              </div>
+              <div class="edit-bonus-field">
+                <label class="edit-bonus-field-label">Bonus (%)</label>
+                <input type="number" min="0" class="edit-field-input add-bonusadmin-bonus" value="${item.bonus ?? 0}" data-index="${i}">
+              </div>
+              <button class="btn-hapus-row btn-hapus-add-bonusadmin" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="addTambahBonusAdmin">
+          <i class="fa-solid fa-plus"></i> Tambah Rule
+        </button>
+      </div>
+  
+      <div class="tab-card">
+        <div class="tab-section-title">Bonus Produksi (Efisiensi Produksi)</div>
+        <div id="addBonusProduksiList">
+          ${bonusProduksi.map((item, i) => `
+            <div class="edit-bonus-row" data-index="${i}">
+              <div class="edit-bonus-field">
+                <label class="edit-bonus-field-label">Patokan / Loyang</label>
+                <input type="number" min="0" class="edit-field-input add-bonusprod-patokan" value="${item.patokan ?? 0}" data-index="${i}">
+              </div>
+              <div class="edit-bonus-field">
+                <label class="edit-bonus-field-label">Bonus (%)</label>
+                <input type="number" min="0" class="edit-field-input add-bonusprod-bonus" value="${item.bonus ?? 0}" data-index="${i}">
+              </div>
+              <button class="btn-hapus-row btn-hapus-add-bonusprod" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-tambah-row" id="addTambahBonusProduksi">
+          <i class="fa-solid fa-plus"></i> Tambah Rule
+        </button>
+      </div>
+  
+      <div class="tab-card">
+        <div class="tab-section-title">Pengeluaran Distribusi (Fix)</div>
+        <div id="addPenDistFixList">
+          ${penDistFix.map((item, i) => `
+            <div class="edit-pen-fix-row">
+              <input class="edit-field-input add-pendist-fix" value="${item}" placeholder="Nama pengeluaran..." data-index="${i}">
+              <button class="btn-hapus-row btn-hapus-pendist-fix" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <div class="edit-pen-fix-add">
+          <input id="addPenDistFixInput" class="edit-field-input" placeholder="Nama pengeluaran...">
+          <button class="btn-tambah-row" id="addTambahPenDistFix">
+            <i class="fa-solid fa-plus"></i>
           </button>
         </div>
-        <div class="tab-card">
-          <div class="tab-section-title">Upah</div>
-          <div class="edit-field">
-            <div class="edit-field-label">Upah Harian</div>
-            <input id="addUpahHarian" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahHarian || 0)}">
-          </div>
-          <div class="edit-field">
-            <div class="edit-field-label">Upah Hunter</div>
-            <input id="addUpahHunter" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.upahHunter || 0)}">
-          </div>
-        </div>
-        <div class="tab-card">
-          <div class="tab-section-title">Pengeluaran Fix</div>
-          <div id="addPenFixList">
-            ${penFix.map((item, i) => `
-              <div class="edit-pen-fix-row">
-                <span class="edit-pen-fix-label">${item}</span>
-                <button class="btn-hapus-row btn-hapus-fix" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+      </div>
+  
+      <div class="tab-card">
+        <div class="tab-section-title">Pengeluaran Distribusi (Variable)</div>
+        <div id="addPenDistVarList">
+          ${penDistVariable.map((item, i) => `
+            <div class="edit-varian-row">
+              <div class="edit-varian-fields">
+                <input class="edit-field-input add-pendist-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
+                <input class="edit-field-input add-pendist-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga||0)}" placeholder="Harga" data-index="${i}">
               </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="btnTambahFix">
-            <i class="fa-solid fa-plus"></i> Tambah Fix
-          </button>
+              <button class="btn-hapus-row btn-hapus-pendist-var" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join("")}
         </div>
-        <div class="tab-card">
-          <div class="tab-section-title">Pengeluaran Variable</div>
-          <div id="addPenVarList">
-            ${penVariable.map((item, i) => `
-              <div class="edit-varian-row">
-                <div class="edit-varian-fields">
-                  <input class="edit-field-input edit-pen-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
-                  <input class="edit-field-input edit-pen-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga||0)}" placeholder="Harga" data-index="${i}">
-                </div>
-                <button class="btn-hapus-row btn-hapus-var" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="addTambahVar">
-            <i class="fa-solid fa-plus"></i> Tambah Variable
-          </button>
+        <button class="btn-tambah-row" id="addTambahPenDistVar">
+          <i class="fa-solid fa-plus"></i> Tambah Variable
+        </button>
+      </div>
+  
+      <div class="tab-card">
+        <div class="tab-section-title">Potongan</div>
+        <div class="edit-field">
+          <div class="edit-field-label">Kelipatan Upah - Batas</div>
+          <input id="addPotKelipatanBatas" type="number" class="edit-field-input" value="${op.potongan.kelipatanUpah.batas||0}">
         </div>
-
-        <div class="tab-card">
-          <div class="tab-section-title">Loyang</div>
-          <div id="addLoyangList">
-            ${loyang.map((item, i) => `
-              <div class="edit-varian-row" data-index="${i}">
-                <div class="edit-varian-fields">
-                  <input class="edit-field-input add-loyang-jenis" value="${item.jenisLoyang||""}" placeholder="Jenis Loyang" data-index="${i}">
-                  <input class="edit-field-input add-loyang-upah rp-input" type="text" inputmode="numeric" value="${rpFormat(item.upah||0)}" placeholder="Upah" data-index="${i}">
-                  <input class="edit-field-input add-loyang-hargapaket rp-input" type="text" inputmode="numeric" value="${rpFormat(item.hargaPaket||0)}" placeholder="Harga Paket" data-index="${i}">
-                  <label class="add-loyang-status-label">
-                    <input type="checkbox" class="add-loyang-status" data-index="${i}" ${item.status !== false ? "checked" : ""}> Aktif
-                  </label>
-                </div>
-                <button class="btn-hapus-row btn-hapus-loyang" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="addTambahLoyang">
-            <i class="fa-solid fa-plus"></i> Tambah Loyang
-          </button>
+        <div class="edit-field">
+          <div class="edit-field-label">Kelipatan Upah - Kelipatan</div>
+          <input id="addPotKelipatanKelipatan" type="number" class="edit-field-input" value="${op.potongan.kelipatanUpah.kelipatan||0}">
         </div>
-
-        <div class="tab-card">
-          <div class="tab-section-title">Estimasi Loyang (Kapasitas per Varian)</div>
-          <div id="addEstimasiList">
-            ${Object.keys(estimasi).map(groupKey => `
-              <div class="edit-estimasi-group" data-group-key="${groupKey}">
-                <div class="edit-estimasi-group-header">
-                  <input class="edit-field-input add-estimasi-group-name" value="${groupKey}" placeholder="Nama Grup (misal loyangOriginal)" data-group-key="${groupKey}">
-                  <button class="btn-hapus-row btn-hapus-add-estimasi-group" data-group-key="${groupKey}"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <div class="edit-estimasi-varian-list">
-                  ${Object.entries(estimasi[groupKey] || {}).map(([kode, kap]) => `
-                    <div class="edit-estimasi-varian-row" data-group-key="${groupKey}" data-kode="${kode}">
-                      <input class="edit-field-input add-estimasi-kode" value="${kode}" placeholder="Kode Varian" data-group-key="${groupKey}" data-original-kode="${kode}">
-                      <input type="number" min="0" class="edit-field-input add-estimasi-kapasitas" value="${kap}" placeholder="Kapasitas" data-group-key="${groupKey}" data-kode="${kode}">
-                      <button class="btn-hapus-row btn-hapus-add-estimasi-varian" data-group-key="${groupKey}" data-kode="${kode}"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                  `).join("")}
-                </div>
-                <button class="btn-tambah-row btn-tambah-add-estimasi-varian" data-group-key="${groupKey}">
-                  <i class="fa-solid fa-plus"></i> Tambah Varian
-                </button>
-              </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="addTambahEstimasiGroup">
-            <i class="fa-solid fa-plus"></i> Tambah Grup Loyang
-          </button>
+        <div class="edit-field">
+          <div class="edit-field-label">Kelipatan Upah - Potongan (Rp)</div>
+          <input id="addPotKelipatanPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.kelipatanUpah.potonganUpah||0)}">
         </div>
-
-        <div class="tab-card">
-          <div class="tab-section-title">Bonus Admin (Efisiensi Produksi)</div>
-          <div id="addBonusAdminList">
-            ${bonusAdmin.map((item, i) => `
-              <div class="edit-bonus-row" data-index="${i}">
-                <div class="edit-bonus-field">
-                  <label class="edit-bonus-field-label">Target (di bawah %)</label>
-                  <input type="number" min="0" class="edit-field-input add-bonusadmin-target" value="${item.target ?? 0}" data-index="${i}">
-                </div>
-                <div class="edit-bonus-field">
-                  <label class="edit-bonus-field-label">Bonus (%)</label>
-                  <input type="number" min="0" class="edit-field-input add-bonusadmin-bonus" value="${item.bonus ?? 0}" data-index="${i}">
-                </div>
-                <button class="btn-hapus-row btn-hapus-add-bonusadmin" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="addTambahBonusAdmin">
-            <i class="fa-solid fa-plus"></i> Tambah Rule
-          </button>
+        <div class="edit-field">
+          <div class="edit-field-label">Setengah Upah - Batas</div>
+          <input id="addPotSetengahBatas" type="number" class="edit-field-input" value="${op.potongan.setengahUpah.batas||0}">
         </div>
-
-        <div class="tab-card">
-          <div class="tab-section-title">Bonus Produksi (Efisiensi Produksi)</div>
-          <div id="addBonusProduksiList">
-            ${bonusProduksi.map((item, i) => `
-              <div class="edit-bonus-row" data-index="${i}">
-                <div class="edit-bonus-field">
-                  <label class="edit-bonus-field-label">Patokan / Loyang</label>
-                  <input type="number" min="0" class="edit-field-input add-bonusprod-patokan" value="${item.patokan ?? 0}" data-index="${i}">
-                </div>
-                <div class="edit-bonus-field">
-                  <label class="edit-bonus-field-label">Bonus (%)</label>
-                  <input type="number" min="0" class="edit-field-input add-bonusprod-bonus" value="${item.bonus ?? 0}" data-index="${i}">
-                </div>
-                <button class="btn-hapus-row btn-hapus-add-bonusprod" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="addTambahBonusProduksi">
-            <i class="fa-solid fa-plus"></i> Tambah Rule
-          </button>
+        <div class="edit-field">
+          <div class="edit-field-label">Setengah Upah - Potongan (Rp)</div>
+          <input id="addPotSetengahPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.setengahUpah.potonganUpah||0)}">
         </div>
-
-        <div class="tab-card">
-          <div class="tab-section-title">Pengeluaran Distribusi (Fix)</div>
-          <div id="addPenDistFixList">
-            ${penDistFix.map((item, i) => `
-              <div class="edit-pen-fix-row">
-                <input class="edit-field-input add-pendist-fix" value="${item}" placeholder="Nama pengeluaran..." data-index="${i}">
-                <button class="btn-hapus-row btn-hapus-pendist-fix" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            `).join("")}
-          </div>
-          <div class="edit-pen-fix-add">
-            <input id="addPenDistFixInput" class="edit-field-input" placeholder="Nama pengeluaran...">
-            <button class="btn-tambah-row" id="addTambahPenDistFix">
-              <i class="fa-solid fa-plus"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="tab-card">
-          <div class="tab-section-title">Pengeluaran Distribusi (Variable)</div>
-          <div id="addPenDistVarList">
-            ${penDistVariable.map((item, i) => `
-              <div class="edit-varian-row">
-                <div class="edit-varian-fields">
-                  <input class="edit-field-input add-pendist-var-jenis" value="${item.jenis}" placeholder="Jenis" data-index="${i}">
-                  <input class="edit-field-input add-pendist-var-harga rp-input" type="text" inputmode="numeric" value="${rpFormat(item.harga||0)}" placeholder="Harga" data-index="${i}">
-                </div>
-                <button class="btn-hapus-row btn-hapus-pendist-var" data-index="${i}"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            `).join("")}
-          </div>
-          <button class="btn-tambah-row" id="addTambahPenDistVar">
-            <i class="fa-solid fa-plus"></i> Tambah Variable
-          </button>
-        </div>
-
-        <div class="tab-card">
-          <div class="tab-section-title">Potongan</div>
-          <div class="edit-field">
-            <div class="edit-field-label">Kelipatan Upah - Batas</div>
-            <input id="addPotKelipatanBatas" type="number" class="edit-field-input" value="${op.potongan.kelipatanUpah.batas||0}">
-          </div>
-          <div class="edit-field">
-            <div class="edit-field-label">Kelipatan Upah - Kelipatan</div>
-            <input id="addPotKelipatanKelipatan" type="number" class="edit-field-input" value="${op.potongan.kelipatanUpah.kelipatan||0}">
-          </div>
-          <div class="edit-field">
-            <div class="edit-field-label">Kelipatan Upah - Potongan (Rp)</div>
-            <input id="addPotKelipatanPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.kelipatanUpah.potonganUpah||0)}">
-          </div>
-          <div class="edit-field">
-            <div class="edit-field-label">Setengah Upah - Batas</div>
-            <input id="addPotSetengahBatas" type="number" class="edit-field-input" value="${op.potongan.setengahUpah.batas||0}">
-          </div>
-          <div class="edit-field">
-            <div class="edit-field-label">Setengah Upah - Potongan (Rp)</div>
-            <input id="addPotSetengahPotongan" type="text" inputmode="numeric" class="edit-field-input rp-input" value="${rpFormat(op.potongan.setengahUpah.potonganUpah||0)}">
-          </div>
-        </div>
-      `;
-
-      document.getElementById("addTambahVarian").onclick = () => {
-        varian[""] = ""; harga[""] = 0;
+      </div>
+    `;
+  
+    document.getElementById("addTambahVarian").onclick = () => {
+      varian[""] = ""; harga[""] = 0;
+      renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-row[data-key]").forEach(btn => {
+      btn.onclick = () => { delete varian[btn.dataset.key]; delete harga[btn.dataset.key]; renderStepBody(); };
+    });
+    document.querySelectorAll(".edit-varian-row[data-key]").forEach(row => {
+      const oldKey  = row.dataset.key;
+      const kodeEl  = row.querySelector(".edit-varian-kode");
+      const namaEl  = row.querySelector(".edit-varian-nama");
+      const hargaEl = row.querySelector(".edit-varian-harga");
+      kodeEl.oninput  = () => { const nk = kodeEl.value.toUpperCase(); delete varian[oldKey]; delete harga[oldKey]; varian[nk] = namaEl.value; harga[nk] = parseInt(hargaEl.value)||0; row.dataset.key = nk; };
+      namaEl.oninput  = () => { varian[kodeEl.value.toUpperCase()] = namaEl.value; };
+      hargaEl.oninput = () => { harga[kodeEl.value.toUpperCase()]  = parseInt(hargaEl.value)||0; };
+    });
+  
+    document.getElementById("btnTambahFix").onclick = () => {
+      penFix.push(""); renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-fix").forEach(btn => {
+      btn.onclick = () => { penFix.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+    });
+    document.querySelectorAll(".add-pen-fix-input").forEach(el => {
+      el.oninput = () => { penFix[parseInt(el.dataset.index)] = el.value; };
+    });
+  
+    document.getElementById("addTambahVar").onclick = () => {
+      penVariable.push({ jenis: "", harga: 0 }); renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-var").forEach(btn => {
+      btn.onclick = () => { penVariable.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+    });
+    document.querySelectorAll(".edit-pen-var-jenis").forEach(el => {
+      el.oninput = () => { penVariable[parseInt(el.dataset.index)].jenis = el.value; };
+    });
+    document.querySelectorAll(".edit-pen-var-harga").forEach(el => {
+      el.oninput = () => { penVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
+    });
+  
+    document.getElementById("addTambahLoyang").onclick = () => {
+      loyang.push({ jenisLoyang: "", status: true, upah: 0, hargaPaket: 0 });
+      renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-loyang").forEach(btn => {
+      btn.onclick = () => { loyang.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+    });
+    document.querySelectorAll(".add-loyang-jenis").forEach(el => {
+      el.oninput = () => { loyang[parseInt(el.dataset.index)].jenisLoyang = el.value; };
+    });
+    document.querySelectorAll(".add-loyang-upah").forEach(el => {
+      el.oninput = () => { loyang[parseInt(el.dataset.index)].upah = rpNum(el.value); };
+    });
+    document.querySelectorAll(".add-loyang-hargapaket").forEach(el => {
+      el.oninput = () => { loyang[parseInt(el.dataset.index)].hargaPaket = rpNum(el.value); };
+    });
+    document.querySelectorAll(".add-loyang-status").forEach(el => {
+      el.onchange = () => { loyang[parseInt(el.dataset.index)].status = el.checked; };
+    });
+  
+    document.getElementById("addTambahEstimasiGroup").onclick = () => {
+      let newKey = "loyangBaru", i = 1;
+      while (newKey in estimasi) { newKey = `loyangBaru${i}`; i++; }
+      estimasi[newKey] = {};
+      renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-add-estimasi-group").forEach(btn => {
+      btn.onclick = () => { delete estimasi[btn.dataset.groupKey]; renderStepBody(); };
+    });
+    document.querySelectorAll(".add-estimasi-group-name").forEach(el => {
+      el.onchange = () => {
+        const oldKey = el.dataset.groupKey;
+        const newKey = el.value.trim();
+        if (!newKey || newKey === oldKey) { renderStepBody(); return; }
+        estimasi[newKey] = estimasi[oldKey] || {};
+        delete estimasi[oldKey];
         renderStepBody();
       };
-      document.querySelectorAll(".btn-hapus-row[data-key]").forEach(btn => {
-        btn.onclick = () => { delete varian[btn.dataset.key]; delete harga[btn.dataset.key]; renderStepBody(); };
-      });
-      document.querySelectorAll(".edit-varian-row[data-key]").forEach(row => {
-        const oldKey  = row.dataset.key;
-        const kodeEl  = row.querySelector(".edit-varian-kode");
-        const namaEl  = row.querySelector(".edit-varian-nama");
-        const hargaEl = row.querySelector(".edit-varian-harga");
-        kodeEl.oninput  = () => { const nk = kodeEl.value.toUpperCase(); delete varian[oldKey]; delete harga[oldKey]; varian[nk] = namaEl.value; harga[nk] = parseInt(hargaEl.value)||0; row.dataset.key = nk; };
-        namaEl.oninput  = () => { varian[kodeEl.value.toUpperCase()] = namaEl.value; };
-        hargaEl.oninput = () => { harga[kodeEl.value.toUpperCase()]  = parseInt(hargaEl.value)||0; };
-      });
-
-      document.getElementById("addTambahFix").onclick = () => {
-        const val = document.getElementById("addPenFixInput").value.trim();
-        if (!val) return;
-        penFix.push(val); renderStepBody();
-      };
-      document.querySelectorAll(".btn-hapus-fix").forEach(btn => {
-        btn.onclick = () => { penFix.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
-      });
-
-      document.getElementById("addTambahVar").onclick = () => {
-        penVariable.push({ jenis: "", harga: 0 }); renderStepBody();
-      };
-      document.querySelectorAll(".btn-hapus-var").forEach(btn => {
-        btn.onclick = () => { penVariable.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
-      });
-      document.querySelectorAll(".edit-pen-var-jenis").forEach(el => {
-        el.oninput = () => { penVariable[parseInt(el.dataset.index)].jenis = el.value; };
-      });
-      document.querySelectorAll(".edit-pen-var-harga").forEach(el => {
-        el.oninput = () => { penVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
-      });
-
-      document.getElementById("addTambahLoyang").onclick = () => {
-        loyang.push({ jenisLoyang: "", status: true, upah: 0, hargaPaket: 0 });
+    });
+    document.querySelectorAll(".btn-tambah-add-estimasi-varian").forEach(btn => {
+      btn.onclick = () => {
+        const groupKey = btn.dataset.groupKey;
+        if (!estimasi[groupKey]) estimasi[groupKey] = {};
+        let newKode = "KODE", i = 1;
+        while (newKode in estimasi[groupKey]) { newKode = `KODE${i}`; i++; }
+        estimasi[groupKey][newKode] = 0;
         renderStepBody();
       };
-      document.querySelectorAll(".btn-hapus-loyang").forEach(btn => {
-        btn.onclick = () => { loyang.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
-      });
-      document.querySelectorAll(".add-loyang-jenis").forEach(el => {
-        el.oninput = () => { loyang[parseInt(el.dataset.index)].jenisLoyang = el.value; };
-      });
-      document.querySelectorAll(".add-loyang-upah").forEach(el => {
-        el.oninput = () => { loyang[parseInt(el.dataset.index)].upah = rpNum(el.value); };
-      });
-      document.querySelectorAll(".add-loyang-hargapaket").forEach(el => {
-        el.oninput = () => { loyang[parseInt(el.dataset.index)].hargaPaket = rpNum(el.value); };
-      });
-      document.querySelectorAll(".add-loyang-status").forEach(el => {
-        el.onchange = () => { loyang[parseInt(el.dataset.index)].status = el.checked; };
-      });
-
-      document.getElementById("addTambahEstimasiGroup").onclick = () => {
-        let newKey = "loyangBaru", i = 1;
-        while (newKey in estimasi) { newKey = `loyangBaru${i}`; i++; }
-        estimasi[newKey] = {};
+    });
+    document.querySelectorAll(".btn-hapus-add-estimasi-varian").forEach(btn => {
+      btn.onclick = () => {
+        const groupKey = btn.dataset.groupKey;
+        if (estimasi[groupKey]) delete estimasi[groupKey][btn.dataset.kode];
         renderStepBody();
       };
-      document.querySelectorAll(".btn-hapus-add-estimasi-group").forEach(btn => {
-        btn.onclick = () => { delete estimasi[btn.dataset.groupKey]; renderStepBody(); };
-      });
-      document.querySelectorAll(".add-estimasi-group-name").forEach(el => {
-        el.onchange = () => {
-          const oldKey = el.dataset.groupKey;
-          const newKey = el.value.trim();
-          if (!newKey || newKey === oldKey) { renderStepBody(); return; }
-          estimasi[newKey] = estimasi[oldKey] || {};
-          delete estimasi[oldKey];
-          renderStepBody();
-        };
-      });
-      document.querySelectorAll(".btn-tambah-add-estimasi-varian").forEach(btn => {
-        btn.onclick = () => {
-          const groupKey = btn.dataset.groupKey;
-          if (!estimasi[groupKey]) estimasi[groupKey] = {};
-          let newKode = "KODE", i = 1;
-          while (newKode in estimasi[groupKey]) { newKode = `KODE${i}`; i++; }
-          estimasi[groupKey][newKode] = 0;
-          renderStepBody();
-        };
-      });
-      document.querySelectorAll(".btn-hapus-add-estimasi-varian").forEach(btn => {
-        btn.onclick = () => {
-          const groupKey = btn.dataset.groupKey;
-          if (estimasi[groupKey]) delete estimasi[groupKey][btn.dataset.kode];
-          renderStepBody();
-        };
-      });
-      document.querySelectorAll(".add-estimasi-kode").forEach(el => {
-        el.onchange = () => {
-          const groupKey = el.dataset.groupKey;
-          const oldKode  = el.dataset.originalKode;
-          const newKode  = el.value.trim().toUpperCase();
-          if (!newKode || !estimasi[groupKey]) { renderStepBody(); return; }
-          const val = estimasi[groupKey][oldKode] || 0;
-          delete estimasi[groupKey][oldKode];
-          estimasi[groupKey][newKode] = val;
-          renderStepBody();
-        };
-      });
-      document.querySelectorAll(".add-estimasi-kapasitas").forEach(el => {
-        el.oninput = () => {
-          const groupKey = el.dataset.groupKey;
-          const kode = el.dataset.kode;
-          if (!estimasi[groupKey]) estimasi[groupKey] = {};
-          estimasi[groupKey][kode] = parseInt(el.value) || 0;
-        };
-      });
-
-      document.getElementById("addTambahBonusAdmin").onclick = () => {
-        bonusAdmin.push({ target: 0, bonus: 0 });
+    });
+    document.querySelectorAll(".add-estimasi-kode").forEach(el => {
+      el.onchange = () => {
+        const groupKey = el.dataset.groupKey;
+        const oldKode  = el.dataset.originalKode;
+        const newKode  = el.value.trim().toUpperCase();
+        if (!newKode || !estimasi[groupKey]) { renderStepBody(); return; }
+        const val = estimasi[groupKey][oldKode] || 0;
+        delete estimasi[groupKey][oldKode];
+        estimasi[groupKey][newKode] = val;
         renderStepBody();
       };
-      document.querySelectorAll(".btn-hapus-add-bonusadmin").forEach(btn => {
-        btn.onclick = () => { bonusAdmin.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
-      });
-      document.querySelectorAll(".add-bonusadmin-target").forEach(el => {
-        el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].target = parseInt(el.value) || 0; };
-      });
-      document.querySelectorAll(".add-bonusadmin-bonus").forEach(el => {
-        el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
-      });
-
-      document.getElementById("addTambahBonusProduksi").onclick = () => {
-        bonusProduksi.push({ patokan: 0, bonus: 0 });
-        renderStepBody();
+    });
+    document.querySelectorAll(".add-estimasi-kapasitas").forEach(el => {
+      el.oninput = () => {
+        const groupKey = el.dataset.groupKey;
+        const kode = el.dataset.kode;
+        if (!estimasi[groupKey]) estimasi[groupKey] = {};
+        estimasi[groupKey][kode] = parseInt(el.value) || 0;
       };
-      document.querySelectorAll(".btn-hapus-add-bonusprod").forEach(btn => {
-        btn.onclick = () => { bonusProduksi.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
-      });
-      document.querySelectorAll(".add-bonusprod-patokan").forEach(el => {
-        el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].patokan = parseInt(el.value) || 0; };
-      });
-      document.querySelectorAll(".add-bonusprod-bonus").forEach(el => {
-        el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
-      });
+    });
+  
+    document.getElementById("addTambahBonusAdmin").onclick = () => {
+      bonusAdmin.push({ target: 0, bonus: 0 });
+      renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-add-bonusadmin").forEach(btn => {
+      btn.onclick = () => { bonusAdmin.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+    });
+    document.querySelectorAll(".add-bonusadmin-target").forEach(el => {
+      el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].target = parseInt(el.value) || 0; };
+    });
+    document.querySelectorAll(".add-bonusadmin-bonus").forEach(el => {
+      el.oninput = () => { bonusAdmin[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
+    });
+  
+    document.getElementById("addTambahBonusProduksi").onclick = () => {
+      bonusProduksi.push({ patokan: 0, bonus: 0 });
+      renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-add-bonusprod").forEach(btn => {
+      btn.onclick = () => { bonusProduksi.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+    });
+    document.querySelectorAll(".add-bonusprod-patokan").forEach(el => {
+      el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].patokan = parseInt(el.value) || 0; };
+    });
+    document.querySelectorAll(".add-bonusprod-bonus").forEach(el => {
+      el.oninput = () => { bonusProduksi[parseInt(el.dataset.index)].bonus = parseInt(el.value) || 0; };
+    });
+  
+    document.getElementById("addTambahPenDistFix").onclick = () => {
+      const val = document.getElementById("addPenDistFixInput").value.trim();
+      if (!val) return;
+      penDistFix.push(val); renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-pendist-fix").forEach(btn => {
+      btn.onclick = () => { penDistFix.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+    });
+    document.querySelectorAll(".add-pendist-fix").forEach(el => {
+      el.oninput = () => { penDistFix[parseInt(el.dataset.index)] = el.value; };
+    });
+  
+    document.getElementById("addTambahPenDistVar").onclick = () => {
+      penDistVariable.push({ jenis: "", harga: 0 }); renderStepBody();
+    };
+    document.querySelectorAll(".btn-hapus-pendist-var").forEach(btn => {
+      btn.onclick = () => { penDistVariable.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
+    });
+    document.querySelectorAll(".add-pendist-var-jenis").forEach(el => {
+      el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].jenis = el.value; };
+    });
+    document.querySelectorAll(".add-pendist-var-harga").forEach(el => {
+      el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
+    });
+  }
 
-      document.getElementById("addTambahPenDistFix").onclick = () => {
-        const val = document.getElementById("addPenDistFixInput").value.trim();
-        if (!val) return;
-        penDistFix.push(val); renderStepBody();
-      };
-      document.querySelectorAll(".btn-hapus-pendist-fix").forEach(btn => {
-        btn.onclick = () => { penDistFix.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
-      });
-      document.querySelectorAll(".add-pendist-fix").forEach(el => {
-        el.oninput = () => { penDistFix[parseInt(el.dataset.index)] = el.value; };
-      });
-
-      document.getElementById("addTambahPenDistVar").onclick = () => {
-        penDistVariable.push({ jenis: "", harga: 0 }); renderStepBody();
-      };
-      document.querySelectorAll(".btn-hapus-pendist-var").forEach(btn => {
-        btn.onclick = () => { penDistVariable.splice(parseInt(btn.dataset.index), 1); renderStepBody(); };
-      });
-      document.querySelectorAll(".add-pendist-var-jenis").forEach(el => {
-        el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].jenis = el.value; };
-      });
-      document.querySelectorAll(".add-pendist-var-harga").forEach(el => {
-        el.oninput = () => { penDistVariable[parseInt(el.dataset.index)].harga = rpNum(el.value); };
-      });
-    }
-
-    else if (currentStep === 3) {
+  // ── STEP 3: BONUS ──
+  function renderStepBonus(body) {
       const b = newData.bonus;
       body.innerHTML = `
         <div class="tab-card">
@@ -2657,9 +2669,10 @@ function renderTambahCabang() {
           `).join("")}
         </div>
       `;
-    }
+  }
 
-    else if (currentStep === 4) {
+  // ── STEP 4: TRIKOTOMI ──
+  function renderStepTrikotomi(body) {
       const trik = newData.trikotomi;
       body.innerHTML = `
         <div class="edit-form">
@@ -2678,9 +2691,10 @@ function renderTambahCabang() {
           </div>
         </div>
       `;
-    }
+  }
 
-    else if (currentStep === 5) {
+  // ── STEP 5: OWNER ──
+  function renderStepOwner(body) {
       const o = newData.owner;
       body.innerHTML = `
         <div class="tab-card edit-foto-card">
@@ -2703,7 +2717,7 @@ function renderTambahCabang() {
           ${editField("Tempat Lahir", "addOwnerTempat", o.tempatLahir || "")}
           <div class="edit-field">
             <div class="edit-field-label">Tanggal Lahir</div>
-            <input id="addOwnerTanggal" type="date" class="edit-field-input" value="${o.tanggalLahir || ""}">
+            <input id="addOwnerTanggal" type="date" class="edit-field-input" value="${o.tanggalLahir instanceof Date ? o.tanggalLahir.toISOString().split('T')[0] : (o.tanggalLahir || "")}">
           </div>
         </div>
       `;
@@ -2720,8 +2734,8 @@ function renderTambahCabang() {
           renderStepBody();
         }});
       };
-    }
   }
+
 
   function saveCurrentStep() {
     const g = id => document.getElementById(id)?.value || "";
@@ -2831,17 +2845,18 @@ function renderTambahCabang() {
 
       // Simpan owner
       if (newData.owner.namaOwner) {
+        const ownerDocRef = window.doc(window.collection(window.db, "ownerMitra"));
         const ownerPayload = { ...newData.owner, idCabang: docRef.id, createdAt: window.serverTimestamp() };
         if (tempFotoOwnerBlob) {
           btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Kompres foto owner...`;
           const compressedOwner = await window.compressImage(tempFotoOwnerBlob, 1280, 0.78);
           btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload foto owner 0%...`;
-          const ownerRef = window.storageRef(window.storage, `fotoOwner/${docRef.id}.jpg`);
+          const ownerRef = window.storageRef(window.storage, `fotoOwner/${ownerDocRef.id}.jpg`);
           ownerPayload.fotoOwner = await window.uploadWithProgress(ownerRef, compressedOwner, "image/jpeg", pct => {
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Upload foto owner ${pct}%...`;
           });
         }
-        await window.addDoc(window.collection(window.db, "ownerMitra"), ownerPayload);
+        await window.setDoc(ownerDocRef, ownerPayload);
       }
 
       await new Promise(r => setTimeout(r, 1000));
