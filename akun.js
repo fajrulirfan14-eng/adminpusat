@@ -2189,7 +2189,7 @@ function renderAkunSheet(u) {
         // Reload tab yang aktif
         const activeTab = document.querySelector(".akun-tab.active")?.dataset.tab;
         if (activeTab === "adminCabang") loadAdminCabangTab();
-        else loadMarketingTab();
+        else loadMarketingTab(activeTab);
       }, 1000);
 
     } catch(e) {
